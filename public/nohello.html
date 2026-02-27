@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>no hello | Meet Winter</title>
+  <meta name="theme-color" content="#4da6ff">
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/feather-icons"></script>
+  <style>
+    :root{--bg:#1a1a2e;--surface:#252542;--surface2:#2d2d4a;--blue:#4da6ff;--text:#fff;--text2:#b4b4c8;--muted:#6b6b8a;--border:rgba(255,255,255,0.08)}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    #bg{position:fixed;inset:0;z-index:0}
+    #bg img{width:100%;height:100%;object-fit:cover;opacity:.3}
+    .container{position:relative;z-index:2;max-width:560px}
+    .window{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.4)}
+    .titlebar{height:36px;background:var(--surface2);display:flex;align-items:center;padding:0 12px}
+    .dots{display:flex;gap:8px}
+    .dot{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,0.1)}
+    .dot.red{background:#ff5f57}.dot.yellow{background:#ffbd2e}.dot.green{background:#28ca41}
+    .title{flex:1;text-align:center;font-size:12px;color:var(--muted)}
+    .content{padding:24px}
+    h1{font-size:42px;font-weight:600;margin-bottom:14px;background:linear-gradient(135deg,#fff,var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    p{font-size:15px;color:var(--text2);margin-bottom:20px;line-height:1.7}
+    .rules{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+    .rule{display:flex;align-items:flex-start;gap:10px;padding:12px;background:rgba(0,0,0,0.2);border-radius:8px}
+    .rule-n{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--blue);min-width:20px}
+    .rule-t{font-size:13px;color:var(--text2)}
+    .code{font-family:'JetBrains Mono',monospace;font-size:13px;background:rgba(77,166,255,0.15);color:var(--blue);padding:3px 8px;border-radius:5px}
+    .links{display:flex;gap:8px;flex-wrap:wrap}
+    .link{padding:10px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);font-size:13px;transition:all .2s}
+    .link:hover{background:rgba(77,166,255,0.2);border-color:var(--blue)}
+    .link svg{width:14px;height:14px;vertical-align:middle;margin-right:5px}
+    footer{text-align:center;margin-top:20px;font-size:11px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div id="bg"><img src="https://i.pinimg.com/originals/f9/a4/18/f9a41860623f211bcaa72bf001f0fab6.gif" alt="bg"></div>
+  <div class="container">
+    <div class="window">
+      <div class="titlebar">
+        <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+        <span class="title">no-hello_protocol.exe</span>
+      </div>
+      <div class="content">
+        <h1>no hello</h1>
+        <p>Please don't just say "hi" or "hey" and wait for me to ask what you need. It's inefficient.</p>
+        <div class="rules">
+          <div class="rule"><span class="rule-n">01</span><span class="rule-t">Jump straight to the question or request</span></div>
+          <div class="rule"><span class="rule-n">02</span><span class="rule-t">Describe the problem upfront</span></div>
+          <div class="rule"><span class="rule-n">03</span><span class="rule-t">Share relevant errors or what you've tried</span></div>
+          <div class="rule"><span class="rule-n">04</span><span class="rule-t">Be specific about what you want</span></div>
+        </div>
+        <p>This is a <span class="code">no-hello</span> zone.</p>
+        <div class="links">
+          <a href="/" class="link"><svg data-feather="home"></svg>Home</a>
+          <a href="/now" class="link"><svg data-feather="clock"></svg>Time</a>
+          <a href="/fakeisloading" class="link"><svg data-feather="loader"></svg>Loading</a>
+        </div>
+      </div>
+    </div>
+    <footer>no hello. just talk.</footer>
+  </div>
+  <script>feather.replace()</script>
+</body>
+</html>

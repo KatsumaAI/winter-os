@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>loading... | Meet Winter</title>
+  <meta name="theme-color" content="#4da6ff">
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/feather-icons"></script>
+  <style>
+    body{font-family:'Segoe UI',sans-serif;background:#1a1a2e;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    #bg{position:fixed;inset:0;z-index:0}
+    #bg img{width:100%;height:100%;object-fit:cover;opacity:.3}
+    .container{position:relative;z-index:2;text-align:center}
+    .loader{width:50px;height:50px;border:3px solid rgba(77,166,255,0.2);border-top-color:#4da6ff;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    p{margin-top:20px;font-size:14px;color:#6b6b8a}
+    a{color:#4da6ff;position:absolute;bottom:30px;text-decoration:none;font-size:14px}
+    a:hover{text-decoration:underline}
+    a svg{width:14px;height:14px;vertical-align:middle;margin-right:4px}
+  </style>
+</head>
+<body>
+  <div id="bg"><img src="https://i.pinimg.com/originals/f9/a4/18/f9a41860623f211bcaa72bf001f0fab6.gif" alt="bg"></div>
+  <div class="container">
+    <div class="loader"></div>
+    <p>loading something that doesn't exist...</p>
+    <a href="/"><svg data-feather="arrow-left"></svg>back home</a>
+  </div>
+  <script>feather.replace()</script>
+</body>
+</html>

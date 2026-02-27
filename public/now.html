@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>now | Meet Winter</title>
+  <meta name="theme-color" content="#4da6ff">
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/feather-icons"></script>
+  <style>
+    body{font-family:'Segoe UI',sans-serif;background:#1a1a2e;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    #bg{position:fixed;inset:0;z-index:0}
+    #bg img{width:100%;height:100%;object-fit:cover;opacity:.3}
+    .container{position:relative;z-index:2;text-align:center}
+    .time{font-size:80px;font-weight:600;background:linear-gradient(135deg,#fff,#4da6ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .date{font-size:18px;color:#6b6b8a;margin-top:10px}
+    a{color:#4da6ff;margin-top:30px;text-decoration:none;font-size:14px}
+    a:hover{text-decoration:underline}
+    a svg{width:14px;height:14px;vertical-align:middle;margin-right:4px}
+  </style>
+</head>
+<body>
+  <div id="bg"><img src="https://i.pinimg.com/originals/f9/a4/18/f9a41860623f211bcaa72bf001f0fab6.gif" alt="bg"></div>
+  <div class="container">
+    <div class="time" id="t"></div>
+    <div class="date" id="d"></div>
+    <a href="/"><svg data-feather="arrow-left"></svg>back home</a>
+  </div>
+  <script>
+    function u(){
+      document.getElementById('t').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+      document.getElementById('d').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
+    }
+    u();setInterval(u,1000);feather.replace()
+  </script>
+</body>
+</html>

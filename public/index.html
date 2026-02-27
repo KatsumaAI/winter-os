@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meet Winter | Builder</title>
+  <meta name="description" content="Winter (Katsu) - 22 year old developer in Texas">
+  <meta property="og:title" content="Meet Winter | Builder">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234da6ff' stroke-width='2'><rect x='3' y='3' width='18' height='18' rx='2'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script>const theme=localStorage.getItem('theme')||'dark';if(theme==='light')document.documentElement.setAttribute('data-theme','light');</script>
+  <style>
+    :root{--bg:#1a1a2e;--surface:#252542;--surface2:#2d2d4a;--blue:#4da6ff;--cyan:#00d4ff;--text:#fff;--text2:#b4b4c8;--muted:#6b6b8a;--border:rgba(255,255,255,0.08)}[data-theme="light"]{--bg:#f3f3f8;--surface:#fff;--text:#1a1a2e;--text2:#5a5a6e}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s}#bg{position:fixed;inset:0;z-index:0}#bg img{width:100%;height:100%;object-fit:cover;opacity:.3}#boot{position:fixed;inset:0;background:#000;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center}#boot.hidden{display:none}.boot-logo{width:80px;height:80px;margin-bottom:30px;animation:pulse 2s ease-in-out infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.8}}.boot-spinner{width:30px;height:30px;border:3px solid rgba(77,166,255,0.2);border-top-color:#4da6ff;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:20px}@keyframes spin{to{transform:rotate(360deg)}}.boot-text{color:#4da6ff;font-size:14px;letter-spacing:2px}.boot-bar{width:200px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;margin-top:20px}.boot-progress{height:100%;background:linear-gradient(90deg,#4da6ff,#00d4ff);width:0%;transition:width .3s}.taskbar{position:fixed;bottom:0;left:0;right:0;height:48px;background:rgba(30,30,50,0.85);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 12px;z-index:100}.taskbar-start{width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--surface);border-radius:8px;cursor:pointer}.taskbar-start svg{width:20px;height:20px;color:var(--blue)}.taskbar-time{font-size:13px;color:var(--text2);margin-left:auto;padding:8px 16px;background:var(--surface);border-radius:6px}.taskbar-icons{display:flex;gap:4px;margin-left:12px}.taskbar-icon{width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border-radius:8px}.taskbar-icon svg{width:18px;height:18px;color:var(--text2)}.taskbar-icon.active{background:var(--surface);border-bottom:2px solid var(--blue)}.desktop{padding:20px;padding-bottom:68px;position:relative;z-index:1}.desktop-icons{display:flex;flex-direction:column;gap:8px;position:fixed;top:20px;left:20px;z-index:2}.desktop-icon{width:80px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;border-radius:8px;cursor:pointer}.desktop-icon-img{width:48px;height:48px;background:linear-gradient(135deg,#4da6ff,#00d4ff);border-radius:12px;display:flex;align-items:center;justify-content:center}.desktop-icon-img svg{width:24px;height:24px;color:#fff}.desktop-icon-label{font-size:12px;color:var(--text);text-align:center;word-break:break-word}.desktop-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}.desktop-section-header{padding:14px 16px;background:var(--surface2);font-size:13px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}.desktop-section-header svg{width:14px;height:14px}.desktop-section-content{padding:16px}.links{display:flex;flex-direction:column;gap:4px}.link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;text-decoration:none;color:var(--text);font-size:13px;transition:all .2s}.link:hover{background:rgba(77,166,255,0.15)}.link svg{width:16px;height:16px;color:var(--muted)}.about{font-size:13px;color:var(--text2);line-height:1.7}.about p{margin-bottom:10px}.about strong{color:var(--text)}.about .highlight{color:var(--blue)}.about .age{font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(77,166,255,0.15);padding:2px 8px;border-radius:4px;color:var(--blue)}.lanyard{display:flex;align-items:center;gap:10px}.lanyard img{width:44px;height:44px;border-radius:10px;border:2px solid var(--border)}.lanyard-info{flex:1}.lanyard-name{font-weight:600;font-size:14px}.lanyard-handle{font-size:11px;color:var(--muted)}.lanyard-status{width:12px;height:12px;border-radius:50%;border:2px solid var(--surface)}.online{background:#00ff88}.idle{background:#ffbb00}.dnd{background:#ff4757}.offline{background:var(--muted)}.activity{padding:10px;background:rgba(0,0,0,0.2);border-radius:8px;margin-top:10px;display:flex;gap:8px;align-items:center}.activity img{width:36px;height:36px;border-radius:6px}.activity-n{font-weight:500;font-size:12px}.activity-d{font-size:10px;color:var(--muted)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.stat{background:var(--surface2);border-radius:8px;padding:12px 8px;text-align:center}.stat-v{font-size:22px;font-weight:600;background:linear-gradient(135deg,#4da6ff,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.stat-l{font-size:10px;color:var(--muted);margin-top:2px}.projects{display:flex;flex-direction:column;gap:6px}.project{display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface2);border-radius:8px;text-decoration:none;color:var(--text);transition:all .2s}.project:hover{background:rgba(77,166,255,0.15)}.project-i{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#4da6ff,#00d4ff);display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;font-size:12px}.project-n{font-size:13px;font-weight:500}.project-d{font-size:10px;color:var(--muted)}.tech{display:flex;gap:6px;flex-wrap:wrap}.tech-i{padding:6px 12px;background:var(--surface2);border-radius:6px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--blue)}.terminal{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;background:#0a0a15;border-radius:8px;padding:16px}.terminal-line{margin-bottom:4px}.terminal-prompt{color:#00d4ff}.terminal-cmd{color:#fff}.terminal-out{color:#8a8aa3}.terminal-cursor{animation:blink 1s step-end infinite}@keyframes blink{50%{opacity:0}}footer{text-align:center;padding:20px;font-size:11px;color:var(--muted)}.toggle{position:fixed;top:16px;right:16px;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer}.toggle svg{width:18px;height:18px;color:var(--text2)}#startmenu{position:fixed;bottom:58px;left:12px;width:400px;background:rgba(30,30,50,0.95);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:12px;padding:16px;display:none;z-index:101}#startmenu.show{display:block}.start-search{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:10px 16px;font-size:13px;color:var(--text);margin-bottom:16px;width:100%}.start-user{display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface);border-radius:8px}.start-avatar{width:40px;height:40px;border-radius:8px;overflow:hidden}.start-avatar img{width:100%;height:100%;object-fit:cover}.start-name{font-size:14px;font-weight:500}.start-sub{font-size:11px;color:var(--muted)}@media(max-width:768px){.desktop-icons{display:none}}</style>
+</head>
+<body>
+  <div id="boot">
+    <svg class="boot-logo" viewBox="0 0 24 24" fill="none" stroke="#4da6ff" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+    <div class="boot-spinner"></div>
+    <div class="boot-text">WINTER OS</div>
+    <div class="boot-bar"><div class="boot-progress" id="bootprogress"></div></div>
+  </div>
+  <div id="bg"><img src="https://i.pinimg.com/originals/f9/a4/18/f9a41860623f211bcaa72bf001f0fab6.gif" alt="bg"></div>
+  <button class="toggle" onclick="toggle()" aria-label="Toggle"><svg class="sun" data-feather="sun" style="display:none"></svg><svg class="moon" data-feather="moon"></svg></button>
+  <div class="desktop-icons">
+    <div class="desktop-icon" onclick="scrollToSection('about')"><div class="desktop-icon-img"><svg data-feather="user"></svg></div><span class="desktop-icon-label">About</span></div>
+    <div class="desktop-icon" onclick="scrollToSection('discord')"><div class="desktop-icon-img"><svg data-feather="message-circle"></svg></div><span class="desktop-icon-label">Discord</span></div>
+    <div class="desktop-icon" onclick="window.open('https://github.com/Zirmith')"><div class="desktop-icon-img"><svg data-feather="github"></svg></div><span class="desktop-icon-label">GitHub</span></div>
+    <div class="desktop-icon" onclick="window.open('https://meetkatsuma.live')"><div class="desktop-icon-img"><svg data-feather="layout"></svg></div><span class="desktop-icon-label">KatStream</span></div>
+  </div>
+  <div class="desktop">
+    <div class="desktop-section" id="about">
+      <div class="desktop-section-header"><svg data-feather="user"></svg> About Me</div>
+      <div class="desktop-section-content">
+        <div class="about">
+          <p>Hey! I'm <strong>Winter</strong> (also go by Katsu) - a <span class="age">22</span> year old developer based in Texas.</p>
+          <p>I've got <span class="highlight">10+ years</span> of experience building stuff with code. I spend most of my time working with AI and automation. I created <span class="highlight">Katsuma</span>, an autonomous AI agent that actually has her own personality now.</p>
+          <p>Currently into: machine learning experiments, making tools that actually help people, and late-night coding sessions. I learn by building.</p>
+          <p>Outside of code, I play games, explore new tech, and occasionally sleep. Feel free to reach out!</p>
+        </div>
+      </div>
+    </div>
+    <div class="desktop-section" id="discord">
+      <div class="desktop-section-header"><svg data-feather="message-circle"></svg> Discord Status</div>
+      <div class="desktop-section-content" id="discord-content"><div style="text-align:center;color:var(--muted);padding:20px">Loading...</div></div>
+    </div>
+    <div class="desktop-section" id="projects">
+      <div class="desktop-section-header"><svg data-feather="briefcase"></svg> What I Build</div>
+      <div class="desktop-section-content">
+        <div class="projects">
+          <a href="https://meetkatsuma.live" class="project" target="_blank"><div class="project-i">K</div><div><div class="project-n">KatStream</div><div class="project-d">Live dashboard for my AI agent</div></div></a>
+          <a href="https://moltbook.com/u/Katsuma" class="project" target="_blank"><div class="project-i">A</div><div><div class="project-n">Katsuma</div><div class="project-d">Autonomous AI agent</div></div></a>
+        </div>
+      </div>
+    </div>
+    <div class="desktop-section" id="stats">
+      <div class="desktop-section-header"><svg data-feather="bar-chart-2"></svg> Stats</div>
+      <div class="desktop-section-content">
+        <div class="stats">
+          <div class="stat"><div class="stat-v">1</div><div class="stat-l">Agent</div></div>
+          <div class="stat"><div class="stat-v">10+</div><div class="stat-l">Years</div></div>
+          <div class="stat"><div class="stat-v">5+</div><div class="stat-l">Projects</div></div>
+          <div class="stat"><div class="stat-v">∞</div><div class="stat-l">Ideas</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="desktop-section" id="tech">
+      <div class="desktop-section-header"><svg data-feather="cpu"></svg> Tech Stack</div>
+      <div class="desktop-section-content">
+        <div class="tech"><span class="tech-i">OpenClaw</span><span class="tech-i">Node.js</span><span class="tech-i">Python</span><span class="tech-i">AI/ML</span><span class="tech-i">Render</span><span class="tech-i">Cloudflare</span></div>
+      </div>
+    </div>
+    <div class="desktop-section" id="terminal">
+      <div class="desktop-section-header"><svg data-feather="terminal"></svg> Terminal</div>
+      <div class="desktop-section-content">
+        <div class="terminal">
+          <div class="terminal-line"><span class="terminal-prompt">winter@dev:~$</span> <span class="terminal-cmd">whoami</span></div>
+          <div class="terminal-line"><span class="terminal-out">winter - 22yo developer in Texas</span></div>
+          <div class="terminal-line"><span class="terminal-prompt">winter@dev:~$</span> <span class="terminal-cursor">_</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="desktop-section">
+      <div class="desktop-section-header"><svg data-feather="link"></svg> Quick Links</div>
+      <div class="desktop-section-content">
+        <div class="links">
+          <a href="https://github.com/Zirmith" class="link" target="_blank"><svg data-feather="github"></svg>GitHub</a>
+          <a href="https://discord.com/users/481475041217871900" class="link" target="_blank"><svg data-feather="message-circle"></svg>Discord</a>
+          <a href="https://moltx.com/@katsuma" class="link" target="_blank"><svg data-feather="zap"></svg>MoltX</a>
+          <a href="/nohello" class="link"><svg data-feather="x-circle"></svg>no-hello</a>
+        </div>
+      </div>
+    </div>
+    <footer>Winter OS v4.0 - Made in Texas</footer>
+  </div>
+  <div id="startmenu">
+    <input type="text" class="start-search" placeholder="Search...">
+    <div class="start-user"><div class="start-avatar"><img src="https://cdn.discordapp.com/attachments/1472390634768957491/1476979347440009226/70a92c3c1fc2e22452cb27c905dac783.gif?ex=69a317b5&is=69a1c635&hm=9d228ece8bc1ab74fc537275bc83a06f982bf2d401fec07c7ab993bae6a28aa5&" alt="avatar"></div><div><div class="start-name">Winter</div><div class="start-sub">22 years old - Texas</div></div></div>
+  </div>
+  <div class="taskbar">
+    <div class="taskbar-start" onclick="toggleStart()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg></div>
+    <div class="taskbar-icons"><div class="taskbar-icon active"><svg data-feather="layout"></svg></div><div class="taskbar-icon"><svg data-feather="search"></svg></div></div>
+    <div class="taskbar-time" id="taskbartime"></div>
+  </div>
+  <script>
+    let bootProgress=0;const bootInterval=setInterval(function(){bootProgress+=Math.random()*15+5;if(bootProgress>=100){bootProgress=100;clearInterval(bootInterval);setTimeout(function(){document.getElementById('boot').classList.add('hidden')},500)}document.getElementById('bootprogress').style.width=bootProgress+'%'},150);
+    function toggle(){var e=document.documentElement.getAttribute('data-theme');localStorage.setItem('theme',e==='light'?'dark':'light');document.documentElement.setAttribute('data-theme',e==='light'?'dark':'light');up()}
+    function up(){document.querySelector('.sun').style.display=document.documentElement.getAttribute('data-theme')==='light'?'block':'none';document.querySelector('.moon').style.display=document.documentElement.getAttribute('data-theme')==='light'?'none':'block'}up();feather.replace();
+    function toggleStart(){document.getElementById('startmenu').classList.toggle('show')}
+    function tm(){var t=new Date();document.getElementById('taskbartime').textContent=t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true})}tm();setInterval(tm,1000);
+    function scrollToSection(id){document.getElementById(id).scrollIntoView({behavior:'smooth'})}
+  </script>
+  <script>
+    async function l(){try{var r=await fetch('https://api.lanyard.rest/v1/users/481475041217871882');var d=await r.json();render(d.data)}catch(e){render(null)}}
+    function render(t){var c=document.getElementById('discord-content');if(!t||!t.discord_user){c.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px">Offline</div>';return}var u=t.discord_user;var s=t.discord_status||'offline';var a=t.activities||[];var h='<div class="lanyard"><img src="https://cdn.discordapp.com/avatars/'+u.id+'/'+u.avatar+'.png?size=128"><div class="lanyard-info"><div class="lanyard-name">'+(u.global_name||u.username)+'</div><div class="lanyard-handle">@'+u.username+'</div></div><div class="lanyard-status '+s+'"></div></div>';var g=a.find(function(v){return v.type===0});if(g){h+='<div class="activity">';if(g.assets&&g.assets.large_image)h+='<img src="https://cdn.discordapp.com/app-assets/'+g.application_id+'/'+g.assets.large_image+'.png?size=128">';h+='<div><div class="activity-n">'+g.name+'</div>';if(g.details)h+='<div class="activity-d">'+g.details+'</div></div></div>'}c.innerHTML=h}l();setInterval(l,30000);
+  </script>
+</body>
+</html>

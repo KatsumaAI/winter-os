@@ -10,6 +10,12 @@ A Windows 11-styled personal landing page.
 - Discord status via Lanyard
 - Light/dark theme toggle
 
+## Pages
+- `/` - Main landing page
+- `/nohello` - No-hello protocol page
+- `/now` - Live clock
+- `/fakeisloading` - Fake loading page
+
 ## Run locally
 ```bash
 npm install
@@ -20,4 +26,3 @@ npm start
 - Express.js
 - Vanilla HTML/CSS/JS
 - Lanyard API for Discord status
-
