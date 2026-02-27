@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>loading… | Katsumi Social</title>
+  <meta name="theme-color" content="#4da6ff" />
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script>
+    const theme = localStorage.getItem('theme');
+    if (theme === 'light') document.documentElement.setAttribute('data-theme','light');
+  </script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <link rel="stylesheet" href="/public/css/fluent.css" />
+  <link rel="stylesheet" href="/public/css/simplepage.css" />
+</head>
+<body>
+  <div class="wallpaper" aria-hidden="true"></div>
+
+  <div class="center">
+    <section class="window glass">
+      <header class="titlebar">
+        <div class="left"><span class="dot"></span> loading.exe</div>
+        <div class="pill" style="font-size:12px;color:var(--text2)"><i class="icon" data-feather="loader"></i> spoof</div>
+      </header>
+
+      <div class="content" style="text-align:center">
+        <div class="dotloader" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <p style="margin-top:16px">Pretending to boot a social OS…</p>
+
+        <div class="rule" style="text-align:left; margin-top:12px">
+          <div class="n">log</div>
+          <div class="t" id="fakeLog">Initializing timeline modules…</div>
+        </div>
+        <div class="btnrow" style="justify-content:center">
+          <a class="btn" href="/"><i data-feather="arrow-left"></i>Back home</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    if (window.feather && typeof window.feather.replace === 'function') feather.replace();
+
+    const lines = [
+      'Initializing timeline modules…',
+      'Warming up message bus…',
+      'Rendering acrylic panels…',
+      'Syncing presence (definitely real)…',
+      'Launching desktop…',
+      'All done. (Not really.)'
+    ];
+    const el = document.getElementById('fakeLog');
+    if (el){
+      let i = 0;
+      setInterval(() => {
+        el.textContent = lines[i % lines.length];
+        i++;
+      }, 900);
+    }
+  </script>
+</body>
+</html>
