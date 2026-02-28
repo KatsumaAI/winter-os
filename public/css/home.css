@@ -2,11 +2,12 @@
 .wallpaper{
   position:fixed; inset:0; z-index:0;
   background-image:
-    linear-gradient(180deg, var(--wallpaperTint), var(--wallpaperTint)),
-    url('https://i.pinimg.com/originals/f9/a4/18/f9a41860623f211bcaa72bf001f0fab6.gif');
+    radial-gradient(1200px 800px at 20% 10%, rgba(77,166,255,0.18), transparent 60%),
+    radial-gradient(1100px 760px at 80% 0%, rgba(0,212,255,0.14), transparent 62%),
+    radial-gradient(900px 700px at 50% 90%, rgba(185,107,255,0.14), transparent 62%),
+    linear-gradient(180deg, var(--wallpaperTint), var(--wallpaperTint));
   background-size: cover;
   background-position: center;
-  filter: saturate(1.08) contrast(1.04);
 }
 
 .wallpaper::before{
@@ -40,8 +41,6 @@
 
 .shell{position:relative; z-index:2; min-height:100vh; padding:18px 18px 74px;}
 
-/* Subtle global polish */
-.shell{filter: drop-shadow(0 28px 90px rgba(0,0,0,0.22));}
 
 /* Boot experience (no loading bar) */
 .boot{
@@ -223,7 +222,7 @@
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.14);
   box-shadow: 0 18px 55px rgba(0,0,0,0.44);
-  backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(125%);
 }
 .desk-icon:hover .tile{transform: translateY(-1px); box-shadow: 0 22px 70px rgba(0,0,0,0.52)}
 .desk-icon .tile::before{
@@ -830,8 +829,8 @@
   opacity: 0;
   pointer-events:none;
   transition: .18s ease;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
 }
 .ui-backdrop.show{opacity: 1; pointer-events:auto;}
 .tb-center{display:flex; align-items:center; justify-content:center; gap:8px; flex: 1}
@@ -1052,3 +1051,14 @@
 .musicWidget .mwHint{margin-top:8px;font-size:11px;color: var(--muted)}
 
 
+
+
+/* Performance hints */
+.discordPanel, .appwin, .startMenu, .widgetsPanel{contain: content;}
+@supports (content-visibility: auto){
+  .discordPanel, .widgetsPanel{content-visibility: auto; contain-intrinsic-size: 600px;}
+}
+
+.actProg .progbar{height:8px;border-radius:999px;background:rgba(255,255,255,0.10);overflow:hidden}
+.actProg .progbar span{display:block;height:100%;width:0%;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.actProg .progt{display:flex;justify-content:space-between;margin-top:4px;font-family:var(--mono);font-size:11px;color:var(--muted)}

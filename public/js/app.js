@@ -15,7 +15,14 @@
     try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){ /* ignore */ }
   };
 
-  // Theme
+  
+  // Reusable date/time formatters (less GC + less lag)
+  const fmtTime = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
+  const fmtDateShort = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const fmtDateLong = new Intl.DateTimeFormat('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  let lastFlyoutDayKey = '';
+
+// Theme
   const savedTheme = localStorage.getItem('theme') || 'dark';
   if (savedTheme === 'light') document.documentElement.setAttribute('data-theme', 'light');
 
@@ -98,8 +105,8 @@
     const el = qs('#tbClock');
     if (!el) return;
     const d = new Date();
-    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
-    const date = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const time = fmtTime.format(d);
+    const date = fmtDateShort.format(d);
     const t1 = el.querySelector('.t1');
     const t2 = el.querySelector('.t2');
     if (t1 && t2){
@@ -111,7 +118,11 @@
     // Flyout header date
     const fd = byId('flyoutDate');
     if (fd){
-      fd.textContent = d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+      const dk = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      if (dk !== lastFlyoutDayKey){
+        lastFlyoutDayKey = dk;
+        fd.textContent = fmtDateLong.format(d);
+      }
     }
   }
 

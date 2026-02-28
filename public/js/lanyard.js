@@ -2,7 +2,13 @@
   const USER_ID = '481475041217871882';
   const el = () => document.getElementById('discordContent');
 
-  let tickers = [];
+  let progressTicker = null;
+  let progressItems = [];
+  let musicProgress = null;
+  let lastSig = '';
+
+
+  let currentProgressDefs = [];
 
   const ACT_TYPES = {
     0: 'Playing',
@@ -14,8 +20,38 @@
   };
 
   function clearTickers(){
-    tickers.forEach(t => clearInterval(t));
-    tickers = [];
+    if (progressTicker){ clearInterval(progressTicker); progressTicker = null; }
+    progressItems = [];
+    musicProgress = null;
+  }
+
+  function startProgressTicker(){
+    if (progressTicker) return;
+    progressTicker = setInterval(() => {
+      const now = Date.now();
+
+      for (const it of progressItems){
+        if (!it || !it.bar || !it.curEl || !it.endEl) continue;
+        const {start, end} = it;
+        if (!(end > start)) continue;
+        const cur = Math.min(end, Math.max(start, now));
+        const pct = ((cur - start) / (end - start)) * 100;
+        it.bar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+        it.curEl.textContent = fmtMs(cur - start);
+        it.endEl.textContent = fmtMs(end - start);
+      }
+
+      if (musicProgress && musicProgress.bar && musicProgress.curEl && musicProgress.endEl){
+        const {start, end} = musicProgress;
+        if (end > start){
+          const cur = Math.min(end, Math.max(start, now));
+          const pct = ((cur - start) / (end - start)) * 100;
+          musicProgress.bar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+          musicProgress.curEl.textContent = fmtMs(cur - start);
+          musicProgress.endEl.textContent = fmtMs(end - start);
+        }
+      }
+    }, 1000);
   }
 
   function statusClass(s){
@@ -65,7 +101,29 @@
     return `https://cdn.discordapp.com/app-assets/${appId}/${key}.png?size=256`;
   }
 
-  function platformTags(data){
+  
+  function makeSig(d){
+    try{
+      if (!d || !d.discord_user) return 'none';
+      const flags = [
+        d.discord_status || '',
+        d.active_on_discord_desktop ? 'D' : '',
+        d.active_on_discord_mobile ? 'M' : '',
+        d.active_on_discord_web ? 'W' : '',
+        d.active_on_discord_embedded ? 'E' : ''
+      ].join('');
+      const user = d.discord_user;
+      const acts = (d.activities || []).map(a => {
+        if (!a) return '';
+        const ts = a.timestamps || {};
+        return [a.id||'', a.name||'', a.type||'', a.details||'', a.state||'', ts.start||'', ts.end||''].join('|');
+      }).join('~');
+      return [user.id||'', user.username||'', user.display_name||'', user.avatar||'', flags, acts].join('§');
+    }catch(_){
+      return String(Date.now());
+    }
+  }
+function platformTags(data){
     const tags = [];
     if (data.active_on_discord_desktop) tags.push({ icon:'monitor', label:'Desktop' });
     if (data.active_on_discord_mobile) tags.push({ icon:'smartphone', label:'Mobile' });
@@ -135,23 +193,15 @@
     if (window.feather && typeof window.feather.replace === 'function'){
       window.feather.replace();
     }
-
+    // progress (handled by a single shared ticker)
     if (start && end && end > start){
-      const run = () => {
-        const now = Date.now();
-        const cur = Math.min(end, Math.max(start, now));
-        const pct = ((cur - start) / (end - start)) * 100;
-
-        const bar = document.getElementById('musicProg');
-        const curEl = document.getElementById('musicCur');
-        const endEl = document.getElementById('musicEnd');
-
-        if (bar) bar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
-        if (curEl) curEl.textContent = fmtMs(cur - start);
-        if (endEl) endEl.textContent = fmtMs(end - start);
-      };
-      setTimeout(run, 0);
-      tickers.push(setInterval(run, 1000));
+      const bar = document.getElementById('musicProg');
+      const curEl = document.getElementById('musicCur');
+      const endEl = document.getElementById('musicEnd');
+      musicProgress = { start, end, bar, curEl, endEl };
+      startProgressTicker();
+    } else {
+      musicProgress = null;
     }
   }
 
@@ -240,24 +290,9 @@
     if (emoji) html += kvRow('emoji', emoji);
     html += `  </div>`;
     html += `</div>`;
-
-    // attach ticker after injection
+    // progress wiring (handled by one shared ticker)
     if (start && end && end > start){
-      const run = () => {
-        const now = Date.now();
-        const cur = Math.min(end, Math.max(start, now));
-        const pct = ((cur - start) / (end - start)) * 100;
-
-        const bar = document.getElementById(progId);
-        const curEl = document.getElementById(curId);
-        const endEl = document.getElementById(endId);
-
-        if (bar) bar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
-        if (curEl) curEl.textContent = fmtMs(cur - start);
-        if (endEl) endEl.textContent = fmtMs(end - start);
-      };
-      setTimeout(run, 0);
-      tickers.push(setInterval(run, 1000));
+      currentProgressDefs.push({ start, end, barId: progId, curId: curId, endId: endId });
     }
 
     return html;
@@ -268,6 +303,7 @@
     if (!c) return;
 
     clearTickers();
+    currentProgressDefs = [];
     updateMusicWidget(data);
 
     if (!data || !data.discord_user){
@@ -407,21 +443,8 @@
       spotify += `    <a class="tag" style="text-decoration:none" href="https://open.spotify.com/track/${pid}" target="_blank" rel="noreferrer noopener"><i data-feather="external-link"></i><span>Open</span></a>`;
       spotify += '  </div>';
       spotify += '</div>';
-
-      const run = () => {
-        if (!start || !end || end <= start) return;
-        const now = Date.now();
-        const cur = Math.min(end, Math.max(start, now));
-        const pct = ((cur - start) / (end - start)) * 100;
-        const bar = document.getElementById('spProg');
-        const curEl = document.getElementById('spCur');
-        const endEl = document.getElementById('spEnd');
-        if (bar) bar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
-        if (curEl) curEl.textContent = fmtMs(cur - start);
-        if (endEl) endEl.textContent = fmtMs(end - start);
-      };
-      setTimeout(run, 0);
-      tickers.push(setInterval(run, 1000));
+      // spotify progress (handled by shared ticker)
+      currentProgressDefs.push({ start, end, barId: 'spProg', curId: 'spCur', endId: 'spEnd' });
     }
 
     // --- Activities section (scrolls inside its own card)
@@ -454,6 +477,24 @@
       </div>
     `;
 
+
+    // bind progress elements once (no per-card intervals)
+    if (currentProgressDefs && currentProgressDefs.length){
+      progressItems = currentProgressDefs.map(d => ({
+        start: d.start,
+        end: d.end,
+        bar: document.getElementById(d.barId),
+        curEl: document.getElementById(d.curId),
+        endEl: document.getElementById(d.endId)
+      })).filter(it => it.bar && it.curEl && it.endEl);
+      if (progressItems.length){
+        startProgressTicker();
+      }
+    } else {
+      progressItems = [];
+    }
+
+
     if (window.feather && typeof window.feather.replace === 'function'){
       window.feather.replace();
     }
@@ -463,7 +504,15 @@
     try{
       const r = await fetch(`https://api.lanyard.rest/v1/users/${USER_ID}`, { cache: 'no-store' });
       const j = await r.json();
-      render(j && j.data);
+      const data = j && j.data;
+      const sig = makeSig(data);
+      if (sig === lastSig){
+        // minimal updates when nothing changed
+        updateMusicWidget(data);
+        return;
+      }
+      lastSig = sig;
+      render(data);
     }catch(_){
       render(null);
     }
