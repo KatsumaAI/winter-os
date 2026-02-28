@@ -1,0 +1,145 @@
+:root{
+  --mx-ink: rgba(255,255,255,0.92);
+  --mx-ink2: rgba(255,255,255,0.70);
+  --mx-line: rgba(255,255,255,0.10);
+  --mx-accent: rgba(88, 170, 255, 0.95);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  color:var(--mx-ink);
+  overflow:hidden;
+  background: radial-gradient(1200px 800px at 20% 15%, rgba(120, 200, 255, 0.22), transparent 55%),
+              radial-gradient(900px 700px at 85% 25%, rgba(90, 120, 255, 0.18), transparent 55%),
+              radial-gradient(1000px 800px at 50% 90%, rgba(40, 70, 180, 0.22), transparent 60%),
+              linear-gradient(180deg, #080b13, #0b1020);
+}
+
+.mx-bg{position:fixed; inset:0; z-index:0}
+.mx-grid{
+  position:absolute; inset:-2px;
+  background:
+    linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+  opacity:0.22;
+  mask-image: radial-gradient(closest-side at 50% 45%, rgba(0,0,0,1), rgba(0,0,0,0));
+}
+
+.mx-orb{position:absolute; border-radius:999px; filter: blur(18px); opacity:0.55; transform: translateZ(0)}
+.mx-orb-a{width:520px; height:520px; left:-140px; top:-160px; background: rgba(90, 180, 255, 0.35); animation: floatA 10s ease-in-out infinite}
+.mx-orb-b{width:620px; height:620px; right:-220px; top:80px; background: rgba(120, 120, 255, 0.26); animation: floatB 13s ease-in-out infinite}
+.mx-orb-c{width:560px; height:560px; left:30%; bottom:-260px; background: rgba(40, 120, 255, 0.22); animation: floatC 12s ease-in-out infinite}
+
+@keyframes floatA{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,40px)}}
+@keyframes floatB{0%,100%{transform:translate(0,0)}50%{transform:translate(-40px,-30px)}}
+@keyframes floatC{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-35px)}}
+
+.mx-wrap{
+  position:relative; z-index:1;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 28px;
+}
+
+.mx-card{
+  width:min(880px, 96vw);
+  border:1px solid var(--mx-line);
+  border-radius: 22px;
+  padding: 26px 26px 20px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+  box-shadow: 0 24px 70px rgba(0,0,0,0.55);
+}
+
+.mx-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.10);
+  color: var(--mx-ink2);
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+
+.mx-title{
+  margin: 14px 0 8px;
+  font-size: clamp(30px, 3.3vw, 44px);
+  line-height:1.05;
+  letter-spacing: -0.6px;
+}
+
+.mx-sub{
+  margin:0 0 18px;
+  font-size: 15.5px;
+  color: var(--mx-ink2);
+  max-width: 62ch;
+}
+
+.mx-status{
+  display:flex;
+  gap: 12px;
+  align-items:flex-start;
+  padding: 14px 14px;
+  border-radius: 16px;
+  background: rgba(10, 14, 26, 0.42);
+  border:1px solid rgba(255,255,255,0.10);
+  margin-bottom: 18px;
+}
+
+.mx-dot{
+  width: 10px; height: 10px;
+  border-radius: 999px;
+  background: var(--mx-accent);
+  margin-top: 4px;
+  box-shadow: 0 0 0 6px rgba(88,170,255,0.14), 0 0 30px rgba(88,170,255,0.32);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+
+.mx-status-line{font-weight:800}
+.mx-status-mini{color:var(--mx-ink2); font-size: 13px; margin-top: 3px}
+
+.mx-actions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn{
+  appearance:none;
+  border:none;
+  text-decoration:none;
+  font-weight: 800;
+  color: var(--mx-ink);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  padding: 10px 14px;
+  border-radius: 14px;
+  cursor:pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.btn:hover{ background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.16); }
+.btn:active{ background: rgba(255,255,255,0.08); } /* no translate = no "moving" */
+
+.btn.primary{
+  background: linear-gradient(180deg, rgba(88,170,255,0.35), rgba(88,170,255,0.18));
+  border-color: rgba(88,170,255,0.30);
+}
+.btn.primary:hover{ background: linear-gradient(180deg, rgba(88,170,255,0.45), rgba(88,170,255,0.20)); }
+
+.mx-foot{
+  margin-top: 14px;
+  color: rgba(255,255,255,0.55);
+  font-size: 12.5px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 12px;
+}
+.mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;}

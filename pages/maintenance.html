@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Maintenance — Katsumi Social OS</title>
+
+  <meta name="description" content="Katsumi Social OS is under maintenance right now. We’ll be back soon with fresh updates." />
+  <meta name="author" content="Katsumi" />
+  <meta name="theme-color" content="#0b0f1a" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="application-name" content="Katsumi Social OS" />
+  <meta name="robots" content="noindex,nofollow" />
+
+  <meta property="og:title" content="Maintenance — Katsumi Social OS" />
+  <meta property="og:description" content="Under maintenance right now — back soon." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Katsumi Social OS" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:image" content="/public/assets/og-main.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Katsumi Social OS preview image" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Maintenance — Katsumi Social OS" />
+  <meta name="twitter:description" content="Under maintenance right now — back soon." />
+  <meta name="twitter:image" content="/public/assets/og-main.png" />
+  <meta name="twitter:image:alt" content="Katsumi Social OS preview image" />
+
+  <link rel="manifest" href="/public/site.webmanifest" />
+  <link rel="apple-touch-icon" href="/public/assets/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="48x48" href="/public/assets/favicon-48.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/public/assets/icon-192.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/public/css/fluent.css" />
+  <link rel="stylesheet" href="/public/css/maintenance.css" />
+</head>
+<body>
+  <div class="mx-bg">
+    <div class="mx-grid"></div>
+    <div class="mx-orb mx-orb-a"></div>
+    <div class="mx-orb mx-orb-b"></div>
+    <div class="mx-orb mx-orb-c"></div>
+  </div>
+
+  <main class="mx-wrap">
+    <section class="mx-card glass">
+      <div class="mx-badge">Katsumi Social OS</div>
+      <h1 class="mx-title">Under maintenance</h1>
+      <p class="mx-sub">
+        I’m tuning the system and rolling updates. It’ll be back up soon.
+      </p>
+
+      <div class="mx-status">
+        <div class="mx-dot"></div>
+        <div class="mx-status-text">
+          <div class="mx-status-line">Services temporarily paused</div>
+          <div class="mx-status-mini">Try again in a bit.</div>
+        </div>
+      </div>
+
+      <div class="mx-actions">
+        <button class="btn primary" id="retryBtn" type="button">Retry</button>
+        <a class="btn" href="/nohello">No Hello</a>
+        <a class="btn" href="/" aria-label="Go to home">Home</a>
+      </div>
+
+      <div class="mx-foot">
+        <span class="mono">Tip:</span> If you’re seeing this during deploy, refresh after 20–60 seconds.
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Avoid "moving" on click: no transforms on active, and we keep this isolated from desktop layout.
+    document.getElementById('retryBtn').addEventListener('click', () => location.reload());
+  </script>
+</body>
+</html>
