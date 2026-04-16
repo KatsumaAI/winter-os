@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cases - KatsuCases</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-inner">
+                <a href="/" class="logo">
+                    <div class="logo-icon"><i class="ri-gamepad-line"></i></div>
+                    <span>KatsuCases</span>
+                </a>
+                
+                <nav class="nav">
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/cases" class="nav-link active">Cases</a>
+                    <a href="/marketplace" class="nav-link">Marketplace</a>
+                    <a href="/trading" class="nav-link">Trading</a>
+                    <a href="/livepulls" class="nav-link">Live Pulls</a>
+                    <a href="/guide" class="nav-link">Info</a>
+                </nav>
+                
+                <div class="header-actions">
+                    <div class="balance-display">
+                        <i class="ri-wallet-3-line"></i>
+                        <span class="balance-value">$0.00</span>
+                    </div>
+                    <div class="auth-buttons">
+                        <a href="/signin" class="btn btn-ghost">Sign In</a>
+                        <a href="/signup" class="btn btn-primary">Sign Up</a>
+                    </div>
+                    <div class="user-area" style="display: none;">
+                        <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
+                        <div class="user-menu">
+                            <div class="user-menu-trigger">
+                                <div class="user-avatar"><span class="user-initial">U</span></div>
+                                <span class="user-name">Username</span>
+                            </div>
+                            <div class="user-menu-dropdown">
+                                <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                                <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                                <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <section class="cases-hero section-sm">
+                <div class="container">
+                    <div class="section-title">
+                        <h1>Case Collection</h1>
+                        <p>Browse our selection of premium cases and test your luck for rare Pokémon</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="section-sm">
+                <div class="container">
+                    <div class="cases-filters">
+                        <div class="pills" id="categoryPills">
+                            <button class="pill active" data-filter="all">All Cases</button>
+                            <button class="pill" data-filter="featured">Featured</button>
+                            <button class="pill" data-filter="daily">Daily</button>
+                            <button class="pill" data-filter="special">Special</button>
+                            <button class="pill" data-filter="standard">Standard</button>
+                        </div>
+                        
+                        <select class="form-input form-select" style="width: 180px;" id="sortSelect">
+                            <option value="featured">Featured First</option>
+                            <option value="price_low">Price: Low to High</option>
+                            <option value="price_high">Price: High to Low</option>
+                            <option value="popular">Most Popular</option>
+                        </select>
+                    </div>
+                    
+                    <div class="cases-grid" id="casesGrid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-bottom" style="border-top: none; padding-top: 0;">
+                    <p>&copy; 2024 KatsuCases. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Case Detail Modal -->
+    <div class="modal-overlay" id="case-modal">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalCaseName">Case Name</h3>
+                <button class="modal-close" onclick="KatsuCases.closeModal('case-modal')">
+                    <i class="ri-close-line"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+                    <div>
+                        <div class="case-preview" style="background: var(--bg-tertiary); border-radius: 16px; padding: 48px; text-align: center; margin-bottom: 24px;">
+                            <i class="ri-treasure-map-line" style="font-size: 80px; color: var(--accent-primary);"></i>
+                        </div>
+                        <div id="caseOddsSummary">
+                            <!-- Rarity odds populated by JS -->
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 16px;">Case Contents</h4>
+                        <div class="rarity-preview" style="max-height: 300px; overflow-y: auto;">
+                            <div id="caseContentsPreview">
+                                <!-- Contents populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="opening-balance">
+                    Balance: <span id="modalBalance">$0.00</span>
+                </div>
+                <button class="btn btn-secondary" onclick="openCase(1)">
+                    <i class="ri-gamepad-line"></i> Open 1
+                </button>
+                <button class="btn btn-primary" onclick="openCase(10)">
+                    <i class="ri-gamepad-line"></i> Open 10
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Opening Modal -->
+    <div class="modal-overlay opening-modal" id="opening-modal">
+        <div class="modal" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Opening <span id="openingCaseName">Case</span>...</h3>
+                <button class="modal-close" onclick="KatsuCases.closeModal('opening-modal')">
+                    <i class="ri-close-line"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="opening-area">
+                    <div class="opening-roller" id="roller">
+                        <div class="roller-track" id="rollerTrack">
+                            <!-- Slots populated by JS -->
+                        </div>
+                    </div>
+                    
+                    <div class="reward-reveal" id="rewardReveal">
+                        <!-- Reveal populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/animations.js"></script>
+    <script>
+        let currentCase = null;
+        let currentCaseContents = [];
+        let casesData = [];
+        
+        async function loadCases(category = 'all') {
+            try {
+                const url = category === 'all' ? '/api/cases' : `/api/cases?category=${category}`;
+                const data = await KatsuCases.api.get(url);
+                casesData = data.cases || [];
+                renderCases(casesData);
+            } catch (error) {
+                console.error('Failed to load cases:', error);
+                KatsuCases.showToast('Failed to load cases', 'error');
+            }
+        }
+        
+        function renderCases(cases) {
+            const grid = document.getElementById('casesGrid');
+            
+            if (cases.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <i class="ri-inbox-line"></i>
+                        <h3>No cases found</h3>
+                        <p>Check back soon for new cases</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = cases.map(c => `
+                <div class="card case-card" style="--case-color: ${c.image_color}">
+                    <div class="case-card-image">
+                        <div class="case-card-glow"></div>
+                        <div class="case-card-icon">
+                            <i class="ri-treasure-map-line"></i>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="card-title">${c.name}</h3>
+                        <p class="card-description">${c.description || `${c.total_items} items inside`}</p>
+                        ${c.rarity_breakdown ? `
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+                                ${c.rarity_breakdown.slice(0, 3).map(r => `
+                                    <span class="badge badge-${r.rarity}">${r.rarity}: ${r.count}</span>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="card-footer">
+                        <div>
+                            <div class="case-card-price">${KatsuCases.formatCurrency(c.price)}</div>
+                            <div class="case-card-items">${c.total_items} items</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="openCaseModal(${c.id})">
+                            Open
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            window.KatsuAnimations.animateGridStagger('.cases-grid .case-card');
+        }
+        
+        async function openCaseModal(caseId) {
+            if (!KatsuCases.state.user) {
+                KatsuCases.showToast('Please sign in to open cases', 'error');
+                window.location.href = '/signin';
+                return;
+            }
+            
+            try {
+                const data = await KatsuCases.api.get(`/api/cases/${caseId}`);
+                currentCase = data.case;
+                currentCaseContents = Array.isArray(data.contents) ? data.contents : [];
+                
+                document.getElementById('modalCaseName').textContent = currentCase.name;
+                document.getElementById('modalBalance').textContent = KatsuCases.formatCurrency(KatsuCases.state.user.balance);
+                
+                // Render odds summary
+                const oddsSummary = document.getElementById('caseOddsSummary');
+                oddsSummary.innerHTML = `
+                    <h4 style="margin-bottom: 16px;">Rarity Distribution</h4>
+                    ${Object.entries(data.byRarity).filter(([_, items]) => items.length > 0).map(([rarity, items]) => {
+                        const avgOdds = Math.round(items.reduce((sum, i) => sum + i.odds, 0) / items.length);
+                        return `
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                                <span class="badge badge-${rarity}">${rarity.toUpperCase()}</span>
+                                <span style="color: var(--text-muted);">1 in ${KatsuCases.formatNumber(avgOdds)}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                `;
+                
+                // Render sample contents
+                const contentsPreview = document.getElementById('caseContentsPreview');
+                const sampleItems = [...new Set(data.contents.slice(0, 20))];
+                contentsPreview.innerHTML = sampleItems.map(item => `
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 8px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 8px;">
+                        ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width: 40px; height: 40px; image-rendering: pixelated;' })}
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600;">${item.pokemon_name}</div>
+                            <span class="badge badge-${item.rarity}" style="font-size: 10px;">${item.rarity}</span>
+                        </div>
+                        <span style="color: var(--text-muted); font-size: 12px;">1/${item.odds}</span>
+                    </div>
+                `).join('');
+                
+                KatsuCases.openModal('case-modal');
+            } catch (error) {
+                console.error('Failed to load case:', error);
+                KatsuCases.showToast('Failed to load case details', 'error');
+            }
+        }
+        
+        async function openCase(amount = 1) {
+            if (!currentCase) return;
+            
+            const totalCost = currentCase.price * amount;
+            if (KatsuCases.state.user.balance < totalCost) {
+                KatsuCases.showToast('Insufficient balance', 'error');
+                return;
+            }
+            
+            KatsuCases.closeModal('case-modal');
+            document.getElementById('openingCaseName').textContent = currentCase.name;
+            document.getElementById('rewardReveal').classList.remove('active');
+            document.getElementById('roller').innerHTML = '';
+            if (window.KatsuAnimations?.setAnimationPool) window.KatsuAnimations.setAnimationPool(currentCaseContents);
+            KatsuCases.openModal('opening-modal');
+            
+            try {
+                const data = await KatsuCases.api.post(`/api/cases/${currentCase.id}/open`, { amount });
+                
+                // Update balance
+                KatsuCases.state.user.balance = data.newBalance;
+                document.querySelector('.balance-value').textContent = KatsuCases.formatCurrency(data.newBalance);
+                
+                // Animate opening
+                await window.KatsuAnimations.animateCaseOpen(
+                    data.results,
+                    document.getElementById('roller'),
+                    document.getElementById('rewardReveal')
+                );
+                
+                // Refresh live pulls
+                loadCases(document.querySelector('#categoryPills .pill.active')?.dataset.filter || 'all');
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to open case', 'error');
+                KatsuCases.closeModal('opening-modal');
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await KatsuCases.checkAuth();
+            
+            // Check URL params for category
+            const urlParams = new URLSearchParams(window.location.search);
+            const category = urlParams.get('category') || 'all';
+            
+            // Update active pill
+            document.querySelectorAll('#categoryPills .pill').forEach(pill => {
+                pill.classList.toggle('active', pill.dataset.filter === category);
+            });
+            
+            await loadCases(category);
+            
+            // Category filter
+            document.querySelectorAll('#categoryPills .pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('#categoryPills .pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    loadCases(pill.dataset.filter);
+                });
+            });
+            
+            // Sort handler
+            document.getElementById('sortSelect').addEventListener('change', (e) => {
+                let sorted = [...casesData];
+                switch (e.target.value) {
+                    case 'price_low':
+                        sorted.sort((a, b) => a.price - b.price);
+                        break;
+                    case 'price_high':
+                        sorted.sort((a, b) => b.price - a.price);
+                        break;
+                    case 'popular':
+                        sorted.sort((a, b) => b.times_opened - a.times_opened);
+                        break;
+                    default:
+                        sorted.sort((a, b) => b.is_featured - a.is_featured);
+                }
+                renderCases(sorted);
+            });
+        });
+    </script>
+</body>
+</html>

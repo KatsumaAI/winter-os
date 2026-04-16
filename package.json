@@ -1,0 +1,28 @@
+{
+  "name": "katsucases",
+  "version": "1.0.1",
+  "description": "Premium Pokémon-themed RNG case-opening, inventory, trading, and marketplace platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=17"
+  },
+  "dependencies": {
+    "animejs": "^3.2.2",
+    "axios": "^1.6.7",
+    "express": "^4.18.2",
+    "express-session": "^1.18.0"
+  },
+  "keywords": [
+    "pokemon",
+    "rng",
+    "marketplace",
+    "trading",
+    "case-opening"
+  ],
+  "author": "KatsuCases",
+  "license": "MIT"
+}

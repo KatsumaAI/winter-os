@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - KatsuCases</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body>
+    <div class="auth-page">
+        <div class="auth-card">
+            <div class="auth-header">
+                <a href="/" class="logo">
+                    <div class="logo-icon">
+                        <i class="ri-gamepad-line"></i>
+                    </div>
+                    <span>KatsuCases</span>
+                </a>
+                <h1>Create Account</h1>
+                <p>Join thousands of trainers building their collection</p>
+            </div>
+            
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); border-radius: 12px; padding: 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+                <i class="ri-gift-line" style="font-size: 24px; color: var(--success);"></i>
+                <div>
+                    <strong style="color: var(--success);">Get $100 Welcome Bonus!</strong>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Start opening cases immediately</p>
+                </div>
+            </div>
+            
+            <form id="signupForm">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" id="username" placeholder="Choose a username" required minlength="3" maxlength="20">
+                    <span class="form-hint">3-20 characters, letters, numbers, and underscores only</span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" id="email" placeholder="you@example.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="password" placeholder="Create a password" required minlength="6">
+                    <span class="form-hint">At least 6 characters</span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" id="terms" required>
+                        <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                    <i class="ri-user-add-line"></i> Create Account
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                Already have an account? <a href="/signin">Sign in</a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const button = e.target.querySelector('button[type="submit"]');
+            
+            // Validate username
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                KatsuCases.showToast('Username can only contain letters, numbers, and underscores', 'error');
+                return;
+            }
+            
+            KatsuCases.setLoading(true, button);
+            
+            try {
+                const data = await KatsuCases.api.post('/api/auth/register', { username, email, password });
+                
+                KatsuCases.showToast('Account created! $100 bonus added!', 'success');
+                KatsuCases.updateUserUI(data.user);
+                
+                // Redirect to home
+                window.location.href = '/';
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Registration failed', 'error');
+            } finally {
+                KatsuCases.setLoading(false, button);
+            }
+        });
+    </script>
+</body>
+</html>

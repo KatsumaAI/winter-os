@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - KatsuCases</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body>
+    <div class="page-wrapper">
+        <header class="header">
+            <div class="header-inner">
+                <a href="/" class="logo">
+                    <div class="logo-icon"><i class="ri-gamepad-line"></i></div>
+                    <span>KatsuCases</span>
+                </a>
+                
+                <nav class="nav">
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/cases" class="nav-link">Cases</a>
+                    <a href="/marketplace" class="nav-link">Marketplace</a>
+                    <a href="/trading" class="nav-link">Trading</a>
+                    <a href="/livepulls" class="nav-link">Live Pulls</a>
+                    <a href="/guide" class="nav-link">Info</a>
+                </nav>
+                
+                <div class="header-actions">
+                    <div class="balance-display">
+                        <i class="ri-wallet-3-line"></i>
+                        <span class="balance-value">$0.00</span>
+                    </div>
+                    <div class="user-area">
+                        <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
+                        <div class="user-menu">
+                            <div class="user-menu-trigger">
+                                <div class="user-avatar"><span class="user-initial">U</span></div>
+                                <span class="user-name">Username</span>
+                            </div>
+                            <div class="user-menu-dropdown">
+                                <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                                <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                                <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <main class="main-content">
+            <section class="section-sm">
+                <div class="container">
+                    <div class="profile-header">
+                        <div class="profile-avatar" id="profileAvatar">U</div>
+                        <div class="profile-info">
+                            <h2 id="profileName">Username</h2>
+                            <p id="profileEmail">user@example.com</p>
+                            <p id="profileJoined" style="font-size: 12px; color: var(--text-muted);">Member since January 2024</p>
+                        </div>
+                        <div class="profile-stats">
+                            <div class="profile-stat">
+                                <div class="profile-stat-value" id="statCasesOpened">0</div>
+                                <div class="profile-stat-label">Cases Opened</div>
+                            </div>
+                            <div class="profile-stat">
+                                <div class="profile-stat-value" id="statTotalSpent">$0</div>
+                                <div class="profile-stat-label">Total Spent</div>
+                            </div>
+                            <div class="profile-stat">
+                                <div class="profile-stat-value" id="statTotalEarned">$0</div>
+                                <div class="profile-stat-label">Total Earned</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-grid">
+                        <div>
+                            <div class="profile-section">
+                                <h4 class="profile-section-title">Recent Transactions</h4>
+                                <div id="transactionsList">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+                            
+                            <div class="profile-section" style="margin-top: 24px;">
+                                <h4 class="profile-section-title">Recent Opens</h4>
+                                <div id="recentOpens" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="profile-section">
+                                <h4 class="profile-section-title">Account</h4>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <a href="/inventory" class="user-menu-item" style="border-radius: 8px;">
+                                        <i class="ri-archive-line"></i> My Inventory
+                                    </a>
+                                    <a href="/trading" class="user-menu-item" style="border-radius: 8px;">
+                                        <i class="ri-exchange-line"></i> My Trades
+                                    </a>
+                                    <a href="/marketplace" class="user-menu-item" style="border-radius: 8px;">
+                                        <i class="ri-store-2-line"></i> My Listings
+                                    </a>
+                                    <a href="#" class="user-menu-item" style="border-radius: 8px;">
+                                        <i class="ri-settings-3-line"></i> Settings
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="profile-section" style="margin-top: 24px;">
+                                <h4 class="profile-section-title">Quick Actions</h4>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <a href="/cases" class="btn btn-primary" style="width: 100%;">
+                                        <i class="ri-gamepad-line"></i> Open Cases
+                                    </a>
+                                    <a href="/marketplace" class="btn btn-secondary" style="width: 100%;">
+                                        <i class="ri-shopping-cart-line"></i> Buy Items
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-bottom" style="border-top: none; padding-top: 0;">
+                    <p>&copy; 2024 KatsuCases. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        async function loadProfile() {
+            try {
+                const userData = await KatsuCases.api.get('/api/auth/me');
+                const user = userData.user;
+                
+                document.getElementById('profileAvatar').textContent = user.username.charAt(0).toUpperCase();
+                document.getElementById('profileName').textContent = user.username;
+                document.getElementById('profileEmail').textContent = user.email;
+                document.getElementById('profileJoined').textContent = `Member since ${new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+                document.getElementById('statCasesOpened').textContent = user.cases_opened;
+                document.getElementById('statTotalSpent').textContent = KatsuCases.formatCurrency(user.total_spent);
+                document.getElementById('statTotalEarned').textContent = KatsuCases.formatCurrency(user.total_earned);
+                
+                // Load transactions
+                const txData = await KatsuCases.api.get('/api/transactions');
+                renderTransactions(txData.transactions || []);
+                
+                // Load recent opens
+                const pullsData = await KatsuCases.api.get('/api/livepulls?limit=4');
+                renderRecentOpens(pullsData.pulls?.filter(p => p.username === user.username) || []);
+            } catch (error) {
+                console.error('Failed to load profile:', error);
+            }
+        }
+        
+        function renderTransactions(transactions) {
+            const container = document.getElementById('transactionsList');
+            
+            if (transactions.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted);">No transactions yet</p>';
+                return;
+            }
+            
+            container.innerHTML = transactions.slice(0, 10).map(tx => {
+                const isPositive = tx.amount > 0;
+                const icon = tx.type === 'purchase' ? 'ri-shopping-cart-line' : 
+                             tx.type === 'sale' ? 'ri-money-dollar-circle-line' : 
+                             tx.type === 'bonus' ? 'ri-gift-line' : 'ri-exchange-line';
+                const iconClass = isPositive ? 'sale' : 'purchase';
+                
+                return `
+                    <div class="transaction-item">
+                        <div class="transaction-info">
+                            <div class="transaction-icon ${iconClass}">
+                                <i class="${icon}"></i>
+                            </div>
+                            <div>
+                                <div class="transaction-description">${tx.description || tx.type}</div>
+                                <div class="transaction-date">${KatsuCases.formatRelativeTime(tx.created_at)}</div>
+                            </div>
+                        </div>
+                        <div class="transaction-amount ${isPositive ? 'positive' : 'negative'}">
+                            ${isPositive ? '+' : ''}${KatsuCases.formatCurrency(tx.amount)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderRecentOpens(opens) {
+            const container = document.getElementById('recentOpens');
+            
+            if (opens.length === 0) {
+                container.innerHTML = '<p style="grid-column: 1 / -1; color: var(--text-muted);">No opens yet. Start opening cases!</p>';
+                return;
+            }
+            
+            container.innerHTML = opens.map(pull => `
+                <div class="card" style="text-align: center; padding: 12px;">
+                    ${KatsuCases.buildSpriteImg({ pokemonName: pull.pokemon_name, isShiny: pull.is_shiny, spriteUrl: pull.sprite_url, alt: pull.pokemon_name, style: 'width: 60px; height: 60px; image-rendering: pixelated; margin: 0 auto 8px;' })}
+                    <div style="font-size: 12px; font-weight: 600;">${pull.pokemon_name}</div>
+                    <span class="badge badge-${pull.rarity}" style="font-size: 10px;">${pull.rarity}</span>
+                </div>
+            `).join('');
+        }
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            await KatsuCases.checkAuth();
+            if (KatsuCases.state.user) {
+                await loadProfile();
+            } else {
+                window.location.href = '/signin';
+            }
+        });
+    </script>
+</body>
+</html>
