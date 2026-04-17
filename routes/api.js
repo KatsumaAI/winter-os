@@ -6,6 +6,7 @@ const router = express.Router();
 const { db, notifications } = require('../database');
 const { isAuthenticated, optionalAuth } = require('../middleware/auth');
 const { isAdminUserId, getOwnerUserId } = require('../utils/roles');
+const { loadConfig: loadGitBackupConfig, saveConfig: saveGitBackupConfig, getStatus: getGitBackupStatus, backupNow: runGitBackupNow, restoreNow: runGitRestoreNow } = require('../utils/gitBackup');
 
 const dataDir = path.join(__dirname, '..', 'data');
 const appDataPath = path.join(dataDir, 'katsucases.json');
@@ -165,7 +166,11 @@ function getUserById(userId) {
 
 function getUserByUsernameLike(identifier) {
     const needle = normalizeText(identifier).toLowerCase();
-    return getAllUsers().find((row) => String(row.username || '').toLowerCase() === needle || String(row.display_name || '').toLowerCase() === needle) || null;
+    return getAllUsers().find((row) => {
+        const matchesCurrent = String(row.username || '').toLowerCase() === needle || String(row.display_name || '').toLowerCase() === needle;
+        const matchesHistory = safeArray(row.username_history).some((entry) => String(entry || '').toLowerCase() === needle);
+        return matchesCurrent || matchesHistory;
+    }) || null;
 }
 
 function getUserDisplayName(user) {
@@ -698,7 +703,8 @@ function getTradableInventoryForUser(userId, limit = 24) {
 
 function maybeCreateRareRollAnnouncement({ user, result, caseInfo, seed }) {
     const odds = Math.max(Number(result?.odds || 0), 0);
-    const shouldBroadcast = ['legendary', 'mythical'].includes(String(result?.rarity || '').toLowerCase()) || odds >= 1000000;
+    const rarityKey = String(result?.rarity || '').toLowerCase();
+    const shouldBroadcast = ['legendary', 'mythical'].includes(rarityKey) || odds >= 1000000;
     if (!shouldBroadcast) return;
     const store = readCommunityStore();
     const displayName = getUserDisplayName(user);
@@ -710,14 +716,16 @@ function maybeCreateRareRollAnnouncement({ user, result, caseInfo, seed }) {
         message,
         meta: { seed, profile_link: getProfileLink(user) }
     });
+    const isJackpot = odds >= 1000000000000 || (rarityKey === 'mythical' && Number(result?.is_shiny || 0) === 1);
     store.announcements.unshift({
         id: store.nextAnnouncementId++,
         type: 'rare_roll',
+        priority: isJackpot ? 'jackpot' : 'highlight',
         created_at: new Date().toISOString(),
         expires_at: new Date(Date.now() + 20 * 60 * 1000).toISOString(),
         message,
         link: '/livepulls',
-        meta: { seed, case_name: caseInfo.name, username: user.username, pokemon_name: result.pokemon_name }
+        meta: { seed, case_name: caseInfo.name, username: user.username, pokemon_name: result.pokemon_name, rarity: result.rarity, odds, isJackpot }
     });
     store.announcements = store.announcements.slice(0, 12);
     writeCommunityStore(store);
@@ -1570,7 +1578,7 @@ router.get('/users/:id/tradable-items', isAuthenticated, (req, res) => {
             return res.json({ items: [], user: user ? { id: user.id, username: user.username } : null });
         }
         res.json({
-            user: { id: user.id, username: user.username, display_name: getUserDisplayName(user), avatar_url: user.avatar_url || null, badges: getUserBadges(user).map(serializeBadge), region: user.region || '' },
+            user: { id: user.id, username: user.username, display_name: getUserDisplayName(user), avatar_url: user.avatar_url || null, badges: getUserBadges(user).map(serializeBadge), region: user.region || '', hide_inventory: Boolean(Number(user.hide_inventory || 0)) },
             items: getTradableInventoryForUser(userId, 24)
         });
     } catch (error) {
@@ -1616,13 +1624,16 @@ router.get('/profiles/:identifier', optionalAuth, (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
+        const isSelf = Boolean(req.user && Number(req.user.id) === Number(user.id));
+        const hideInventory = Boolean(Number(user.hide_inventory || 0));
         const inventory = getTable('inventory').filter((item) => Number(item.user_id) === Number(user.id)).map((item) => enrichInventoryLikeItem(item, { case_id: item.case_id, odds: item.odds }));
         const openings = getTable('openings').filter((item) => Number(item.user_id) === Number(user.id)).slice().sort((a, b) => String(b.opened_at || '').localeCompare(String(a.opened_at || ''))).slice(0, 10).map((item) => enrichInventoryLikeItem(item, { case_id: item.case_id, odds: item.odds }));
+        const canViewInventory = isSelf || !hideInventory;
         const publicUser = {
             id: user.id,
             username: user.username,
             display_name: getUserDisplayName(user),
-            email: req.user && Number(req.user.id) === Number(user.id) ? user.email : null,
+            email: isSelf ? user.email : null,
             avatar_url: user.avatar_url || null,
             pronouns: user.pronouns || '',
             region: user.region || '',
@@ -1634,15 +1645,20 @@ router.get('/profiles/:identifier', optionalAuth, (req, res) => {
             total_spent: Number(user.total_spent || 0),
             total_earned: Number(user.total_earned || 0),
             free_rolls: Number(user.free_rolls || 0),
+            hide_inventory: hideInventory,
             inventory_count: inventory.length,
             inventory_value: Number(inventory.reduce((sum, item) => sum + Number(item.estimated_value || 0), 0).toFixed(2)),
-            profile_link: getProfileLink(user)
+            profile_link: getProfileLink(user),
+            username_history: safeArray(user.username_history).slice(-12).reverse()
         };
         res.json({
             user: publicUser,
-            featuredInventory: inventory.slice().sort((a, b) => Number(b.estimated_value || 0) - Number(a.estimated_value || 0)).slice(0, 12),
+            featuredInventory: canViewInventory ? inventory.slice().sort((a, b) => Number(b.estimated_value || 0) - Number(a.estimated_value || 0)).slice(0, 12) : [],
             recentOpens: openings,
-            canTrade: Boolean(req.user && Number(req.user.id) !== Number(user.id))
+            canTrade: Boolean(req.user && Number(req.user.id) !== Number(user.id)),
+            canEdit: isSelf,
+            canViewInventory,
+            notFound: false
         });
     } catch (error) {
         console.error('Profile lookup error:', error);
@@ -1657,6 +1673,7 @@ router.put('/profile', isAuthenticated, (req, res) => {
         const avatarUrl = normalizeText(req.body.avatar_url || req.body.avatarUrl || '').slice(0, 300);
         const pronouns = normalizeText(req.body.pronouns || '').slice(0, 24);
         const region = normalizeText(req.body.region || '').slice(0, 48);
+        const hideInventory = req.body.hide_inventory === undefined ? null : (req.body.hide_inventory ? 1 : 0);
         const state = readAppState();
         const users = safeArray(state.tables?.users);
         const currentUser = users.find((row) => Number(row.id) === Number(req.user.id));
@@ -1670,11 +1687,74 @@ router.put('/profile', isAuthenticated, (req, res) => {
         if (conflict) {
             return res.status(400).json({ error: 'That username is already taken' });
         }
+        const previousUsername = currentUser.username;
+        if (!Array.isArray(currentUser.username_history)) currentUser.username_history = [];
+        if (previousUsername && previousUsername !== username) {
+            const nextHistory = currentUser.username_history
+                .filter((entry) => normalizeText(entry).toLowerCase() !== normalizeText(username).toLowerCase() && normalizeText(entry).toLowerCase() !== normalizeText(previousUsername).toLowerCase());
+            nextHistory.push(previousUsername);
+            currentUser.username_history = nextHistory.slice(-12);
+        }
         currentUser.username = username;
         currentUser.display_name = displayName || username;
         currentUser.avatar_url = avatarUrl || null;
         currentUser.pronouns = pronouns;
         currentUser.region = region;
+        if (hideInventory !== null) currentUser.hide_inventory = hideInventory;
+
+        safeArray(state.tables?.inventory).forEach((row) => {
+            if (Number(row.original_owner_id || 0) === Number(req.user.id)) {
+                row.original_owner_username = username;
+            }
+        });
+        safeArray(state.tables?.openings).forEach((row) => {
+            if (Number(row.user_id) === Number(req.user.id)) {
+                row.username = username;
+            }
+        });
+        safeArray(state.tables?.marketplace).forEach((row) => {
+            if (Number(row.seller_id) === Number(req.user.id)) row.seller_username = username;
+        });
+        safeArray(state.tables?.trades).forEach((row) => {
+            if (Number(row.sender_id) === Number(req.user.id)) row.sender_username = username;
+            if (Number(row.receiver_id) === Number(req.user.id)) row.receiver_username = username;
+        });
+
+        const roomStore = readCaseVsStore();
+        safeArray(roomStore.rooms).forEach((room) => {
+            safeArray(room.players).forEach((player) => {
+                if (Number(player.user_id) === Number(req.user.id)) {
+                    player.username = username;
+                    player.display_name = currentUser.display_name || username;
+                }
+            });
+            safeArray(room.rounds_data).forEach((round) => {
+                safeArray(round.pulls).forEach((pull) => {
+                    if (Number(pull.user_id) === Number(req.user.id)) pull.username = username;
+                });
+            });
+            if (Number(room.winner_id || 0) === Number(req.user.id)) room.winner_username = username;
+        });
+        writeCaseVsStore(roomStore);
+
+        const communityStore = readCommunityStore();
+        safeArray(communityStore.messages).forEach((message) => {
+            if (Number(message.user_id || 0) === Number(req.user.id)) {
+                message.username = username;
+                message.display_name = currentUser.display_name || username;
+                message.avatar_url = currentUser.avatar_url || null;
+                message.region = currentUser.region || '';
+                message.pronouns = currentUser.pronouns || '';
+            }
+        });
+        if (communityStore.presence && communityStore.presence[req.user.id]) {
+            communityStore.presence[req.user.id].username = username;
+            communityStore.presence[req.user.id].display_name = currentUser.display_name || username;
+            communityStore.presence[req.user.id].avatar_url = currentUser.avatar_url || null;
+            communityStore.presence[req.user.id].region = currentUser.region || '';
+        }
+        writeCommunityStore(communityStore);
+
         writeJson(appDataPath, state);
         res.json({ success: true, user: getUserById(req.user.id) });
     } catch (error) {
@@ -2152,6 +2232,65 @@ router.post('/claims/:code/claim', isAuthenticated, (req, res) => {
     } catch (error) {
         console.error('Claim use error:', error);
         res.status(500).json({ error: 'Failed to redeem claim link' });
+    }
+});
+
+
+
+router.get('/admin/git-backup/status', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        res.json(getGitBackupStatus(loadGitBackupConfig()));
+    } catch (error) {
+        console.error('Git backup status error:', error);
+        res.status(500).json({ error: 'Failed to read Git backup status' });
+    }
+});
+
+router.post('/admin/git-backup/config', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const current = loadGitBackupConfig();
+        const next = {
+            ...current,
+            repoPath: normalizeText(req.body.repoPath || current.repoPath || '').slice(0, 300) || current.repoPath,
+            branch: normalizeText(req.body.branch || current.branch || 'main').slice(0, 80) || 'main',
+            remoteUrl: normalizeText(req.body.remoteUrl || current.remoteUrl || '').slice(0, 500),
+            pushOnBackup: Boolean(req.body.pushOnBackup)
+        };
+        saveGitBackupConfig(next);
+        res.json({ success: true, status: getGitBackupStatus(next) });
+    } catch (error) {
+        console.error('Git backup config error:', error);
+        res.status(500).json({ error: error.message || 'Failed to save Git backup config' });
+    }
+});
+
+router.post('/admin/git-backup/backup', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const current = loadGitBackupConfig();
+        const overrides = {
+            repoPath: normalizeText(req.body.repoPath || current.repoPath || '').slice(0, 300) || current.repoPath,
+            branch: normalizeText(req.body.branch || current.branch || 'main').slice(0, 80) || current.branch || 'main',
+            remoteUrl: normalizeText(req.body.remoteUrl || current.remoteUrl || '').slice(0, 500),
+            pushOnBackup: req.body.pushOnBackup === undefined ? current.pushOnBackup : Boolean(req.body.pushOnBackup)
+        };
+        const result = runGitBackupNow(overrides);
+        if (typeof db.reload === 'function') db.reload();
+        res.json({ success: true, result, status: getGitBackupStatus(loadGitBackupConfig()) });
+    } catch (error) {
+        console.error('Git backup run error:', error);
+        res.status(500).json({ error: error.message || 'Failed to backup site data to Git' });
+    }
+});
+
+router.post('/admin/git-backup/restore', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const ref = normalizeText(req.body.ref || req.body.branch || '');
+        const result = runGitRestoreNow(ref || '', {});
+        if (typeof db.reload === 'function') db.reload();
+        res.json({ success: true, result, status: getGitBackupStatus(loadGitBackupConfig()) });
+    } catch (error) {
+        console.error('Git restore error:', error);
+        res.status(500).json({ error: error.message || 'Failed to restore site data from Git' });
     }
 });
 

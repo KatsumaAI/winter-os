@@ -19,9 +19,11 @@ const state = {
     siteStatePoll: null,
     communityPoll: null,
     communityUiReady: false,
-    communityOpen: window.innerWidth > 1100,
+    communityOpen: (() => { try { const saved = window.localStorage.getItem('katsucases.community.open'); return saved === null ? window.innerWidth > 1100 : saved === '1'; } catch (e) { return window.innerWidth > 1100; } })(),
     typingTimeout: null,
-    authRefreshPoll: null
+    authRefreshPoll: null,
+    seenAnnouncementIds: [],
+    activeAnnouncementFlashId: null
 };
 
 // API helper
@@ -263,6 +265,44 @@ function ensureSiteAnnouncementUI() {
     return bar;
 }
 
+
+function triggerAnnouncementFlash(announcement) {
+    const key = Number(announcement?.id || 0);
+    if (!key || state.activeAnnouncementFlashId === key) return;
+    state.activeAnnouncementFlashId = key;
+    let flash = document.querySelector('.site-announcement-flash');
+    if (!flash) {
+        flash = document.createElement('div');
+        flash.className = 'site-announcement-flash';
+        document.body.appendChild(flash);
+    }
+    const isJackpot = announcement?.priority === 'jackpot' || announcement?.type === 'rare_roll';
+    flash.className = `site-announcement-flash${isJackpot ? ' jackpot' : ''}`;
+    flash.innerHTML = `
+        <div class="site-announcement-flash-inner">
+            <div class="site-announcement-flash-eyebrow">${isJackpot ? 'Global Roll Alert' : 'Site Alert'}</div>
+            <div class="site-announcement-flash-text">${escapeHtml(announcement?.message || '')}</div>
+        </div>
+    `;
+    flash.classList.add('active');
+    window.clearTimeout(flash._dismissTimer);
+    flash._dismissTimer = window.setTimeout(() => {
+        flash.classList.remove('active');
+        state.activeAnnouncementFlashId = null;
+    }, isJackpot ? 8500 : 5200);
+}
+
+function syncAnnouncementFlash() {
+    const visible = state.announcements.filter((announcement) => !isAnnouncementDismissed(announcement));
+    const latest = visible.find((entry) => entry?.priority === 'jackpot' || entry?.type === 'rare_roll');
+    if (!latest) return;
+    if (!state.seenAnnouncementIds.includes(Number(latest.id || 0))) {
+        state.seenAnnouncementIds.push(Number(latest.id || 0));
+        state.seenAnnouncementIds = state.seenAnnouncementIds.slice(-20);
+        triggerAnnouncementFlash(latest);
+    }
+}
+
 function renderSiteAnnouncements() {
     const bar = ensureSiteAnnouncementUI();
     const visibleAnnouncements = state.announcements.filter((announcement) => !isAnnouncementDismissed(announcement));
@@ -272,17 +312,20 @@ function renderSiteAnnouncements() {
         return;
     }
     bar.style.display = 'block';
-    bar.innerHTML = visibleAnnouncements.slice(0, 2).map((announcement) => `
+    bar.innerHTML = visibleAnnouncements.slice(0, 2).map((announcement) => {
+        const itemClass = `site-announcement-item ${(announcement.priority === 'jackpot' || announcement.type === 'rare_roll') ? 'jackpot' : ''}`.trim();
+        return `
         <div class="site-announcement-item-wrap">
-            <a class="site-announcement-item" href="${escapeHtml(announcement.link || '#')}" ${announcement.link ? '' : 'onclick="return false;"'}>
-                <span class="site-announcement-icon"><i class="ri-megaphone-line"></i></span>
+            <a class="${itemClass}" href="${escapeHtml(announcement.link || '#')}" ${announcement.link ? '' : 'onclick="return false;"'}>
+                <span class="site-announcement-icon"><i class="${announcement.priority === 'jackpot' || announcement.type === 'rare_roll' ? 'ri-vip-diamond-line' : 'ri-megaphone-line'}"></i></span>
                 <span>${escapeHtml(announcement.message || '')}</span>
             </a>
             <button class="site-announcement-dismiss" type="button" aria-label="Dismiss announcement" onclick="KatsuCases.dismissAnnouncement(${Number(announcement.id || 0)})">
                 <i class="ri-close-line"></i>
             </button>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
+    syncAnnouncementFlash();
 }
 
 async function loadSiteState(silent = true) {
@@ -619,6 +662,7 @@ function getRainCountdown(endAt) {
     return `${hours}h ${remainder}m remaining`;
 }
 
+
 function ensureCommunityUI() {
     let sidebar = document.querySelector('.community-sidebar');
     if (!sidebar) {
@@ -636,6 +680,7 @@ function ensureCommunityUI() {
                     </div>
                     <div class="community-sidebar-actions">
                         <a href="/admin" class="btn btn-ghost btn-sm community-admin-shortcut" style="display:none;">Owner</a>
+                        <button class="btn btn-ghost btn-sm community-sidebar-close" type="button"><i class="ri-close-line"></i></button>
                     </div>
                 </div>
                 <div class="community-rain-panel"></div>
@@ -651,10 +696,29 @@ function ensureCommunityUI() {
         document.body.appendChild(sidebar);
         document.body.classList.add('has-community-sidebar');
 
-        const toggle = sidebar.querySelector('.community-sidebar-toggle');
-        toggle.addEventListener('click', () => {
-            state.communityOpen = !state.communityOpen;
+        const toggleSidebar = (nextState = !state.communityOpen) => {
+            state.communityOpen = Boolean(nextState);
             sidebar.classList.toggle('closed', !state.communityOpen);
+            const toggle = sidebar.querySelector('.community-sidebar-toggle');
+            if (toggle) toggle.setAttribute('aria-expanded', state.communityOpen ? 'true' : 'false');
+            try { window.localStorage.setItem('katsucases.community.open', state.communityOpen ? '1' : '0'); } catch (error) {}
+        };
+
+        const toggle = sidebar.querySelector('.community-sidebar-toggle');
+        if (toggle) toggle.addEventListener('click', () => toggleSidebar());
+        const closeButton = sidebar.querySelector('.community-sidebar-close');
+        if (closeButton) closeButton.addEventListener('click', () => toggleSidebar(false));
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth < 900 && state.communityOpen) {
+                toggleSidebar(false);
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!sidebar.contains(event.target) && window.innerWidth < 900 && state.communityOpen) {
+                toggleSidebar(false);
+            }
         });
 
         const form = sidebar.querySelector('.community-chat-form');
@@ -684,9 +748,12 @@ function ensureCommunityUI() {
 
     state.communityUiReady = true;
     sidebar.classList.toggle('closed', !state.communityOpen);
+    const toggle = sidebar.querySelector('.community-sidebar-toggle');
+    if (toggle) toggle.setAttribute('aria-expanded', state.communityOpen ? 'true' : 'false');
     ensureAdminUI();
     startCommunityPolling();
 }
+
 
 function renderCommunityUI() {
     const sidebar = document.querySelector('.community-sidebar');

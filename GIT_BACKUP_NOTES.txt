@@ -1,0 +1,14 @@
+KatsuCases Git Backup Notes
+
+Admin page now includes Git Backup & Restore.
+
+What it does:
+- Creates a JSON snapshot of app/community/case-vs/replay data
+- Saves it into data/backups/
+- Commits it into data/backups/repo/
+- If you provide a repo URL, it also tries to push to that Git remote
+
+Important:
+- The runtime/server environment must have git installed
+- If your remote requires authentication, configure credentials/token access on the server first
+- Restore replaces the current live JSON data with the selected backup snapshot

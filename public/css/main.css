@@ -867,3 +867,12 @@ h5 {
         font-size: 13px;
     }
 }
+
+.site-announcement-item.jackpot {
+    border-color: rgba(250, 204, 21, 0.42);
+    box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.18) inset, 0 18px 46px rgba(250, 204, 21, 0.08);
+    background: linear-gradient(180deg, rgba(56, 30, 6, 0.95), rgba(24, 16, 8, 0.96));
+}
+.site-announcement-item.jackpot .site-announcement-icon {
+    color: #facc15;
+}

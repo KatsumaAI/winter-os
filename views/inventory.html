@@ -84,6 +84,16 @@
                     </div>
                     
                     <div class="inventory-filters">
+                        <div class="inventory-toolbar" style="display:grid; grid-template-columns: minmax(0,1fr) 220px; gap:12px; width:100%; margin-bottom:14px;">
+                            <input id="inventorySearch" class="input" placeholder="Search your inventory">
+                            <select id="inventorySort" class="input">
+                                <option value="recent">Newest First</option>
+                                <option value="value_desc">Highest Value</option>
+                                <option value="value_asc">Lowest Value</option>
+                                <option value="name">Name A-Z</option>
+                                <option value="rarity">Best Rarity</option>
+                            </select>
+                        </div>
                         <div class="pills" id="rarityPills">
                             <button class="pill active" data-filter="all">All</button>
                             <button class="pill" data-filter="common">Common</button>
@@ -187,11 +197,13 @@
                     <div class="inventory-item-info">
                         <div class="inventory-item-name">${item.pokemon_name}</div>
                         ${item.is_shiny ? '<span style="color: var(--rarity-legendary); font-size: 10px;">SHINY</span>' : ''}
+                        <div class="inventory-item-price">Est. ${KatsuCases.formatCurrency(item.estimated_value || 0)}</div>
+                        ${item.case_name ? `<div style="font-size:11px; color: var(--text-secondary); margin-top:4px;">From ${KatsuCases.escapeHtml(item.case_name)}</div>` : ''}
                         ${item.original_owner_username ? `<div style="font-size:11px; color: var(--text-muted); margin-top:6px;">Original owner · <a href="/profile?user=${encodeURIComponent(item.original_owner_username)}">${KatsuCases.escapeHtml(item.original_owner_username)}</a></div>` : ''}
                         ${item.is_listed ? `
-                            <div class="inventory-item-price">${KatsuCases.formatCurrency(item.listed_price)}</div>
+                            <div style="font-size: 12px; color: var(--accent-primary); margin-top: 6px;">Listed for ${KatsuCases.formatCurrency(item.listed_price)}</div>
                         ` : `
-                            <div style="font-size: 12px; color: var(--text-muted);">Not listed</div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Not listed</div>
                         `}
                     </div>
                 </div>
@@ -201,7 +213,7 @@
         function updateStats() {
             const total = inventoryData.length;
             const listed = inventoryData.filter(i => i.is_listed).length;
-            const value = inventoryData.reduce((sum, i) => sum + (i.listed_price || 0), 0);
+            const value = inventoryData.reduce((sum, i) => sum + Number(i.estimated_value || 0), 0);
             
             document.getElementById('totalItems').textContent = total;
             document.getElementById('totalListed').textContent = listed;
@@ -265,19 +277,41 @@
         function filterInventory() {
             const rarity = document.querySelector('#rarityPills .pill.active')?.dataset.filter || 'all';
             const status = document.querySelector('#statusPills .pill.active')?.dataset.filter || 'all';
-            
+            const search = String(document.getElementById('inventorySearch')?.value || '').trim().toLowerCase();
+            const sort = document.getElementById('inventorySort')?.value || 'recent';
+
             let filtered = [...inventoryData];
-            
+
             if (rarity !== 'all') {
                 filtered = filtered.filter(i => i.rarity === rarity);
             }
-            
+
             if (status === 'listed') {
                 filtered = filtered.filter(i => i.is_listed);
             } else if (status === 'unlisted') {
                 filtered = filtered.filter(i => !i.is_listed);
             }
-            
+
+            if (search) {
+                filtered = filtered.filter((i) => {
+                    const hay = [i.pokemon_name, i.rarity, i.case_name, i.original_owner_username].filter(Boolean).join(' ').toLowerCase();
+                    return hay.includes(search);
+                });
+            }
+
+            filtered.sort((a, b) => {
+                switch (sort) {
+                    case 'value_desc': return Number(b.estimated_value || 0) - Number(a.estimated_value || 0);
+                    case 'value_asc': return Number(a.estimated_value || 0) - Number(b.estimated_value || 0);
+                    case 'name': return String(a.pokemon_name || '').localeCompare(String(b.pokemon_name || ''));
+                    case 'rarity': {
+                        const order = { mythical: 0, legendary: 1, epic: 2, rare: 3, uncommon: 4, common: 5 };
+                        return (order[a.rarity] ?? 99) - (order[b.rarity] ?? 99);
+                    }
+                    default: return String(b.acquired_at || '').localeCompare(String(a.acquired_at || ''));
+                }
+            });
+
             renderInventory(filtered);
         }
         
@@ -292,6 +326,8 @@
                     filterInventory();
                 });
             });
+            document.getElementById('inventorySearch')?.addEventListener('input', filterInventory);
+            document.getElementById('inventorySort')?.addEventListener('change', filterInventory);
         });
     </script>
 </body>

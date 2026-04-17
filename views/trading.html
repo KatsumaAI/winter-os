@@ -234,6 +234,9 @@
             try {
                 const data = await KatsuCases.api.get(`/api/users/${selectedReceiver.id}/tradable-items`);
                 receiverInventoryData = Array.isArray(data.items) ? data.items : [];
+                if (data.user?.hide_inventory && !receiverInventoryData.length) {
+                    panel.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">This player hides their inventory from their public profile. You can still send a direct offer here.</div>';
+                }
                 renderRequestedItems();
             } catch (error) {
                 panel.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">Could not load that player&#39;s items.</div>';
@@ -493,7 +496,17 @@
             document.getElementById('sendTradeBtn').addEventListener('click', sendTrade);
             document.getElementById('tradeUserSearch').addEventListener('input', KatsuCases.debounce((event) => searchUsers(event.target.value), 250));
             updateTradeComposeInsight();
-            searchUsers('');
+            const preselectedUser = new URLSearchParams(window.location.search).get('user');
+            if (preselectedUser) {
+                document.getElementById('tradeUserSearch').value = preselectedUser;
+                await searchUsers(preselectedUser);
+                const direct = (await KatsuCases.api.get(`/api/users/search?query=${encodeURIComponent(preselectedUser)}`)).users?.find((entry) => String(entry.username).toLowerCase() === String(preselectedUser).toLowerCase());
+                if (direct) {
+                    selectReceiver(direct.id, direct.username, direct.display_name || direct.username);
+                }
+            } else {
+                searchUsers('');
+            }
             tradePollHandle = window.setInterval(async () => {
                 await loadTrades();
                 await loadInventory();

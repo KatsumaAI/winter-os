@@ -32,14 +32,16 @@
         "region": "",
         "badges": [],
         "custom_role": "",
-        "free_rolls": 0
+        "free_rolls": 0,
+        "hide_inventory": 0,
+        "username_history": []
       }
     ],
     "inventory": [],
     "cases": [
       {
         "name": "Kanto Starter Case",
-        "description": "Classic Pok\u00e9mon from the Kanto region",
+        "description": "Classic Pokémon from the Kanto region",
         "price": 2.99,
         "image_color": "#3b82f6",
         "is_featured": 1,
@@ -69,7 +71,7 @@
       },
       {
         "name": "Hoenn Adventures Case",
-        "description": "Exotic Pok\u00e9mon from Hoenn",
+        "description": "Exotic Pokémon from Hoenn",
         "price": 3.99,
         "image_color": "#10b981",
         "is_featured": 1,
@@ -99,7 +101,7 @@
       },
       {
         "name": "Unova Collection Case",
-        "description": "Unique Unova Pok\u00e9mon",
+        "description": "Unique Unova Pokémon",
         "price": 5.99,
         "image_color": "#ec4899",
         "is_featured": 0,
@@ -114,7 +116,7 @@
       },
       {
         "name": "Galar Champions Case",
-        "description": "High-tier Galar Pok\u00e9mon",
+        "description": "High-tier Galar Pokémon",
         "price": 9.99,
         "image_color": "#06b6d4",
         "is_featured": 1,
@@ -144,7 +146,7 @@
       },
       {
         "name": "Mythical Mystery Case",
-        "description": "Legendary and Mythical Pok\u00e9mon",
+        "description": "Legendary and Mythical Pokémon",
         "price": 14.99,
         "image_color": "#ec4899",
         "is_featured": 1,
@@ -174,7 +176,7 @@
       },
       {
         "name": "Community Favorites Case",
-        "description": "Fan-favorite Pok\u00e9mon",
+        "description": "Fan-favorite Pokémon",
         "price": 3.49,
         "image_color": "#3b82f6",
         "is_featured": 0,

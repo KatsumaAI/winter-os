@@ -96,6 +96,8 @@ function loadState() {
         if (!Array.isArray(user.badges)) { user.badges = []; mutated = true; }
         if (user.custom_role === undefined) { user.custom_role = ''; mutated = true; }
         if (user.free_rolls === undefined) { user.free_rolls = 0; mutated = true; }
+        if (user.hide_inventory === undefined) { user.hide_inventory = 0; mutated = true; }
+        if (!Array.isArray(user.username_history)) { user.username_history = []; mutated = true; }
     }
     for (const caseRow of table('cases')) {
         if (caseRow.launch_at === undefined) { caseRow.launch_at = null; mutated = true; }
@@ -426,6 +428,8 @@ function runStatement(normalized, params) {
                 badges: [],
                 custom_role: '',
                 free_rolls: 0,
+                hide_inventory: 0,
+                username_history: [],
                 created_at: nowIso()
             });
             return { lastInsertRowid: row.id, changes: 1 };

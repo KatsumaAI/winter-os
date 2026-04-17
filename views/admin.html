@@ -382,6 +382,48 @@ Mewtwo|legendary|1000000"></textarea>
                             </form>
                         </section>
 
+                        
+<section class="panel admin-panel">
+    <div class="panel-head">
+        <div>
+            <h3>Git Backup & Restore</h3>
+            <p>Snapshot all site data to a Git repository and restore it if the site goes down.</p>
+        </div>
+    </div>
+    <form id="gitBackupConfigForm" class="stack-form">
+        <div class="form-group">
+            <label for="gitRepoPath">Local repo path</label>
+            <input id="gitRepoPath" class="input" type="text" placeholder="/absolute/path/or/data/git-backup-repo">
+        </div>
+        <div class="form-grid two-col">
+            <div class="form-group">
+                <label for="gitBranch">Branch</label>
+                <input id="gitBranch" class="input" type="text" value="main">
+            </div>
+            <div class="form-group">
+                <label for="gitRemoteUrl">Remote URL (optional)</label>
+                <input id="gitRemoteUrl" class="input" type="text" placeholder="https://...git">
+            </div>
+        </div>
+        <label style="display:flex; gap:10px; align-items:center; font-size:13px; color:var(--text-secondary);">
+            <input id="gitPushOnBackup" type="checkbox"> Push after each backup if a remote URL is configured
+        </label>
+        <div id="gitBackupStatusCard" class="admin-rain-card empty">Git backup has not been configured yet.</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn btn-secondary" type="submit"><i class="ri-settings-3-line"></i> Save Git Config</button>
+            <button class="btn btn-primary" id="runGitBackupBtn" type="button"><i class="ri-upload-cloud-2-line"></i> Backup Now</button>
+        </div>
+    </form>
+    <form id="gitRestoreForm" class="stack-form" style="margin-top:16px;">
+        <div class="form-group">
+            <label for="gitRestoreRef">Restore ref or branch</label>
+            <input id="gitRestoreRef" class="input" type="text" placeholder="main or a commit hash">
+        </div>
+        <button class="btn btn-danger" type="submit"><i class="ri-history-line"></i> Restore From Git</button>
+    </form>
+</section>
+
+
                     </div>
 
                     <div class="admin-grid lower admin-grid-quad">
@@ -717,6 +759,23 @@ Mewtwo|legendary|1000000"></textarea>
             }
         }
 
+
+async function loadGitBackupStatus() {
+    try {
+        const data = await KatsuCases.api.get('/api/admin/git-backup/status');
+        document.getElementById('gitRepoPath').value = data.config?.repoPath || '';
+        document.getElementById('gitBranch').value = data.config?.branch || 'main';
+        document.getElementById('gitRemoteUrl').value = data.config?.remoteUrl || '';
+        document.getElementById('gitPushOnBackup').checked = Boolean(data.config?.pushOnBackup);
+        const card = document.getElementById('gitBackupStatusCard');
+        card.className = 'admin-rain-card';
+        card.innerHTML = `<div><strong>${data.repoExists ? 'Git backup ready' : 'Git backup not initialized yet'}</strong><div class="rain-meta">Repo path · ${KatsuCases.escapeHtml(data.repoPath || '')}<br>Branch · ${KatsuCases.escapeHtml(data.branch || data.config?.branch || 'main')}<br>Last backup · ${KatsuCases.escapeHtml(data.config?.lastBackupAt || 'Never')} ${data.config?.lastBackupCommit ? `(${KatsuCases.escapeHtml(data.config.lastBackupCommit)})` : ''}<br>Last restore · ${KatsuCases.escapeHtml(data.config?.lastRestoreAt || 'Never')}</div></div>`;
+    } catch (error) {
+        document.getElementById('gitBackupStatusCard').className = 'admin-rain-card';
+        document.getElementById('gitBackupStatusCard').innerHTML = `<div><strong>Git backup error</strong><div class="rain-meta">${KatsuCases.escapeHtml(error.message || 'Could not load Git backup status')}</div></div>`;
+    }
+}
+
         async function searchAdminUsers(query = '') {
             const container = document.getElementById('adminUserResults');
             const data = await KatsuCases.api.get(`/api/admin/users/search?query=${encodeURIComponent(query)}`);
@@ -761,6 +820,7 @@ Mewtwo|legendary|1000000"></textarea>
 
             try {
                 await loadAdminSummary();
+                await loadGitBackupStatus();
             } catch (error) {
                 KatsuCases.showToast(error.message || 'Failed to load owner console', 'error');
             }
@@ -802,7 +862,54 @@ Mewtwo|legendary|1000000"></textarea>
                 }
             });
 
-            document.getElementById('adminUserSearch').addEventListener('input', KatsuCases.debounce((event) => {
+
+document.getElementById('gitBackupConfigForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+        await KatsuCases.api.post('/api/admin/git-backup/config', {
+            repoPath: document.getElementById('gitRepoPath').value,
+            branch: document.getElementById('gitBranch').value,
+            remoteUrl: document.getElementById('gitRemoteUrl').value,
+            pushOnBackup: document.getElementById('gitPushOnBackup').checked
+        });
+        KatsuCases.showToast('Git backup config saved', 'success');
+        await loadGitBackupStatus();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to save Git backup config', 'error');
+    }
+});
+
+document.getElementById('runGitBackupBtn').addEventListener('click', async () => {
+    try {
+        await KatsuCases.api.post('/api/admin/git-backup/backup', {
+            repoPath: document.getElementById('gitRepoPath').value,
+            branch: document.getElementById('gitBranch').value,
+            remoteUrl: document.getElementById('gitRemoteUrl').value,
+            pushOnBackup: document.getElementById('gitPushOnBackup').checked
+        });
+        KatsuCases.showToast('Git backup completed', 'success');
+        await loadGitBackupStatus();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to run Git backup', 'error');
+    }
+});
+
+document.getElementById('gitRestoreForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+        await KatsuCases.api.post('/api/admin/git-backup/restore', {
+            ref: document.getElementById('gitRestoreRef').value || document.getElementById('gitBranch').value
+        });
+        KatsuCases.showToast('Git restore completed', 'success');
+        await loadGitBackupStatus();
+        await loadAdminSummary();
+        await KatsuCases.checkAuth();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to restore from Git', 'error');
+    }
+});
+
+document.getElementById('adminUserSearch').addEventListener('input', KatsuCases.debounce((event) => {
                 searchAdminUsers(event.target.value).catch(() => undefined);
             }, 250));
 
