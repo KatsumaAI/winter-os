@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KatsuCases - Owner Console</title>
-    <meta name="description" content="Manage KatsuCases with the owner console for cases, announcements, chat tools, rain events, giveaways, and backups.">
+    <meta name="description" content="Manage KatsuCases with the owner console for cases, announcements, chat tools, rain events, giveaways, and Gist backups.">
     <meta name="theme-color" content="#0a0e1a">
     <meta name="robots" content="noindex,nofollow">
     <meta property="og:site_name" content="KatsuCases">
     <meta property="og:type" content="website">
     <meta property="og:title" content="KatsuCases - Owner Console">
-    <meta property="og:description" content="Manage KatsuCases with the owner console for cases, announcements, chat tools, rain events, giveaways, and backups.">
+    <meta property="og:description" content="Manage KatsuCases with the owner console for cases, announcements, chat tools, rain events, giveaways, and Gist backups.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="KatsuCases - Owner Console">
-    <meta name="twitter:description" content="Manage KatsuCases with the owner console for cases, announcements, chat tools, rain events, giveaways, and backups.">
+    <meta name="twitter:description" content="Manage KatsuCases with the owner console for cases, announcements, chat tools, rain events, giveaways, and Gist backups.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
@@ -395,40 +395,43 @@ Mewtwo|legendary|1000000"></textarea>
 <section class="panel admin-panel">
     <div class="panel-head">
         <div>
-            <h3>Git Backup & Restore</h3>
-            <p>Snapshot all site data to a Git repository and restore it if the site goes down.</p>
+            <h3>Gist Backup & Restore</h3>
+            <p>Snapshot all site data into a GitHub Gist and restore it if the site goes down.</p>
         </div>
     </div>
     <form id="gitBackupConfigForm" class="stack-form">
-        <div class="form-group">
-            <label for="gitRepoPath">Local repo path</label>
-            <input id="gitRepoPath" class="input" type="text" placeholder="/absolute/path/or/data/git-backup-repo">
+        <div class="form-grid two-col">
+            <div class="form-group">
+                <label for="gitRemoteUrl">GitHub token</label>
+                <input id="gitRemoteUrl" class="input" type="password" placeholder="ghp_... or github_pat_...">
+            </div>
+            <div class="form-group">
+                <label for="gitRepoPath">Gist ID or URL (optional on first backup)</label>
+                <input id="gitRepoPath" class="input" type="text" placeholder="https://gist.github.com/... or 0123abcd...">
+            </div>
         </div>
         <div class="form-grid two-col">
             <div class="form-group">
-                <label for="gitBranch">Branch</label>
-                <input id="gitBranch" class="input" type="text" value="main">
+                <label for="gitBranch">Backup description</label>
+                <input id="gitBranch" class="input" type="text" value="KatsuCases site data backup">
             </div>
             <div class="form-group">
-                <label for="gitRemoteUrl">Remote URL (optional)</label>
-                <input id="gitRemoteUrl" class="input" type="text" placeholder="https://...git">
+                <label for="gitRestoreRef">Restore Gist ID or URL</label>
+                <input id="gitRestoreRef" class="input" type="text" placeholder="Leave blank to use the saved Gist">
             </div>
         </div>
         <label style="display:flex; gap:10px; align-items:center; font-size:13px; color:var(--text-secondary);">
-            <input id="gitPushOnBackup" type="checkbox"> Push after each backup if a remote URL is configured
+            <input id="gitPushOnBackup" type="checkbox"> Create a public Gist instead of a secret one
         </label>
-        <div id="gitBackupStatusCard" class="admin-rain-card empty">Git backup has not been configured yet.</div>
+        <div class="rain-meta" style="margin-top:-2px;">Need setup help? Open <code>GIST_BACKUP_HOWTO.md</code> in the project root after install.</div>
+        <div id="gitBackupStatusCard" class="admin-rain-card empty">Gist backup has not been configured yet.</div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn btn-secondary" type="submit"><i class="ri-settings-3-line"></i> Save Git Config</button>
+            <button class="btn btn-secondary" type="submit"><i class="ri-settings-3-line"></i> Save Gist Config</button>
             <button class="btn btn-primary" id="runGitBackupBtn" type="button"><i class="ri-upload-cloud-2-line"></i> Backup Now</button>
         </div>
     </form>
     <form id="gitRestoreForm" class="stack-form" style="margin-top:16px;">
-        <div class="form-group">
-            <label for="gitRestoreRef">Restore ref or branch</label>
-            <input id="gitRestoreRef" class="input" type="text" placeholder="main or a commit hash">
-        </div>
-        <button class="btn btn-danger" type="submit"><i class="ri-history-line"></i> Restore From Git</button>
+        <button class="btn btn-danger" type="submit"><i class="ri-history-line"></i> Restore From Gist</button>
     </form>
 </section>
 
@@ -769,19 +772,19 @@ Mewtwo|legendary|1000000"></textarea>
         }
 
 
-async function loadGitBackupStatus() {
+async function loadGistBackupStatus() {
     try {
-        const data = await KatsuCases.api.get('/api/admin/git-backup/status');
-        document.getElementById('gitRepoPath').value = data.config?.repoPath || '';
-        document.getElementById('gitBranch').value = data.config?.branch || 'main';
-        document.getElementById('gitRemoteUrl').value = data.config?.remoteUrl || '';
-        document.getElementById('gitPushOnBackup').checked = Boolean(data.config?.pushOnBackup);
+        const data = await KatsuCases.api.get('/api/admin/gist-backup/status');
+        document.getElementById('gitRepoPath').value = data.config?.gistId || '';
+        document.getElementById('gitBranch').value = data.config?.description || 'KatsuCases site data backup';
+        document.getElementById('gitRemoteUrl').value = data.config?.token || '';
+        document.getElementById('gitPushOnBackup').checked = Boolean(data.config?.isPublic);
         const card = document.getElementById('gitBackupStatusCard');
         card.className = 'admin-rain-card';
-        card.innerHTML = `<div><strong>${data.repoExists ? 'Git backup ready' : 'Git backup not initialized yet'}</strong><div class="rain-meta">Repo path · ${KatsuCases.escapeHtml(data.repoPath || '')}<br>Branch · ${KatsuCases.escapeHtml(data.branch || data.config?.branch || 'main')}<br>Last backup · ${KatsuCases.escapeHtml(data.config?.lastBackupAt || 'Never')} ${data.config?.lastBackupCommit ? `(${KatsuCases.escapeHtml(data.config.lastBackupCommit)})` : ''}<br>Last restore · ${KatsuCases.escapeHtml(data.config?.lastRestoreAt || 'Never')}</div></div>`;
+        card.innerHTML = `<div><strong>${data.gistExists ? 'Gist backup ready' : 'Gist backup not initialized yet'}</strong><div class="rain-meta">Gist · ${data.gistUrl ? `<a href="${KatsuCases.escapeHtml(data.gistUrl)}" target="_blank" rel="noreferrer">${KatsuCases.escapeHtml(data.gistId || 'Open Gist')}</a>` : KatsuCases.escapeHtml(data.gistId || 'Not created yet')}<br>Visibility · ${data.gistPublic ? 'Public' : 'Secret'}<br>Owner · ${KatsuCases.escapeHtml(data.owner || 'Unknown')}<br>Last backup · ${KatsuCases.escapeHtml(data.config?.lastBackupAt || 'Never')}<br>Last restore · ${KatsuCases.escapeHtml(data.config?.lastRestoreAt || 'Never')}</div></div>`;
     } catch (error) {
         document.getElementById('gitBackupStatusCard').className = 'admin-rain-card';
-        document.getElementById('gitBackupStatusCard').innerHTML = `<div><strong>Git backup error</strong><div class="rain-meta">${KatsuCases.escapeHtml(error.message || 'Could not load Git backup status')}</div></div>`;
+        document.getElementById('gitBackupStatusCard').innerHTML = `<div><strong>Gist backup error</strong><div class="rain-meta">${KatsuCases.escapeHtml(error.message || 'Could not load Gist backup status')}</div></div>`;
     }
 }
 
@@ -829,7 +832,7 @@ async function loadGitBackupStatus() {
 
             try {
                 await loadAdminSummary();
-                await loadGitBackupStatus();
+                await loadGistBackupStatus();
             } catch (error) {
                 KatsuCases.showToast(error.message || 'Failed to load owner console', 'error');
             }
@@ -875,46 +878,47 @@ async function loadGitBackupStatus() {
 document.getElementById('gitBackupConfigForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     try {
-        await KatsuCases.api.post('/api/admin/git-backup/config', {
-            repoPath: document.getElementById('gitRepoPath').value,
-            branch: document.getElementById('gitBranch').value,
-            remoteUrl: document.getElementById('gitRemoteUrl').value,
-            pushOnBackup: document.getElementById('gitPushOnBackup').checked
+        await KatsuCases.api.post('/api/admin/gist-backup/config', {
+            gistId: document.getElementById('gitRepoPath').value,
+            description: document.getElementById('gitBranch').value,
+            token: document.getElementById('gitRemoteUrl').value,
+            isPublic: document.getElementById('gitPushOnBackup').checked
         });
-        KatsuCases.showToast('Git backup config saved', 'success');
-        await loadGitBackupStatus();
+        KatsuCases.showToast('Gist backup config saved', 'success');
+        await loadGistBackupStatus();
     } catch (error) {
-        KatsuCases.showToast(error.message || 'Failed to save Git backup config', 'error');
+        KatsuCases.showToast(error.message || 'Failed to save Gist backup config', 'error');
     }
 });
 
 document.getElementById('runGitBackupBtn').addEventListener('click', async () => {
     try {
-        await KatsuCases.api.post('/api/admin/git-backup/backup', {
-            repoPath: document.getElementById('gitRepoPath').value,
-            branch: document.getElementById('gitBranch').value,
-            remoteUrl: document.getElementById('gitRemoteUrl').value,
-            pushOnBackup: document.getElementById('gitPushOnBackup').checked
+        await KatsuCases.api.post('/api/admin/gist-backup/backup', {
+            gistId: document.getElementById('gitRepoPath').value,
+            description: document.getElementById('gitBranch').value,
+            token: document.getElementById('gitRemoteUrl').value,
+            isPublic: document.getElementById('gitPushOnBackup').checked
         });
-        KatsuCases.showToast('Git backup completed', 'success');
-        await loadGitBackupStatus();
+        KatsuCases.showToast('Gist backup completed', 'success');
+        await loadGistBackupStatus();
     } catch (error) {
-        KatsuCases.showToast(error.message || 'Failed to run Git backup', 'error');
+        KatsuCases.showToast(error.message || 'Failed to run Gist backup', 'error');
     }
 });
 
 document.getElementById('gitRestoreForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     try {
-        await KatsuCases.api.post('/api/admin/git-backup/restore', {
-            ref: document.getElementById('gitRestoreRef').value || document.getElementById('gitBranch').value
+        await KatsuCases.api.post('/api/admin/gist-backup/restore', {
+            gistId: document.getElementById('gitRestoreRef').value || document.getElementById('gitRepoPath').value,
+            token: document.getElementById('gitRemoteUrl').value
         });
-        KatsuCases.showToast('Git restore completed', 'success');
-        await loadGitBackupStatus();
+        KatsuCases.showToast('Gist restore completed', 'success');
+        await loadGistBackupStatus();
         await loadAdminSummary();
         await KatsuCases.checkAuth();
     } catch (error) {
-        KatsuCases.showToast(error.message || 'Failed to restore from Git', 'error');
+        KatsuCases.showToast(error.message || 'Failed to restore from Gist', 'error');
     }
 });
 

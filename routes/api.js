@@ -6,7 +6,7 @@ const router = express.Router();
 const { db, notifications } = require('../database');
 const { isAuthenticated, optionalAuth } = require('../middleware/auth');
 const { isAdminUserId, getOwnerUserId } = require('../utils/roles');
-const { loadConfig: loadGitBackupConfig, saveConfig: saveGitBackupConfig, getStatus: getGitBackupStatus, backupNow: runGitBackupNow, restoreNow: runGitRestoreNow } = require('../utils/gitBackup');
+const { loadConfig: loadGistBackupConfig, saveConfig: saveGistBackupConfig, getStatus: getGistBackupStatus, backupNow: runGistBackupNow, restoreNow: runGistRestoreNow } = require('../utils/gitBackup');
 
 const dataDir = path.join(__dirname, '..', 'data');
 const appDataPath = path.join(dataDir, 'katsucases.json');
@@ -2237,60 +2237,62 @@ router.post('/claims/:code/claim', isAuthenticated, (req, res) => {
 
 
 
-router.get('/admin/git-backup/status', isAuthenticated, requireAdmin, (req, res) => {
+router.get('/admin/gist-backup/status', isAuthenticated, requireAdmin, async (req, res) => {
     try {
-        res.json(getGitBackupStatus(loadGitBackupConfig()));
+        res.json(await getGistBackupStatus(loadGistBackupConfig()));
     } catch (error) {
-        console.error('Git backup status error:', error);
-        res.status(500).json({ error: 'Failed to read Git backup status' });
+        console.error('Gist backup status error:', error);
+        res.status(500).json({ error: 'Failed to read Gist backup status' });
     }
 });
 
-router.post('/admin/git-backup/config', isAuthenticated, requireAdmin, (req, res) => {
+router.post('/admin/gist-backup/config', isAuthenticated, requireAdmin, async (req, res) => {
     try {
-        const current = loadGitBackupConfig();
+        const current = loadGistBackupConfig();
         const next = {
             ...current,
-            repoPath: normalizeText(req.body.repoPath || current.repoPath || '').slice(0, 300) || current.repoPath,
-            branch: normalizeText(req.body.branch || current.branch || 'main').slice(0, 80) || 'main',
-            remoteUrl: normalizeText(req.body.remoteUrl || current.remoteUrl || '').slice(0, 500),
-            pushOnBackup: Boolean(req.body.pushOnBackup)
+            token: normalizeText(req.body.token || current.token || '').slice(0, 300),
+            gistId: normalizeText(req.body.gistId || current.gistId || '').slice(0, 200),
+            description: normalizeText(req.body.description || current.description || 'KatsuCases site data backup').slice(0, 200) || 'KatsuCases site data backup',
+            isPublic: Boolean(req.body.isPublic)
         };
-        saveGitBackupConfig(next);
-        res.json({ success: true, status: getGitBackupStatus(next) });
+        saveGistBackupConfig(next);
+        res.json({ success: true, status: await getGistBackupStatus(next) });
     } catch (error) {
-        console.error('Git backup config error:', error);
-        res.status(500).json({ error: error.message || 'Failed to save Git backup config' });
+        console.error('Gist backup config error:', error);
+        res.status(500).json({ error: error.message || 'Failed to save Gist backup config' });
     }
 });
 
-router.post('/admin/git-backup/backup', isAuthenticated, requireAdmin, (req, res) => {
+router.post('/admin/gist-backup/backup', isAuthenticated, requireAdmin, async (req, res) => {
     try {
-        const current = loadGitBackupConfig();
+        const current = loadGistBackupConfig();
         const overrides = {
-            repoPath: normalizeText(req.body.repoPath || current.repoPath || '').slice(0, 300) || current.repoPath,
-            branch: normalizeText(req.body.branch || current.branch || 'main').slice(0, 80) || current.branch || 'main',
-            remoteUrl: normalizeText(req.body.remoteUrl || current.remoteUrl || '').slice(0, 500),
-            pushOnBackup: req.body.pushOnBackup === undefined ? current.pushOnBackup : Boolean(req.body.pushOnBackup)
+            token: normalizeText(req.body.token || current.token || '').slice(0, 300),
+            gistId: normalizeText(req.body.gistId || current.gistId || '').slice(0, 200),
+            description: normalizeText(req.body.description || current.description || 'KatsuCases site data backup').slice(0, 200) || 'KatsuCases site data backup',
+            isPublic: req.body.isPublic === undefined ? Boolean(current.isPublic) : Boolean(req.body.isPublic)
         };
-        const result = runGitBackupNow(overrides);
+        const result = await runGistBackupNow(overrides);
         if (typeof db.reload === 'function') db.reload();
-        res.json({ success: true, result, status: getGitBackupStatus(loadGitBackupConfig()) });
+        res.json({ success: true, result, status: await getGistBackupStatus(loadGistBackupConfig()) });
     } catch (error) {
-        console.error('Git backup run error:', error);
-        res.status(500).json({ error: error.message || 'Failed to backup site data to Git' });
+        console.error('Gist backup run error:', error);
+        res.status(500).json({ error: error.message || 'Failed to backup site data to Gist' });
     }
 });
 
-router.post('/admin/git-backup/restore', isAuthenticated, requireAdmin, (req, res) => {
+router.post('/admin/gist-backup/restore', isAuthenticated, requireAdmin, async (req, res) => {
     try {
-        const ref = normalizeText(req.body.ref || req.body.branch || '');
-        const result = runGitRestoreNow(ref || '', {});
+        const ref = normalizeText(req.body.ref || req.body.gistId || '');
+        const result = await runGistRestoreNow(ref || '', {
+            token: normalizeText(req.body.token || loadGistBackupConfig().token || '').slice(0, 300)
+        });
         if (typeof db.reload === 'function') db.reload();
-        res.json({ success: true, result, status: getGitBackupStatus(loadGitBackupConfig()) });
+        res.json({ success: true, result, status: await getGistBackupStatus(loadGistBackupConfig()) });
     } catch (error) {
-        console.error('Git restore error:', error);
-        res.status(500).json({ error: error.message || 'Failed to restore site data from Git' });
+        console.error('Gist restore error:', error);
+        res.status(500).json({ error: error.message || 'Failed to restore site data from Gist' });
     }
 });
 

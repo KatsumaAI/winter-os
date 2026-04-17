@@ -1,13 +1,13 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('child_process');
+const axios = require('axios');
 
 const projectRoot = path.join(__dirname, '..');
 const dataDir = path.join(projectRoot, 'data');
-const configPath = path.join(dataDir, 'git-backup-config.json');
-const defaultRepoPath = path.join(dataDir, 'git-backup-repo');
+const configPath = path.join(dataDir, 'gist-backup-config.json');
 const trackedFiles = ['katsucases.json', 'community.json', 'casevs.json', 'replays.json', 'sessions.json'];
+const GITHUB_API = 'https://api.github.com';
 
 function ensureDir(dirPath) {
     fs.mkdirSync(dirPath, { recursive: true });
@@ -21,170 +21,192 @@ function safeReadJson(filePath, fallback) {
     }
 }
 
+function normalizeGistId(value = '') {
+    const text = String(value || '').trim();
+    if (!text) return '';
+    const gistMatch = text.match(/(?:gist\.github\.com\/(?:[^/]+\/)?|\/gists\/)([a-f0-9]{8,})/i);
+    return gistMatch ? gistMatch[1] : text.replace(/[^a-f0-9]/ig, '').slice(0, 64);
+}
+
 function loadConfig() {
     ensureDir(dataDir);
     return safeReadJson(configPath, {
-        repoPath: defaultRepoPath,
-        branch: 'main',
-        remoteUrl: '',
-        pushOnBackup: false,
+        token: '',
+        gistId: '',
+        description: 'KatsuCases site data backup',
+        isPublic: false,
         lastBackupAt: null,
-        lastBackupCommit: null,
+        lastBackupGistId: null,
+        lastBackupVersion: null,
         lastRestoreAt: null,
-        lastRestoreRef: null
+        lastRestoreVersion: null
     });
 }
 
 function saveConfig(config) {
     ensureDir(dataDir);
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-    return config;
+    const next = {
+        ...loadConfig(),
+        ...config,
+        gistId: normalizeGistId(config.gistId || ''),
+        token: String(config.token || '').trim()
+    };
+    fs.writeFileSync(configPath, JSON.stringify(next, null, 2));
+    return next;
 }
 
-function runGit(args, cwd) {
-    return execFileSync('git', args, {
-        cwd,
-        stdio: ['ignore', 'pipe', 'pipe'],
-        encoding: 'utf8'
-    }).trim();
+function githubHeaders(token = '') {
+    const headers = {
+        'Accept': 'application/vnd.github+json',
+        'User-Agent': 'KatsuCases-Backup',
+        'X-GitHub-Api-Version': '2022-11-28'
+    };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
 }
 
-function hasGitRepo(repoPath) {
-    return fs.existsSync(path.join(repoPath, '.git'));
+async function githubRequest(method, url, token = '', data) {
+    const response = await axios({
+        method,
+        url,
+        data,
+        headers: githubHeaders(token),
+        timeout: 30000,
+        validateStatus: () => true
+    });
+    if (response.status >= 200 && response.status < 300) return response.data;
+    const message = response.data?.message || `GitHub API request failed with status ${response.status}`;
+    throw new Error(message);
 }
 
-function ensureRepo(config = loadConfig()) {
-    const repoPath = path.resolve(config.repoPath || defaultRepoPath);
-    ensureDir(repoPath);
-    if (!hasGitRepo(repoPath)) {
-        if (config.remoteUrl) {
-            if (fs.readdirSync(repoPath).length) {
-                throw new Error('Backup repo path must be empty before cloning a remote repository.');
-            }
-            runGit(['clone', '--branch', config.branch || 'main', config.remoteUrl, repoPath], projectRoot);
-        } else {
-            runGit(['init', '-b', config.branch || 'main'], repoPath);
-        }
-    }
-
-    try { runGit(['config', 'user.name', 'KatsuCases Backup'], repoPath); } catch (error) {}
-    try { runGit(['config', 'user.email', 'backup@katsucases.local'], repoPath); } catch (error) {}
-
-    if (config.remoteUrl) {
-        try {
-            const origin = runGit(['remote', 'get-url', 'origin'], repoPath);
-            if (origin !== config.remoteUrl) {
-                runGit(['remote', 'set-url', 'origin', config.remoteUrl], repoPath);
-            }
-        } catch (error) {
-            runGit(['remote', 'add', 'origin', config.remoteUrl], repoPath);
-        }
-    }
-
-    ensureDir(path.join(repoPath, 'backup_data'));
-    return repoPath;
+function buildManifest(files) {
+    return {
+        created_at: new Date().toISOString(),
+        files,
+        site: 'KatsuCases',
+        format_version: 1
+    };
 }
 
-function copyDataIntoRepo(repoPath) {
-    const targetDir = path.join(repoPath, 'backup_data');
-    ensureDir(targetDir);
+function buildGistFiles() {
+    const files = {};
     const copied = [];
     for (const fileName of trackedFiles) {
         const src = path.join(dataDir, fileName);
         if (!fs.existsSync(src)) continue;
-        const dest = path.join(targetDir, fileName);
-        fs.copyFileSync(src, dest);
+        files[fileName] = { content: fs.readFileSync(src, 'utf8') };
         copied.push(fileName);
     }
-    fs.writeFileSync(path.join(repoPath, 'backup_data', 'manifest.json'), JSON.stringify({
-        created_at: new Date().toISOString(),
-        files: copied
-    }, null, 2));
-    return copied;
+    files['manifest.json'] = { content: JSON.stringify(buildManifest(copied), null, 2) };
+    return { files, copied };
 }
 
-function restoreDataFromRepo(repoPath) {
-    const targetDir = path.join(repoPath, 'backup_data');
-    if (!fs.existsSync(targetDir)) {
-        throw new Error('No backup_data directory exists in the configured repository.');
+async function readGistFileContent(file) {
+    if (!file) return '';
+    if (!file.truncated && typeof file.content === 'string') return file.content;
+    if (file.raw_url) {
+        const response = await axios.get(file.raw_url, { timeout: 30000, responseType: 'text', validateStatus: () => true });
+        if (response.status >= 200 && response.status < 300) return String(response.data || '');
     }
-    const restored = [];
-    for (const fileName of trackedFiles) {
-        const src = path.join(targetDir, fileName);
-        if (!fs.existsSync(src)) continue;
-        const dest = path.join(dataDir, fileName);
-        fs.copyFileSync(src, dest);
-        restored.push(fileName);
-    }
-    return restored;
+    throw new Error(`Could not read gist file ${file.filename || 'unknown file'}`);
 }
 
-function getStatus(config = loadConfig()) {
-    const repoPath = path.resolve(config.repoPath || defaultRepoPath);
+async function fetchGist(gistId, token = '') {
+    const cleanId = normalizeGistId(gistId);
+    if (!cleanId) throw new Error('A Gist ID is required.');
+    return githubRequest('get', `${GITHUB_API}/gists/${cleanId}`, token);
+}
+
+async function getStatus(config = loadConfig()) {
+    const gistId = normalizeGistId(config.gistId || '');
     const status = {
-        config: { ...config, repoPath },
-        repoExists: hasGitRepo(repoPath),
-        repoPath,
-        branch: null,
-        latestCommit: null,
+        config: { ...config, gistId },
+        gistConfigured: Boolean(gistId),
+        gistExists: false,
+        gistId,
+        gistUrl: '',
+        gistUpdatedAt: null,
+        gistPublic: Boolean(config.isPublic),
         trackedFiles
     };
-    if (status.repoExists) {
-        try { status.branch = runGit(['branch', '--show-current'], repoPath) || config.branch || 'main'; } catch (error) {}
-        try { status.latestCommit = runGit(['rev-parse', '--short', 'HEAD'], repoPath); } catch (error) {}
+    if (!gistId) return status;
+    try {
+        const gist = await fetchGist(gistId, config.token || '');
+        status.gistExists = true;
+        status.gistId = gist.id;
+        status.gistUrl = gist.html_url || '';
+        status.gistUpdatedAt = gist.updated_at || null;
+        status.gistPublic = Boolean(gist.public);
+        status.owner = gist.owner?.login || '';
+    } catch (error) {
+        status.error = error.message;
     }
     return status;
 }
 
-function backupNow(overrides = {}) {
-    const config = { ...loadConfig(), ...overrides };
-    const repoPath = ensureRepo(config);
-    const copied = copyDataIntoRepo(repoPath);
-    runGit(['add', 'backup_data'], repoPath);
-    let commit = null;
-    try {
-        runGit(['commit', '-m', `KatsuCases backup ${new Date().toISOString()}`], repoPath);
-        commit = runGit(['rev-parse', '--short', 'HEAD'], repoPath);
-    } catch (error) {
-        if (!String(error.stderr || '').includes('nothing to commit')) {
-            throw error;
-        }
-        commit = runGit(['rev-parse', '--short', 'HEAD'], repoPath);
+async function backupNow(overrides = {}) {
+    const config = saveConfig({ ...loadConfig(), ...overrides });
+    const token = String(config.token || '').trim();
+    if (!token) throw new Error('Add a GitHub token with Gists write access before backing up.');
+
+    const { files, copied } = buildGistFiles();
+    const payload = {
+        description: String(config.description || 'KatsuCases site data backup').trim() || 'KatsuCases site data backup',
+        public: Boolean(config.isPublic),
+        files
+    };
+
+    let gist;
+    if (config.gistId) {
+        gist = await githubRequest('patch', `${GITHUB_API}/gists/${normalizeGistId(config.gistId)}`, token, payload);
+    } else {
+        gist = await githubRequest('post', `${GITHUB_API}/gists`, token, payload);
+        config.gistId = gist.id;
     }
-    if (config.remoteUrl && config.pushOnBackup) {
-        runGit(['push', '-u', 'origin', config.branch || 'main'], repoPath);
-    }
+
     config.lastBackupAt = new Date().toISOString();
-    config.lastBackupCommit = commit;
+    config.lastBackupGistId = gist.id;
+    config.lastBackupVersion = gist.updated_at || config.lastBackupAt;
     saveConfig(config);
-    return { repoPath, copied, commit, branch: config.branch || 'main' };
+
+    return {
+        gistId: gist.id,
+        gistUrl: gist.html_url || '',
+        copied,
+        version: gist.updated_at || config.lastBackupAt,
+        public: Boolean(gist.public)
+    };
 }
 
-function restoreNow(ref = '', overrides = {}) {
-    const config = { ...loadConfig(), ...overrides };
-    const repoPath = ensureRepo(config);
-    if (config.remoteUrl) {
-        try { runGit(['fetch', 'origin'], repoPath); } catch (error) {}
+async function restoreNow(ref = '', overrides = {}) {
+    const config = saveConfig({ ...loadConfig(), ...overrides });
+    const gistId = normalizeGistId(ref || config.gistId || '');
+    if (!gistId) throw new Error('Set or enter a Gist ID before restoring.');
+    const gist = await fetchGist(gistId, config.token || '');
+    ensureDir(dataDir);
+    const restored = [];
+    for (const fileName of trackedFiles) {
+        const file = gist.files?.[fileName];
+        if (!file) continue;
+        const content = await readGistFileContent(file);
+        fs.writeFileSync(path.join(dataDir, fileName), content, 'utf8');
+        restored.push(fileName);
     }
-    if (ref) {
-        runGit(['checkout', ref], repoPath);
-    } else if (config.branch) {
-        try { runGit(['checkout', config.branch], repoPath); } catch (error) {}
-        if (config.remoteUrl) {
-            try { runGit(['pull', 'origin', config.branch], repoPath); } catch (error) {}
-        }
-    }
-    const restored = restoreDataFromRepo(repoPath);
+    config.gistId = gist.id;
     config.lastRestoreAt = new Date().toISOString();
-    config.lastRestoreRef = ref || config.branch || 'main';
+    config.lastRestoreVersion = gist.updated_at || config.lastRestoreAt;
     saveConfig(config);
-    return { repoPath, restored, ref: config.lastRestoreRef };
+    return {
+        gistId: gist.id,
+        gistUrl: gist.html_url || '',
+        restored,
+        version: gist.updated_at || config.lastRestoreAt
+    };
 }
 
 module.exports = {
     loadConfig,
     saveConfig,
-    ensureRepo,
     getStatus,
     backupNow,
     restoreNow,
