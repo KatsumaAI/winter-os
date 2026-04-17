@@ -760,14 +760,19 @@ function ensureCommunityUI() {
                         <button class="btn btn-ghost btn-sm community-sidebar-close" type="button"><i class="ri-close-line"></i></button>
                     </div>
                 </div>
+                <div class="community-channel-bar">
+                    <div class="community-channel-pill"><i class="ri-hashtag"></i><span>global-chat</span></div>
+                    <div class="community-channel-copy">Live wins, trades, rain, and site-wide callouts in one feed.</div>
+                </div>
                 <div class="community-rain-panel"></div>
                 <div class="community-claim-panel"></div>
                 <div class="community-message-list"></div>
                 <div class="community-auth-hint"></div>
                 <form class="community-chat-form">
-                    <input class="community-chat-input" type="text" maxlength="240" placeholder="Send a message to everyone">
+                    <input class="community-chat-input" type="text" maxlength="240" placeholder="Message #global-chat">
                     <button class="btn btn-primary" type="submit"><i class="ri-send-plane-line"></i></button>
                 </form>
+                <div class="community-current-user"></div>
             </div>
         `;
         document.body.appendChild(sidebar);
@@ -842,6 +847,7 @@ function renderCommunityUI() {
     const authHint = sidebar.querySelector('.community-auth-hint');
     const input = sidebar.querySelector('.community-chat-input');
     const form = sidebar.querySelector('.community-chat-form');
+    const currentUserBar = sidebar.querySelector('.community-current-user');
     const onlineCount = sidebar.querySelector('.community-online-count');
     const typingSummary = sidebar.querySelector('.community-typing-summary');
 
@@ -904,18 +910,23 @@ function renderCommunityUI() {
     if (messageList) {
         const stickToBottom = messageList.scrollTop + messageList.clientHeight >= messageList.scrollHeight - 40;
         if (!state.communityMessages.length) {
-            messageList.innerHTML = '<div class="community-empty">No messages yet.</div>';
+            messageList.innerHTML = '<div class="community-empty"><i class="ri-chat-3-line"></i><strong>No messages yet</strong><span>Start the first message in #global-chat.</span></div>';
         } else {
             messageList.innerHTML = state.communityMessages.map((message) => `
                 <article class="community-message community-message-${escapeHtml(message.type || 'user')}">
                     <div class="community-message-avatar-wrap">${buildAvatarMarkup(message, 'community-avatar')}</div>
                     <div class="community-message-main">
                         <div class="community-message-head">
-                            ${(message.user_id || message.type !== 'system') ? `<a class="community-message-author" href="/profile?user=${encodeURIComponent(message.username || '')}">${escapeHtml(message.display_name || message.username || 'KatsuCases')}</a>` : `<span class="community-message-author">${escapeHtml(message.display_name || message.username || 'KatsuCases')}</span>`}
-                            ${badgeMarkup(message.badges || [])}
-                            ${message.region ? `<span class="community-message-region">${escapeHtml(message.region)}</span>` : ''}
-                            <span class="community-message-time">${escapeHtml(formatRelativeTime(message.created_at))}</span>
-                            ${canDeleteCommunityMessage(message) ? `<button class="community-message-delete" type="button" onclick="KatsuCases.deleteCommunityMessage(${Number(message.id)})">Delete</button>` : ''}
+                            <div class="community-message-title">
+                                ${(message.user_id || message.type !== 'system') ? `<a class="community-message-author" href="/profile?user=${encodeURIComponent(message.username || '')}">${escapeHtml(message.display_name || message.username || 'KatsuCases')}</a>` : `<span class="community-message-author">${escapeHtml(message.display_name || message.username || 'KatsuCases')}</span>`}
+                                ${message.custom_role ? `<span class="community-message-role">${escapeHtml(message.custom_role)}</span>` : ''}
+                                ${badgeMarkup(message.badges || [])}
+                                ${message.region ? `<span class="community-message-region">${escapeHtml(message.region)}</span>` : ''}
+                            </div>
+                            <div class="community-message-actions">
+                                <span class="community-message-time">${escapeHtml(formatRelativeTime(message.created_at))}</span>
+                                ${canDeleteCommunityMessage(message) ? `<button class="community-message-delete" type="button" onclick="KatsuCases.deleteCommunityMessage(${Number(message.id)})">Delete</button>` : ''}
+                            </div>
                         </div>
                         <div class="community-message-body">${escapeHtml(message.message || '')}</div>
                     </div>
@@ -927,13 +938,41 @@ function renderCommunityUI() {
 
     if (authHint) {
         authHint.innerHTML = state.user
-            ? `<span>Signed in as <strong>${escapeHtml(state.user.display_name || state.user.username)}</strong>${state.user.free_rolls ? ` · ${escapeHtml(String(state.user.free_rolls))} free rolls` : ''}</span>`
+            ? `<span>You are chatting as <strong>${escapeHtml(state.user.display_name || state.user.username)}</strong>${state.user.free_rolls ? ` · ${escapeHtml(String(state.user.free_rolls))} free rolls ready` : ''}</span>`
             : '<a href="/signin">Sign in</a> to chat, claim drops, and enter rain.';
+    }
+
+    if (currentUserBar) {
+        currentUserBar.innerHTML = state.user
+            ? `
+                <div class="community-current-user-main">
+                    <div class="community-current-user-avatar">${buildAvatarMarkup(state.user, 'community-current-avatar')}</div>
+                    <div class="community-current-user-copy">
+                        <strong>${escapeHtml(state.user.display_name || state.user.username)}</strong>
+                        <span>@${escapeHtml(state.user.username || '')}${state.user.region ? ` · ${escapeHtml(state.user.region)}` : ''}</span>
+                    </div>
+                </div>
+                <div class="community-current-user-actions">
+                    <a href="/profile" class="community-current-user-link" aria-label="Open profile"><i class="ri-user-line"></i></a>
+                </div>
+            `
+            : `
+                <div class="community-current-user-main">
+                    <div class="community-current-user-avatar"><span class="community-current-avatar fallback">?</span></div>
+                    <div class="community-current-user-copy">
+                        <strong>Guest</strong>
+                        <span>Sign in to join #global-chat</span>
+                    </div>
+                </div>
+                <div class="community-current-user-actions">
+                    <a href="/signin" class="community-current-user-link" aria-label="Sign in"><i class="ri-login-box-line"></i></a>
+                </div>
+            `;
     }
 
     if (input) {
         input.disabled = !state.user;
-        input.placeholder = state.user ? 'Send a message to everyone' : 'Sign in to join the chat';
+        input.placeholder = state.user ? 'Message #global-chat' : 'Sign in to join the chat';
     }
     if (form) form.classList.toggle('disabled', !state.user);
 }

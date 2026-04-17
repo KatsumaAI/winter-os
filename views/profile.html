@@ -111,27 +111,45 @@
                             </div>
 
                             <div>
-                                <section class="profile-section">
+                                <section class="profile-section profile-member-card">
+                                    <div class="profile-member-card-top">
+                                        <div class="profile-mini-avatar" id="profileMiniAvatar">U</div>
+                                        <div class="profile-member-card-copy">
+                                            <div class="profile-mini-name" id="profileMiniName">Username</div>
+                                            <div class="profile-mini-handle" id="profileMiniHandle">@username</div>
+                                        </div>
+                                        <span class="profile-status-pill" id="profileStatusPill">Profile</span>
+                                    </div>
+                                    <div id="profileMemberBadges" class="profile-badge-row profile-member-badges"></div>
+                                    <div class="profile-member-grid">
+                                        <div class="profile-member-fact"><span>Joined</span><strong id="profileMemberSince">January 2024</strong></div>
+                                        <div class="profile-member-fact"><span>Inventory</span><strong id="profileMemberInventoryCount">0 items</strong></div>
+                                        <div class="profile-member-fact"><span>Visibility</span><strong id="profileMemberVisibility">Public</strong></div>
+                                        <div class="profile-member-fact"><span>Trading</span><strong id="profileMemberTradeStatus">Open</strong></div>
+                                    </div>
+                                </section>
+                                <section class="profile-section" style="margin-top:24px;">
                                     <h4 class="profile-section-title" id="accountSectionTitle">Account</h4>
                                     <div id="accountSectionContent">
+                                        <div id="profileAccountNote" class="profile-account-note">Manage your identity, visibility, and public-facing details here.</div>
                                         <form id="profileSettingsForm" class="profile-settings-form" style="display:none;">
                                             <input id="settingsUsername" class="input" placeholder="Username">
                                             <input id="settingsDisplayName" class="input" placeholder="Display name">
                                             <input id="settingsAvatarUrl" class="input" placeholder="Profile picture URL">
                                             <input id="settingsPronouns" class="input" placeholder="Pronouns">
                                             <input id="settingsRegion" class="input" placeholder="Region">
-                                            <label style="display:flex; gap:10px; align-items:center; font-size:13px; color:var(--text-secondary);">
+                                            <label class="profile-checkbox-row">
                                                 <input id="settingsHideInventory" type="checkbox"> Hide my inventory on my public profile
                                             </label>
                                             <button class="btn btn-primary" type="submit"><i class="ri-save-line"></i> Save Profile</button>
                                         </form>
-                                        <div id="publicProfileInfo" style="display:none; color:var(--text-secondary); font-size:13px; line-height:1.6;">
+                                        <div id="publicProfileInfo" class="profile-account-note" style="display:none;">
                                             View this player’s public overview, their recent opens, and their visible showcase items. Trading still works from here.
                                         </div>
                                     </div>
                                 </section>
                                 <section class="profile-section" style="margin-top:24px;">
-                                    <h4 class="profile-section-title">Recent Transactions</h4>
+                                    <h4 class="profile-section-title" id="transactionsTitle">Collection Overview</h4>
                                     <div id="transactionsList"></div>
                                 </section>
                             </div>
@@ -165,12 +183,58 @@
             `;
         }
 
-        function transactionMarkup(user) {
+        function setProfileAvatar(target, user, avatarClass = '') {
+            if (!target) return;
+            const initial = (user.display_name || user.username || 'U').charAt(0).toUpperCase();
+            if (user.avatar_url) {
+                target.innerHTML = `<img src="${KatsuCases.escapeHtml(user.avatar_url)}" alt="${KatsuCases.escapeHtml(user.display_name || user.username)}" class="${avatarClass}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`;
+            } else {
+                target.textContent = initial;
+            }
+        }
+
+        function transactionMarkup(user, profileData, isSelf) {
+            const cards = [
+                {
+                    label: 'Collection Value',
+                    value: KatsuCases.formatCurrency(user.inventory_value || 0),
+                    detail: `${Number(user.inventory_count || 0)} tracked item${Number(user.inventory_count || 0) === 1 ? '' : 's'} across the profile.`
+                },
+                {
+                    label: isSelf ? 'Wallet Balance' : 'Cases Opened',
+                    value: isSelf ? KatsuCases.formatCurrency(user.balance || 0) : String(user.cases_opened || 0),
+                    detail: isSelf ? `${Number(user.free_rolls || 0)} free roll${Number(user.free_rolls || 0) === 1 ? '' : 's'} currently available.` : 'Total openings shown on the public player card.'
+                },
+                {
+                    label: 'Spent',
+                    value: KatsuCases.formatCurrency(user.total_spent || 0),
+                    detail: 'Lifetime value spent across openings and market actions.'
+                },
+                {
+                    label: 'Earned',
+                    value: KatsuCases.formatCurrency(user.total_earned || 0),
+                    detail: 'Lifetime value earned back from wins, sells, and drops.'
+                },
+                {
+                    label: 'Inventory Visibility',
+                    value: user.hide_inventory ? 'Private' : 'Public',
+                    detail: user.hide_inventory ? 'Showcase is hidden from other players.' : 'Showcase is visible to other players.'
+                },
+                {
+                    label: 'Trade Status',
+                    value: profileData.canTrade ? 'Trade Ready' : (isSelf ? 'Viewing Self' : 'Read Only'),
+                    detail: profileData.canTrade ? 'You can jump into a direct offer from this page.' : (isSelf ? 'Manage your collection and profile from here.' : 'Trading is not available from this view.')
+                }
+            ];
             return `
-                <div style="display:grid; gap:10px;">
-                    <div class="admin-rain-card empty"><strong>Collection value</strong><div class="rain-meta">${KatsuCases.formatCurrency(user.inventory_value || 0)} across ${Number(user.inventory_count || 0)} items.</div></div>
-                    <div class="admin-rain-card empty"><strong>Account earnings</strong><div class="rain-meta">Spent ${KatsuCases.formatCurrency(user.total_spent || 0)} · Earned ${KatsuCases.formatCurrency(user.total_earned || 0)}</div></div>
-                    <div class="admin-rain-card empty"><strong>Profile status</strong><div class="rain-meta">${user.hide_inventory ? 'Inventory is hidden on the public page.' : 'Inventory is visible on the public page.'}</div></div>
+                <div class="profile-summary-stack">
+                    ${cards.map((card) => `
+                        <article class="profile-summary-card">
+                            <span>${KatsuCases.escapeHtml(card.label)}</span>
+                            <strong>${KatsuCases.escapeHtml(card.value)}</strong>
+                            <p>${KatsuCases.escapeHtml(card.detail)}</p>
+                        </article>
+                    `).join('')}
                 </div>
             `;
         }
@@ -189,19 +253,25 @@
                 notFound.style.display = 'none';
 
                 const isSelf = Boolean(profileData.canEdit);
-                const avatar = document.getElementById('profileAvatar');
-                if (user.avatar_url) {
-                    avatar.innerHTML = `<img src="${KatsuCases.escapeHtml(user.avatar_url)}" alt="${KatsuCases.escapeHtml(user.display_name || user.username)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`;
-                } else {
-                    avatar.textContent = (user.display_name || user.username).charAt(0).toUpperCase();
-                }
+                const joinedText = new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                setProfileAvatar(document.getElementById('profileAvatar'), user, 'profile-avatar-image');
+                setProfileAvatar(document.getElementById('profileMiniAvatar'), user, 'profile-mini-avatar-image');
 
                 document.getElementById('profileName').textContent = user.display_name || user.username;
                 document.getElementById('profileHandle').textContent = `@${user.username}`;
                 document.getElementById('profileEmail').textContent = isSelf && user.email ? user.email : `@${user.username}`;
-                document.getElementById('profileJoined').textContent = `Member since ${new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+                document.getElementById('profileJoined').textContent = `Member since ${joinedText}`;
                 document.getElementById('profileMetaLine').textContent = [user.pronouns, user.region, user.custom_role].filter(Boolean).join(' · ') || 'No profile metadata set yet.';
-                document.getElementById('profileBadges').innerHTML = (user.badges || []).map((badge) => `<span class="badge ${KatsuCases.escapeHtml(badge.className || 'badge-common')}">${KatsuCases.escapeHtml(badge.label || badge.key || 'TAG')}</span>`).join('') || '<span class="badge badge-common">PLAYER</span>';
+                const badgeMarkup = (user.badges || []).map((badge) => `<span class="badge ${KatsuCases.escapeHtml(badge.className || 'badge-common')}">${KatsuCases.escapeHtml(badge.label || badge.key || 'TAG')}</span>`).join('') || '<span class="badge badge-common">PLAYER</span>';
+                document.getElementById('profileBadges').innerHTML = badgeMarkup;
+                document.getElementById('profileMemberBadges').innerHTML = badgeMarkup;
+                document.getElementById('profileMiniName').textContent = user.display_name || user.username;
+                document.getElementById('profileMiniHandle').textContent = `@${user.username}`;
+                document.getElementById('profileStatusPill').textContent = isSelf ? 'YOUR CARD' : (String(user.custom_role || '').trim() ? String(user.custom_role).toUpperCase() : 'PLAYER CARD');
+                document.getElementById('profileMemberSince').textContent = joinedText;
+                document.getElementById('profileMemberInventoryCount').textContent = `${Number(user.inventory_count || 0)} item${Number(user.inventory_count || 0) === 1 ? '' : 's'}`;
+                document.getElementById('profileMemberVisibility').textContent = user.hide_inventory ? 'Private' : 'Public';
+                document.getElementById('profileMemberTradeStatus').textContent = profileData.canTrade ? 'Trade Ready' : (isSelf ? 'Your Profile' : 'Read Only');
                 const pastNamesLabel = document.getElementById('profilePastNamesLabel');
                 const pastNames = document.getElementById('profilePastNames');
                 const history = Array.isArray(user.username_history) ? user.username_history.filter(Boolean) : [];
@@ -218,7 +288,7 @@
                 document.getElementById('statInventoryValue').textContent = KatsuCases.formatCurrency(user.inventory_value || 0);
                 document.getElementById('statTotalSpent').textContent = KatsuCases.formatCurrency(user.total_spent || 0);
                 document.getElementById('statTotalEarned').textContent = KatsuCases.formatCurrency(user.total_earned || 0);
-                document.getElementById('transactionsList').innerHTML = transactionMarkup(user);
+                document.getElementById('transactionsList').innerHTML = transactionMarkup(user, profileData, isSelf);
 
                 const inventoryHint = document.getElementById('profileInventoryHint');
                 const showcase = document.getElementById('profileInventoryShowcase');
@@ -247,6 +317,10 @@
                 document.getElementById('profileSettingsForm').style.display = isSelf ? 'grid' : 'none';
                 document.getElementById('publicProfileInfo').style.display = isSelf ? 'none' : 'block';
                 document.getElementById('accountSectionTitle').textContent = isSelf ? 'Account Settings' : 'Public Profile';
+                document.getElementById('transactionsTitle').textContent = isSelf ? 'Collection Overview' : 'Player Snapshot';
+                document.getElementById('profileAccountNote').textContent = isSelf
+                    ? 'Fine-tune how your KatsuCases identity appears across the site, including your public showcase visibility.'
+                    : `${user.display_name || user.username}'s public member card, showcase status, and trade entry points are shown here.`;
 
                 if (isSelf) {
                     document.getElementById('settingsUsername').value = user.username || '';
