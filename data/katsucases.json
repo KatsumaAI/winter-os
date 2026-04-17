@@ -3,14 +3,14 @@
     "version": 1,
     "nextIds": {
       "users": 2,
-      "inventory": 3,
+      "inventory": 1,
       "cases": 11,
       "case_contents": 601,
-      "openings": 3,
+      "openings": 1,
       "marketplace": 1,
       "trades": 1,
       "trade_items": 1,
-      "transactions": 2,
+      "transactions": 1,
       "notifications": 1
     }
   },
@@ -21,10 +21,10 @@
         "username": "Admin",
         "email": "admin@katsucases.local",
         "password_hash": "c09279846e0994d5ffa84dfc3d0e76ef:d962c9f660b622bd0bb3941c7f62687031a5e94575908b314bd23cc899d1cc2df406edfcd69f17f25c6a9fe81de0da436fc90cf7e6107861860141248d56b6fd",
-        "balance": 4993.02,
-        "total_spent": 6.98,
+        "balance": 5000,
+        "total_spent": 0,
         "total_earned": 0,
-        "cases_opened": 2,
+        "cases_opened": 0,
         "created_at": "2026-04-16T20:05:00.000Z",
         "display_name": "Admin",
         "avatar_url": null,
@@ -35,46 +35,11 @@
         "free_rolls": 0
       }
     ],
-    "inventory": [
-      {
-        "user_id": 1,
-        "pokemon_id": 16,
-        "pokemon_name": "Pidgey",
-        "pokemon_form": null,
-        "rarity": "common",
-        "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/pidgey.gif",
-        "is_shiny": 0,
-        "is_listed": 0,
-        "listed_price": null,
-        "acquired_at": "2026-04-17T15:22:06.750Z",
-        "id": 1,
-        "estimated_value": 10.04,
-        "odds": 9,
-        "case_id": 10,
-        "case_name": "Community Favorites Case"
-      },
-      {
-        "user_id": 1,
-        "pokemon_id": 16,
-        "pokemon_name": "Pidgey",
-        "pokemon_form": null,
-        "rarity": "common",
-        "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/pidgey.gif",
-        "is_shiny": 0,
-        "is_listed": 0,
-        "listed_price": null,
-        "acquired_at": "2026-04-17T15:22:18.894Z",
-        "id": 2,
-        "estimated_value": 10.04,
-        "odds": 9,
-        "case_id": 10,
-        "case_name": "Community Favorites Case"
-      }
-    ],
+    "inventory": [],
     "cases": [
       {
         "name": "Kanto Starter Case",
-        "description": "Classic Pokémon from the Kanto region",
+        "description": "Classic Pok\u00e9mon from the Kanto region",
         "price": 2.99,
         "image_color": "#3b82f6",
         "is_featured": 1,
@@ -104,7 +69,7 @@
       },
       {
         "name": "Hoenn Adventures Case",
-        "description": "Exotic Pokémon from Hoenn",
+        "description": "Exotic Pok\u00e9mon from Hoenn",
         "price": 3.99,
         "image_color": "#10b981",
         "is_featured": 1,
@@ -134,7 +99,7 @@
       },
       {
         "name": "Unova Collection Case",
-        "description": "Unique Unova Pokémon",
+        "description": "Unique Unova Pok\u00e9mon",
         "price": 5.99,
         "image_color": "#ec4899",
         "is_featured": 0,
@@ -149,7 +114,7 @@
       },
       {
         "name": "Galar Champions Case",
-        "description": "High-tier Galar Pokémon",
+        "description": "High-tier Galar Pok\u00e9mon",
         "price": 9.99,
         "image_color": "#06b6d4",
         "is_featured": 1,
@@ -179,7 +144,7 @@
       },
       {
         "name": "Mythical Mystery Case",
-        "description": "Legendary and Mythical Pokémon",
+        "description": "Legendary and Mythical Pok\u00e9mon",
         "price": 14.99,
         "image_color": "#ec4899",
         "is_featured": 1,
@@ -209,14 +174,14 @@
       },
       {
         "name": "Community Favorites Case",
-        "description": "Fan-favorite Pokémon",
+        "description": "Fan-favorite Pok\u00e9mon",
         "price": 3.49,
         "image_color": "#3b82f6",
         "is_featured": 0,
         "category": "standard",
         "min_odds": 20,
         "max_odds": 2000,
-        "times_opened": 11,
+        "times_opened": 45,
         "created_at": "2026-04-16T18:43:01.626Z",
         "id": 10,
         "launch_at": null,
@@ -6825,59 +6790,11 @@
         "id": 600
       }
     ],
-    "openings": [
-      {
-        "user_id": 1,
-        "username": "Admin",
-        "case_id": 10,
-        "case_name": "Community Favorites Case",
-        "item_id": 1,
-        "pokemon_name": "Pidgey",
-        "pokemon_form": null,
-        "rarity": "common",
-        "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/pidgey.gif",
-        "is_shiny": 0,
-        "amount_paid": 3.49,
-        "is_public": 1,
-        "opened_at": "2026-04-17T15:22:06.762Z",
-        "id": 1,
-        "estimated_value": 10.04,
-        "odds": 9,
-        "seed": "mo323wxj-nde8aaz8-1"
-      },
-      {
-        "user_id": 1,
-        "username": "Admin",
-        "case_id": 10,
-        "case_name": "Community Favorites Case",
-        "item_id": 2,
-        "pokemon_name": "Pidgey",
-        "pokemon_form": null,
-        "rarity": "common",
-        "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/pidgey.gif",
-        "is_shiny": 0,
-        "amount_paid": 3.49,
-        "is_public": 1,
-        "opened_at": "2026-04-17T15:22:18.896Z",
-        "id": 2,
-        "estimated_value": 10.04,
-        "odds": 9,
-        "seed": "mo323wxj-nde8aaz8-2"
-      }
-    ],
+    "openings": [],
     "marketplace": [],
     "trades": [],
     "trade_items": [],
-    "transactions": [
-      {
-        "user_id": 1,
-        "type": "purchase",
-        "amount": -6.98,
-        "description": "Opened 2x Community Favorites Case",
-        "created_at": "2026-04-17T15:22:29.652Z",
-        "id": 1
-      }
-    ],
+    "transactions": [],
     "notifications": []
   }
 }

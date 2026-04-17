@@ -113,6 +113,8 @@
         let selectedRoomId = null;
         let roomPollHandle = null;
         let roomPlaybackTimer = null;
+        let roomsSignature = '';
+        let selectedRoomUpdatedAt = '';
 
 
 
@@ -187,7 +189,11 @@
             try {
                 const data = await KatsuCases.api.get('/api/casevs/rooms');
                 roomsData = Array.isArray(data.rooms) ? data.rooms : [];
-                renderRooms();
+                const nextSignature = JSON.stringify(roomsData.map((room) => [room.id, room.status, room.updated_at, room.winner_username]));
+                if (nextSignature !== roomsSignature) {
+                    roomsSignature = nextSignature;
+                    renderRooms();
+                }
             } catch (error) {
                 console.error('Failed to load rooms:', error);
                 KatsuCases.showToast('Failed to load Case Vs rooms', 'error');
@@ -263,6 +269,8 @@
         }
 
         async function joinRoom(roomId) {
+            const joinButton = event?.currentTarget || document.querySelector(`button[onclick="joinRoom(${roomId})"]`);
+            if (joinButton) { joinButton.disabled = true; joinButton.dataset.originalText = joinButton.innerHTML; joinButton.innerHTML = '<i class="ri-loader-4-line"></i> Joining…'; }
             try {
                 const data = await KatsuCases.api.post(`/api/casevs/rooms/${roomId}/join`, {});
                 KatsuCases.showToast('Battle started', 'success');
@@ -272,10 +280,13 @@
                 }
                 await loadRooms();
                 selectedRoomId = data.room.id;
+                selectedRoomUpdatedAt = String(data.room.updated_at || '');
                 renderRoomViewer(data.room, { playbackRound: 1, autoplay: false });
                 startRoomPlayback(data.room);
             } catch (error) {
                 KatsuCases.showToast(error.message || 'Failed to join room', 'error');
+            } finally {
+                if (joinButton) { joinButton.disabled = false; joinButton.innerHTML = joinButton.dataset.originalText || '<i class="ri-login-box-line"></i> Join Room'; }
             }
         }
 
@@ -283,6 +294,7 @@
             try {
                 const data = await KatsuCases.api.get(`/api/casevs/rooms/${roomId}`);
                 selectedRoomId = roomId;
+                selectedRoomUpdatedAt = String(data.room.updated_at || '');
                 renderRoomViewer(data.room, { playbackRound: data.room.status === 'finished' ? 1 : null, autoplay: false });
                 if (data.room.status === 'finished') startRoomPlayback(data.room);
             } catch (error) {
@@ -298,6 +310,9 @@
             const rounds = Array.isArray(room.rounds_data) ? room.rounds_data : [];
             const activeRounds = playbackRound > 0 ? rounds.filter((round) => Number(round.round) <= playbackRound) : rounds;
             const activeRound = playbackRound > 0 ? rounds.find((round) => Number(round.round) === playbackRound) : null;
+            const roundsMarkup = playbackRound > 0
+                ? activeRounds.filter((round) => Number(round.round) < playbackRound).map((round) => renderRoomRoundPair(round)).join('')
+                : activeRounds.map((round) => renderRoomRoundPair(round)).join('');
             viewer.innerHTML = `
                 <div class="live-pull-head">
                     <div>
@@ -318,7 +333,7 @@
                 ${activeRound ? `<div class="admin-rain-card" style="margin-top:18px;"><strong>Live Round ${activeRound.round}</strong><div class="rain-meta">Watching both rolls resolve live with the saved seeds and the exact stored result data.</div></div>${renderRoomRoundPair(activeRound)}` : ''}
                 ${room.winner_username && (!playbackRound || playbackRound >= rounds.length) ? `<div style="margin-top:18px; padding:14px; border-radius:14px; background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.18);">Winner: <strong>${KatsuCases.escapeHtml(room.winner_username)}</strong>${summary?.pot_amount ? ` · Pot ${KatsuCases.formatCurrency(summary.pot_amount)}` : ''}</div>` : ''}
                 <div class="casevs-rounds">
-                    ${activeRounds.length ? activeRounds.map((round) => renderRoomRoundPair(round)).join('') : '<div class="empty-state"><i class="ri-time-line"></i><h3>Waiting for challenger</h3><p>This room has not started yet.</p></div>'}
+                    ${activeRounds.length ? (roundsMarkup || '') : '<div class="empty-state"><i class="ri-time-line"></i><h3>Waiting for challenger</h3><p>This room has not started yet.</p></div>'}
                 </div>
             `;
         }
@@ -334,12 +349,17 @@
                 if (selectedRoomId) {
                     try {
                         const data = await KatsuCases.api.get(`/api/casevs/rooms/${selectedRoomId}`);
-                        if (data.room.status === 'finished') {
-                            if (!roomPlaybackTimer) {
+                        const updatedAt = String(data.room.updated_at || '');
+                        if (updatedAt !== selectedRoomUpdatedAt) {
+                            selectedRoomUpdatedAt = updatedAt;
+                            if (data.room.status === 'finished') {
+                                if (!roomPlaybackTimer) {
+                                    renderRoomViewer(data.room, { playbackRound: 0, autoplay: false });
+                                    startRoomPlayback(data.room);
+                                }
+                            } else {
                                 renderRoomViewer(data.room, { playbackRound: 0, autoplay: false });
                             }
-                        } else {
-                            renderRoomViewer(data.room, { playbackRound: 0, autoplay: false });
                         }
                     } catch (error) {
                         return;

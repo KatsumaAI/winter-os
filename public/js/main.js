@@ -230,6 +230,29 @@ function canDeleteCommunityMessage(message) {
     return Date.now() - createdAt < 5 * 60 * 1000;
 }
 
+function announcementDismissKey(announcement) {
+    return `katsucases.announcement.dismiss.${announcement?.id || announcement?.created_at || announcement?.message || 'unknown'}`;
+}
+
+function isAnnouncementDismissed(announcement) {
+    try {
+        return window.localStorage.getItem(announcementDismissKey(announcement)) === '1';
+    } catch (error) {
+        return false;
+    }
+}
+
+function dismissAnnouncement(announcementId) {
+    const announcement = (state.announcements || []).find((entry) => Number(entry.id) === Number(announcementId));
+    if (!announcement) return;
+    try {
+        window.localStorage.setItem(announcementDismissKey(announcement), '1');
+    } catch (error) {
+        console.warn('Announcement dismissal could not be saved', error);
+    }
+    renderSiteAnnouncements();
+}
+
 function ensureSiteAnnouncementUI() {
     let bar = document.querySelector('.site-announcement-bar');
     if (!bar) {
@@ -242,17 +265,23 @@ function ensureSiteAnnouncementUI() {
 
 function renderSiteAnnouncements() {
     const bar = ensureSiteAnnouncementUI();
-    if (!state.announcements.length) {
+    const visibleAnnouncements = state.announcements.filter((announcement) => !isAnnouncementDismissed(announcement));
+    if (!visibleAnnouncements.length) {
         bar.innerHTML = '';
         bar.style.display = 'none';
         return;
     }
     bar.style.display = 'block';
-    bar.innerHTML = state.announcements.slice(0, 2).map((announcement) => `
-        <a class="site-announcement-item" href="${escapeHtml(announcement.link || '#')}" ${announcement.link ? '' : 'onclick="return false;"'}>
-            <span class="site-announcement-icon"><i class="ri-megaphone-line"></i></span>
-            <span>${escapeHtml(announcement.message || '')}</span>
-        </a>
+    bar.innerHTML = visibleAnnouncements.slice(0, 2).map((announcement) => `
+        <div class="site-announcement-item-wrap">
+            <a class="site-announcement-item" href="${escapeHtml(announcement.link || '#')}" ${announcement.link ? '' : 'onclick="return false;"'}>
+                <span class="site-announcement-icon"><i class="ri-megaphone-line"></i></span>
+                <span>${escapeHtml(announcement.message || '')}</span>
+            </a>
+            <button class="site-announcement-dismiss" type="button" aria-label="Dismiss announcement" onclick="KatsuCases.dismissAnnouncement(${Number(announcement.id || 0)})">
+                <i class="ri-close-line"></i>
+            </button>
+        </div>
     `).join('');
 }
 
@@ -738,7 +767,7 @@ function renderCommunityUI() {
                     <div class="community-message-avatar-wrap">${buildAvatarMarkup(message, 'community-avatar')}</div>
                     <div class="community-message-main">
                         <div class="community-message-head">
-                            <a class="community-message-author" href="/profile?user=${encodeURIComponent(message.username || '')}">${escapeHtml(message.display_name || message.username || 'KatsuCases')}</a>
+                            ${(message.user_id || message.type !== 'system') ? `<a class="community-message-author" href="/profile?user=${encodeURIComponent(message.username || '')}">${escapeHtml(message.display_name || message.username || 'KatsuCases')}</a>` : `<span class="community-message-author">${escapeHtml(message.display_name || message.username || 'KatsuCases')}</span>`}
                             ${badgeMarkup(message.badges || [])}
                             ${message.region ? `<span class="community-message-region">${escapeHtml(message.region)}</span>` : ''}
                             <span class="community-message-time">${escapeHtml(formatRelativeTime(message.created_at))}</span>
@@ -1083,7 +1112,6 @@ window.KatsuCases = {
     refreshNotifications: loadNotifications,
     markNotificationRead,
     markAllNotificationsRead,
-    logout,
     openModal,
     closeModal,
     debounce,
@@ -1092,6 +1120,7 @@ window.KatsuCases = {
     escapeHtml,
     applyBranding,
     buildAvatarMarkup,
+    dismissAnnouncement,
     ensureCommunityUI,
     ensureSiteAnnouncementUI,
     loadCommunityChat,

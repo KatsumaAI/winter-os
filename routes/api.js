@@ -40,6 +40,16 @@ const BADGE_META = {
     creator: { label: 'CREATOR', className: 'badge-mythical' }
 };
 
+const SYSTEM_IDENTITY = {
+    username: 'KatsuCases',
+    display_name: 'System',
+    avatar_url: 'https://i.pinimg.com/736x/80/6c/2b/806c2b66dcd1c9a559a40083ef301fa6.jpg',
+    region: '',
+    pronouns: '',
+    custom_role: '',
+    badges: []
+};
+
 const POKEMON_CACHE = { fetchedAt: 0, names: [] };
 const POKEMON_CACHE_TTL = 1000 * 60 * 60 * 12;
 
@@ -173,6 +183,23 @@ function serializeBadge(badge) {
     const key = normalizeBadgeKey(badge);
     const meta = BADGE_META[key] || { label: normalizeText(badge).toUpperCase(), className: 'badge-common' };
     return { key, label: meta.label, className: meta.className };
+}
+
+function getSystemIdentity(overrides = {}) {
+    const badges = Array.isArray(overrides.badges) ? overrides.badges : SYSTEM_IDENTITY.badges;
+    return {
+        ...SYSTEM_IDENTITY,
+        ...overrides,
+        display_name: normalizeText(overrides.display_name || SYSTEM_IDENTITY.display_name) || SYSTEM_IDENTITY.display_name,
+        avatar_url: overrides.avatar_url !== undefined ? overrides.avatar_url : SYSTEM_IDENTITY.avatar_url,
+        badges
+    };
+}
+
+function isSystemIdentityPayload(payload = {}) {
+    const username = normalizeText(payload.username || '');
+    const displayName = normalizeText(payload.display_name || '');
+    return !payload.user_id && (username.toLowerCase() === 'katsucases' || displayName.toLowerCase() === 'system' || payload.type === 'system');
 }
 
 function buildUserTagPayload(user) {
@@ -334,6 +361,18 @@ function readCommunityStore() {
     }
     store.announcements = store.announcements.filter((entry) => !entry.expires_at || new Date(entry.expires_at).getTime() > now - 60000).slice(0, 12);
     store.claimDrops = store.claimDrops.slice(0, 60);
+    store.messages = store.messages.map((entry) => {
+        if ((String(entry.username || '').toLowerCase() === 'katsucases' || String(entry.display_name || '').toLowerCase() === 'system') && !entry.user_id) {
+            return {
+                ...entry,
+                username: SYSTEM_IDENTITY.username,
+                display_name: entry.display_name || SYSTEM_IDENTITY.display_name,
+                avatar_url: entry.avatar_url || SYSTEM_IDENTITY.avatar_url,
+                badges: Array.isArray(entry.badges) ? entry.badges : []
+            };
+        }
+        return entry;
+    });
     return store;
 }
 
@@ -350,13 +389,14 @@ function requireAdmin(req, res, next) {
 
 function addCommunityMessage(store, payload) {
     const linkedUser = payload.user_id ? getUserById(payload.user_id) : null;
-    const profile = buildUserTagPayload(linkedUser || payload.user || null);
+    const isSystem = isSystemIdentityPayload(payload) && !linkedUser;
+    const profile = isSystem ? getSystemIdentity(payload) : buildUserTagPayload(linkedUser || payload.user || null);
     const message = {
         id: store.nextMessageId++,
         created_at: new Date().toISOString(),
         type: payload.type || 'user',
         user_id: payload.user_id || linkedUser?.id || null,
-        username: payload.username || linkedUser?.username || 'KatsuCases',
+        username: payload.username || linkedUser?.username || profile.username || 'KatsuCases',
         display_name: payload.display_name || profile.display_name || payload.username || 'KatsuCases',
         is_admin: Boolean(payload.is_admin || (linkedUser && isAdminUserId(linkedUser.id))),
         avatar_url: payload.avatar_url !== undefined ? payload.avatar_url : profile.avatar_url,
@@ -367,6 +407,12 @@ function addCommunityMessage(store, payload) {
         message: String(payload.message || '').trim(),
         meta: payload.meta || null
     };
+    if (isSystem) {
+        message.username = SYSTEM_IDENTITY.username;
+        message.display_name = payload.display_name || SYSTEM_IDENTITY.display_name;
+        message.avatar_url = payload.avatar_url !== undefined ? payload.avatar_url : SYSTEM_IDENTITY.avatar_url;
+        if (!Array.isArray(message.badges)) message.badges = [];
+    }
     store.messages.push(message);
     store.messages = store.messages.slice(-220);
     return message;
@@ -498,11 +544,11 @@ function pickWeightedReplayItem(contents) {
     return pickCaseResult(enriched) || enriched[0] || null;
 }
 
-function buildReplayTrack(contents, winner, slots = 48) {
+function buildReplayTrack(contents, winner, slots = 20) {
     const enriched = safeArray(contents).map((item) => enrichCaseContent(item));
     if (!enriched.length) return { track: [], winnerIndex: 0 };
     const track = [];
-    const winnerIndex = Number.isFinite(Number(winner?.winning_index)) ? Number(winner.winning_index) : Math.max(8, slots - 7);
+    const winnerIndex = Number.isFinite(Number(winner?.winning_index)) ? Number(winner.winning_index) : Math.max(8, slots - 5);
     const teasePool = enriched.slice().sort((a, b) => (RARITY_SCORE[b.rarity] || 0) - (RARITY_SCORE[a.rarity] || 0));
     for (let i = 0; i < slots; i += 1) {
         let item;
@@ -958,9 +1004,15 @@ router.post('/cases/:id/open', isAuthenticated, (req, res) => {
 
         const updatedUser = getUserById(userId);
 
+        const responseResults = results.map((result, index) => {
+            if (index === results.length - 1) return result;
+            const { track, ...rest } = result;
+            return rest;
+        });
+
         res.json({
             success: true,
-            results,
+            results: responseResults,
             newBalance: Number(updatedUser?.balance || 0),
             freeRolls: Number(updatedUser?.free_rolls || 0),
             freeRollsUsed,
@@ -1631,6 +1683,29 @@ router.put('/profile', isAuthenticated, (req, res) => {
     }
 });
 
+function serializeCaseVsPull(pull) {
+    if (!pull) return pull;
+    const { track, ...rest } = pull;
+    return rest;
+}
+
+function serializeCaseVsRoom(room) {
+    if (!room) return room;
+    const rounds = Array.isArray(room.rounds_data) ? room.rounds_data : [];
+    const summary = room.summary ? {
+        ...room.summary,
+        best_pull: room.summary.best_pull ? serializeCaseVsPull(room.summary.best_pull) : room.summary.best_pull
+    } : null;
+    return {
+        ...room,
+        rounds_data: rounds.map((round) => ({
+            ...round,
+            pulls: Array.isArray(round.pulls) ? round.pulls.map(serializeCaseVsPull) : []
+        })),
+        summary
+    };
+}
+
 // Case Vs lobby rooms
 router.get('/casevs/rooms', (req, res) => {
     try {
@@ -1639,7 +1714,7 @@ router.get('/casevs/rooms', (req, res) => {
             .slice()
             .sort((a, b) => String(b.updated_at || b.created_at).localeCompare(String(a.updated_at || a.created_at)))
             .map((room) => ({
-                ...room,
+                ...serializeCaseVsRoom(room),
                 can_join: room.status === 'waiting' && room.players.length === 1
             }));
         res.json({ rooms });
@@ -1657,7 +1732,7 @@ router.get('/casevs/rooms/:id', (req, res) => {
         if (!room) {
             return res.status(404).json({ error: 'Room not found' });
         }
-        res.json({ room });
+        res.json({ room: serializeCaseVsRoom(room) });
     } catch (error) {
         console.error('Case Vs room error:', error);
         res.status(500).json({ error: 'Failed to fetch room' });
@@ -1695,7 +1770,7 @@ router.post('/casevs/rooms', isAuthenticated, (req, res) => {
         };
         store.rooms.unshift(room);
         writeCaseVsStore(store);
-        res.json({ success: true, room });
+        res.json({ success: true, room: serializeCaseVsRoom(room) });
     } catch (error) {
         console.error('Case Vs create error:', error);
         res.status(500).json({ error: 'Failed to create room' });
@@ -1800,7 +1875,7 @@ router.post('/casevs/rooms/:id/join', isAuthenticated, (req, res) => {
         notifyUser(playerB.user_id, 'casevs_finished', 'Case Vs finished', `${room.winner_username} won room #${room.id}${winnerUserId === Number(playerB.user_id) ? ` and banked $${formatAmount(totalPot)}.` : '.'}`, '/casevs', { roomId: room.id, pot_amount: totalPot });
 
         writeCaseVsStore(store);
-        res.json({ success: true, room });
+        res.json({ success: true, room: serializeCaseVsRoom(room) });
     } catch (error) {
         console.error('Case Vs join error:', error);
         res.status(500).json({ error: 'Failed to join room' });

@@ -300,14 +300,15 @@ function updateRevealContent(revealElement, results) {
             </div>
             ${finalResult.seed ? `<div class="opening-seed">Replay seed: ${finalResult.seed}</div>` : ''}
             ${isMulti ? `
-                <div class="multi-roll-summary" style="margin-top:20px;">
+                <div class="multi-roll-summary">
                     ${results.map((item, index) => `
-                        <div class="multi-roll-chip rarity-glow-${item.rarity}" style="align-items:flex-start;">
-                            ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:44px; height:44px;' })}
+                        <div class="multi-roll-chip rarity-glow-${item.rarity}">
+                            <div class="multi-roll-chip-order">#${index + 1}</div>
+                            ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:56px; height:56px;' })}
                             <div class="multi-roll-chip-meta">
-                                <div class="multi-roll-chip-name">Roll ${index + 1} · ${item.pokemon_name}</div>
+                                <div class="multi-roll-chip-name">${item.pokemon_name}</div>
                                 <div class="multi-roll-chip-value">${KatsuCases.formatCurrency(item.estimated_value || 0)} · 1 in ${KatsuCases.formatNumber(item.odds || 0)}</div>
-                                ${item.seed ? `<div class="opening-seed" style="margin-top:8px; font-size:11px;">${item.seed}</div>` : ''}
+                                ${item.seed ? `<div class="opening-seed">${item.seed}</div>` : ''}
                             </div>
                         </div>
                     `).join('')}

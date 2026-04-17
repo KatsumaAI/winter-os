@@ -759,6 +759,12 @@ h5 {
     backdrop-filter: blur(18px);
 }
 
+.site-announcement-item-wrap {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
 .site-announcement-item {
     display: flex;
     align-items: center;
@@ -767,7 +773,19 @@ h5 {
     padding: 10px 18px;
     color: var(--text-primary);
     text-decoration: none;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    flex: 1;
+}
+
+.site-announcement-dismiss {
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    width: 44px;
+    cursor: pointer;
+}
+
+.site-announcement-dismiss:hover {
+    color: var(--text-primary);
 }
 
 .site-announcement-icon {

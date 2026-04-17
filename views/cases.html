@@ -117,7 +117,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+                <div class="case-detail-grid">
                     <div>
                         <div class="case-preview" style="background: var(--bg-tertiary); border-radius: 16px; padding: 48px; text-align: center; margin-bottom: 24px;">
                             <i class="ri-treasure-map-line" style="font-size: 80px; color: var(--accent-primary);"></i>
@@ -357,8 +357,8 @@
                 
                 // Render sample contents
                 const contentsPreview = document.getElementById('caseContentsPreview');
-                const sampleItems = Array.from(new Map(data.contents.slice(0, 24).map((item) => [`${item.pokemon_name}-${item.rarity}-${item.is_shiny}-${item.odds}`, item])).values());
-                contentsPreview.innerHTML = sampleItems.map(item => `
+                const allItems = Array.isArray(data.contents) ? data.contents : [];
+                contentsPreview.innerHTML = allItems.map(item => `
                     <div style="display: flex; align-items: center; gap: 12px; padding: 8px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 8px;">
                         ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width: 40px; height: 40px; image-rendering: pixelated;' })}
                         <div style="flex: 1;">
@@ -381,6 +381,10 @@
 
             currentOpeningAmount = Math.max(1, Math.min(3, Number(amount) || 1));
             const totalCost = currentCase.price * currentOpeningAmount;
+            const openingMeta = document.getElementById('openingCaseMeta');
+            if (openingMeta && currentCase) {
+                openingMeta.textContent = `${KatsuCases.formatCurrency(totalCost)} total · ${currentOpeningAmount} roll${currentOpeningAmount > 1 ? 's' : ''} · ${currentCaseContents.length} drops`;
+            }
             if (KatsuCases.state.user.balance < totalCost) {
                 KatsuCases.showToast('Insufficient balance', 'error');
                 return;
@@ -414,7 +418,9 @@
                     document.getElementById('rewardReveal')
                 );
 
-                loadCases(document.querySelector('#categoryPills .pill.active')?.dataset.filter || 'all');
+                openingBusy = false;
+                loadCases(document.querySelector('#categoryPills .pill.active')?.dataset.filter || 'all').catch(() => undefined);
+                return;
             } catch (error) {
                 KatsuCases.showToast(error.message || 'Failed to open case', 'error');
                 KatsuCases.closeModal('opening-modal');
