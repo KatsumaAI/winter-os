@@ -1,0 +1,12 @@
+{
+  "1D52nxz7DlBIdBC8TJERbf7_efuMTbEw": {
+    "cookie": {
+      "originalMaxAge": 604800000,
+      "expires": "2026-04-23T23:32:32.283Z",
+      "secure": false,
+      "httpOnly": true,
+      "path": "/"
+    },
+    "userId": 1
+  }
+}

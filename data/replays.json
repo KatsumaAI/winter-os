@@ -1,0 +1,468 @@
+{
+  "nextId": 2,
+  "replays": [
+    {
+      "id": 1,
+      "created_at": "2026-04-16T23:32:32.277Z",
+      "type": "case_open",
+      "room_id": null,
+      "opening_id": 1,
+      "user_id": 1,
+      "username": "Admin",
+      "case_id": 1,
+      "case_name": "Kanto Starter Case",
+      "seed": "mo246m2v-8xx624gd-1",
+      "winning_index": 41,
+      "track": [
+        {
+          "pokemon_name": "Caterpie",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/caterpie.gif",
+          "is_shiny": 0,
+          "odds": 8,
+          "estimated_value": 8.19
+        },
+        {
+          "pokemon_name": "Weedle",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/weedle.gif",
+          "is_shiny": 0,
+          "odds": 10,
+          "estimated_value": 8.98
+        },
+        {
+          "pokemon_name": "Charmander",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/charmander.gif",
+          "is_shiny": 0,
+          "odds": 6,
+          "estimated_value": 7.23
+        },
+        {
+          "pokemon_name": "Bulbasaur",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/bulbasaur.gif",
+          "is_shiny": 0,
+          "odds": 6,
+          "estimated_value": 7.23
+        },
+        {
+          "pokemon_name": "Rattata",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/rattata.gif",
+          "is_shiny": 0,
+          "odds": 10,
+          "estimated_value": 8.98
+        },
+        {
+          "pokemon_name": "Weedle",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/weedle.gif",
+          "is_shiny": 0,
+          "odds": 10,
+          "estimated_value": 8.98
+        },
+        {
+          "pokemon_name": "Bulbasaur",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/bulbasaur.gif",
+          "is_shiny": 0,
+          "odds": 6,
+          "estimated_value": 7.23
+        },
+        {
+          "pokemon_name": "Rattata",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/rattata.gif",
+          "is_shiny": 0,
+          "odds": 10,
+          "estimated_value": 8.98
+        },
+        {
+          "pokemon_name": "Ekans",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/ekans.gif",
+          "is_shiny": 0,
+          "odds": 7,
+          "estimated_value": 7.74
+        },
+        {
+          "pokemon_name": "Caterpie",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/caterpie.gif",
+          "is_shiny": 0,
+          "odds": 8,
+          "estimated_value": 8.19
+        },
+        {
+          "pokemon_name": "Pikachu",
+          "pokemon_form": null,
+          "rarity": "uncommon",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/pikachu.gif",
+          "is_shiny": 0,
+          "odds": 25,
+          "estimated_value": 18.44
+        },
+        {
+          "pokemon_name": "Rattata",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/rattata.gif",
+          "is_shiny": 0,
+          "odds": 8,
+          "estimated_value": 8.19
+        },
+        {
+          "pokemon_name": "Rattata",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/rattata.gif",
+          "is_shiny": 0,
+          "odds": 8,
+          "estimated_value": 8.19
+        },
+        {
+          "pokemon_name": "Rattata",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/rattata.gif",
+          "is_shiny": 0,
+          "odds": 10,
+          "estimated_value": 8.98
+        },
+        {
+          "pokemon_name": "Bulbasaur",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/bulbasaur.gif",
+          "is_shiny": 0,
+          "odds": 6,
+          "estimated_value": 7.23
+        },
+        {
+          "pokemon_name": "Ekans",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/ekans.gif",
+          "is_shiny": 0,
+          "odds": 7,
+          "estimated_value": 7.74
+        },
+        {
+          "pokemon_name": "Bulbasaur",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/bulbasaur.gif",
+          "is_shiny": 0,
+          "odds": 6,
+          "estimated_value": 7.23
+        },
+        {
+          "pokemon_name": "Gengar",
+          "pokemon_form": null,
+          "rarity": "rare",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/gengar.gif",
+          "is_shiny": 0,
+          "odds": 120,
+          "estimated_value": 56.12
+        },
+        {
+          "pokemon_name": "Gastly",
+          "pokemon_form": null,
+          "rarity": "uncommon",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/gastly.gif",
+          "is_shiny": 1,
+          "odds": 32,
+          "estimated_value": 23.63
+        },
+        {
+          "pokemon_name": "Weedle",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/weedle.gif",
+          "is_shiny": 0,
+          "odds": 10,
+          "estimated_value": 8.98
+        },
+        {
+          "pokemon_name": "Vulpix",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/vulpix.gif",
+          "is_shiny": 0,
+          "odds": 7,
+          "estimated_value": 7.74
+        },
+        {
+          "pokemon_name": "Rattata",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/rattata.gif",
+          "is_shiny": 0,
+          "odds": 10,
+          "estimated_value": 8.98
+        },
+        {
+          "pokemon_name": "Caterpie",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/caterpie.gif",
+          "is_shiny": 0,
+          "odds": 8,
+          "estimated_value": 8.19
+        },
+        {
+          "pokemon_name": "Vulpix",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/vulpix.gif",
+          "is_shiny": 0,
+          "odds": 5,
+          "estimated_value": 6.64
+        },
+        {
+          "pokemon_name": "Rattata",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/rattata.gif",
+          "is_shiny": 0,
+          "odds": 8,
+          "estimated_value": 8.19
+        },
+        {
+          "pokemon_name": "Vulpix",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/vulpix.gif",
+          "is_shiny": 0,
+          "odds": 7,
+          "estimated_value": 7.74
+        },
+        {
+          "pokemon_name": "Weedle",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/weedle.gif",
+          "is_shiny": 0,
+          "odds": 10,
+          "estimated_value": 8.98
+        },
+        {
+          "pokemon_name": "Weedle",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/weedle.gif",
+          "is_shiny": 0,
+          "odds": 10,
+          "estimated_value": 8.98
+        },
+        {
+          "pokemon_name": "Caterpie",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/caterpie.gif",
+          "is_shiny": 0,
+          "odds": 8,
+          "estimated_value": 8.19
+        },
+        {
+          "pokemon_name": "Sandshrew",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/sandshrew.gif",
+          "is_shiny": 0,
+          "odds": 8,
+          "estimated_value": 8.19
+        },
+        {
+          "pokemon_name": "Caterpie",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/caterpie.gif",
+          "is_shiny": 0,
+          "odds": 8,
+          "estimated_value": 8.19
+        },
+        {
+          "pokemon_name": "Bulbasaur",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/bulbasaur.gif",
+          "is_shiny": 0,
+          "odds": 8,
+          "estimated_value": 8.19
+        },
+        {
+          "pokemon_name": "Togepi",
+          "pokemon_form": null,
+          "rarity": "uncommon",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/togepi.gif",
+          "is_shiny": 0,
+          "odds": 40,
+          "estimated_value": 21.51
+        },
+        {
+          "pokemon_name": "Bulbasaur",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/bulbasaur.gif",
+          "is_shiny": 0,
+          "odds": 6,
+          "estimated_value": 7.23
+        },
+        {
+          "pokemon_name": "Ekans",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/ekans.gif",
+          "is_shiny": 0,
+          "odds": 7,
+          "estimated_value": 7.74
+        },
+        {
+          "pokemon_name": "Weedle",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/weedle.gif",
+          "is_shiny": 0,
+          "odds": 8,
+          "estimated_value": 8.19
+        },
+        {
+          "pokemon_name": "Jigglypuff",
+          "pokemon_form": null,
+          "rarity": "uncommon",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/jigglypuff.gif",
+          "is_shiny": 0,
+          "odds": 30,
+          "estimated_value": 19.6
+        },
+        {
+          "pokemon_name": "Bulbasaur",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/bulbasaur.gif",
+          "is_shiny": 0,
+          "odds": 6,
+          "estimated_value": 7.23
+        },
+        {
+          "pokemon_name": "Weedle",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/weedle.gif",
+          "is_shiny": 0,
+          "odds": 10,
+          "estimated_value": 8.98
+        },
+        {
+          "pokemon_name": "Sandshrew",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/sandshrew.gif",
+          "is_shiny": 0,
+          "odds": 8,
+          "estimated_value": 8.19
+        },
+        {
+          "pokemon_name": "Bulbasaur",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/bulbasaur.gif",
+          "is_shiny": 0,
+          "odds": 6,
+          "estimated_value": 7.23
+        },
+        {
+          "pokemon_name": "Vulpix",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/vulpix.gif",
+          "is_shiny": 0,
+          "odds": 5,
+          "estimated_value": 6.64
+        },
+        {
+          "pokemon_name": "Sandshrew",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/sandshrew.gif",
+          "is_shiny": 0,
+          "odds": 8,
+          "estimated_value": 8.19
+        },
+        {
+          "pokemon_name": "Caterpie",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/caterpie.gif",
+          "is_shiny": 0,
+          "odds": 8,
+          "estimated_value": 8.19
+        },
+        {
+          "pokemon_name": "Rattata",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/rattata.gif",
+          "is_shiny": 0,
+          "odds": 10,
+          "estimated_value": 8.98
+        },
+        {
+          "pokemon_name": "Bulbasaur",
+          "pokemon_form": null,
+          "rarity": "common",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/bulbasaur.gif",
+          "is_shiny": 0,
+          "odds": 8,
+          "estimated_value": 8.19
+        },
+        {
+          "pokemon_name": "Pikachu",
+          "pokemon_form": null,
+          "rarity": "uncommon",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/pikachu.gif",
+          "is_shiny": 0,
+          "odds": 25,
+          "estimated_value": 18.44
+        },
+        {
+          "pokemon_name": "Geodude",
+          "pokemon_form": null,
+          "rarity": "uncommon",
+          "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/geodude.gif",
+          "is_shiny": 0,
+          "odds": 25,
+          "estimated_value": 18.44
+        }
+      ],
+      "result": {
+        "inventoryId": 1,
+        "openingId": 1,
+        "case_id": 1,
+        "case_name": "Kanto Starter Case",
+        "seed": "mo246m2v-8xx624gd-1",
+        "pokemon_id": 37,
+        "pokemon_name": "Vulpix",
+        "pokemon_form": null,
+        "rarity": "common",
+        "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/vulpix.gif",
+        "is_shiny": 0,
+        "odds": 5,
+        "estimated_value": 6.64,
+        "winning_index": 41
+      }
+    }
+  ]
+}
