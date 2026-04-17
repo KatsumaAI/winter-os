@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace - KatsuCases</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-inner">
+                <a href="/" class="logo">
+                    <div class="logo-icon"><i class="ri-gamepad-line"></i></div>
+                    <span>KatsuCases</span>
+                </a>
+                
+                <nav class="nav">
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/cases" class="nav-link">Cases</a>
+                    <a href="/marketplace" class="nav-link active">Marketplace</a>
+                    <a href="/trading" class="nav-link">Trading</a>
+                    <a href="/livepulls" class="nav-link">Live Pulls</a>
+                    <a href="/guide" class="nav-link">Info</a>
+                </nav>
+                
+                <div class="header-actions">
+                    <div class="balance-display">
+                        <i class="ri-wallet-3-line"></i>
+                        <span class="balance-value">$0.00</span>
+                    </div>
+                    <div class="auth-buttons">
+                        <a href="/signin" class="btn btn-ghost">Sign In</a>
+                        <a href="/signup" class="btn btn-primary">Sign Up</a>
+                    </div>
+                    <div class="user-area" style="display: none;">
+                        <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
+                        <div class="user-menu">
+                            <div class="user-menu-trigger">
+                                <div class="user-avatar"><span class="user-initial">U</span></div>
+                                <span class="user-name">Username</span>
+                            </div>
+                            <div class="user-menu-dropdown">
+                                <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                                <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                                <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <section class="cases-hero section-sm">
+                <div class="container">
+                    <div class="section-title">
+                        <h1>Marketplace</h1>
+                        <p>Buy and sell Pokémon items directly with other traders</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="section-sm">
+                <div class="container">
+                    <div class="marketplace-header">
+                        <div class="marketplace-search search-input">
+                            <i class="ri-search-line"></i>
+                            <input type="text" class="form-input" placeholder="Search Pokémon..." id="searchInput">
+                        </div>
+                        
+                        <div class="marketplace-filters">
+                            <div class="pills" id="rarityPills">
+                                <button class="pill active" data-filter="all">All</button>
+                                <button class="pill" data-filter="common">Common</button>
+                                <button class="pill" data-filter="uncommon">Uncommon</button>
+                                <button class="pill" data-filter="rare">Rare</button>
+                                <button class="pill" data-filter="epic">Epic</button>
+                                <button class="pill" data-filter="legendary">Legendary</button>
+                                <button class="pill" data-filter="mythical">Mythical</button>
+                            </div>
+                            
+                            <select class="form-input form-select marketplace-sort" id="sortSelect">
+                                <option value="recent">Most Recent</option>
+                                <option value="price_low">Price: Low to High</option>
+                                <option value="price_high">Price: High to Low</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="items-grid" id="itemsGrid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-bottom" style="border-top: none; padding-top: 0;">
+                    <p>&copy; 2024 KatsuCases. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/animations.js"></script>
+    <script>
+        let itemsData = [];
+        
+        async function loadMarketplace() {
+            try {
+                const data = await KatsuCases.api.get('/api/marketplace');
+                itemsData = data.items || [];
+                renderItems(itemsData);
+            } catch (error) {
+                console.error('Failed to load marketplace:', error);
+                KatsuCases.showToast('Failed to load marketplace', 'error');
+            }
+        }
+        
+        function renderItems(items) {
+            const grid = document.getElementById('itemsGrid');
+            
+            if (items.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <i class="ri-shopping-bag-line"></i>
+                        <h3>No items listed</h3>
+                        <p>Be the first to list an item!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = items.map(item => `
+                <div class="card item-card rarity-glow-${item.rarity}">
+                    <div class="item-card-sprite">
+                        ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name })}
+                    </div>
+                    <div class="card-body">
+                        <h4 class="item-card-name">${item.pokemon_name}</h4>
+                        ${item.pokemon_form ? `<p class="item-card-form">${item.pokemon_form}</p>` : ''}
+                        ${item.is_shiny ? `<span class="badge badge-legendary" style="font-size: 10px;">SHINY</span>` : ''}
+                        <span class="badge badge-${item.rarity}" style="margin-left: 4px;">${item.rarity}</span>
+                        <div style="margin-top: 12px;">
+                            <div class="item-card-price">${KatsuCases.formatCurrency(item.price)}</div>
+                            <div class="item-card-seller">by ${item.seller_username}</div>
+                        </div>
+                        ${KatsuCases.state.user && KatsuCases.state.user.id !== item.seller_id ? `
+                            <button class="btn btn-primary btn-sm" style="width: 100%; margin-top: 12px;" onclick="buyItem(${item.id})">
+                                <i class="ri-shopping-cart-line"></i> Buy Now
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function buyItem(itemId) {
+            if (!KatsuCases.state.user) {
+                KatsuCases.showToast('Please sign in to purchase', 'error');
+                return;
+            }
+            
+            try {
+                await KatsuCases.api.post(`/api/marketplace/${itemId}/buy`);
+                KatsuCases.showToast('Purchase successful!', 'success');
+                
+                // Update balance
+                const user = await KatsuCases.api.get('/api/auth/me');
+                KatsuCases.updateUserUI(user.user);
+                
+                // Refresh marketplace
+                await loadMarketplace();
+                await KatsuCases.refreshNotifications({ silent: true });
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Purchase failed', 'error');
+            }
+        }
+        
+        function filterItems(rarity, search, sort) {
+            let filtered = [...itemsData];
+            
+            if (rarity !== 'all') {
+                filtered = filtered.filter(i => i.rarity === rarity);
+            }
+            
+            if (search) {
+                const searchLower = search.toLowerCase();
+                filtered = filtered.filter(i => 
+                    i.pokemon_name.toLowerCase().includes(searchLower)
+                );
+            }
+            
+            switch (sort) {
+                case 'price_low':
+                    filtered.sort((a, b) => a.price - b.price);
+                    break;
+                case 'price_high':
+                    filtered.sort((a, b) => b.price - a.price);
+                    break;
+                default:
+                    filtered.sort((a, b) => new Date(b.listed_at) - new Date(a.listed_at));
+            }
+            
+            renderItems(filtered);
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await KatsuCases.checkAuth();
+            await loadMarketplace();
+            
+            // Search
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', KatsuCases.debounce((e) => {
+                const activeRarity = document.querySelector('#rarityPills .pill.active')?.dataset.filter || 'all';
+                const sort = document.getElementById('sortSelect').value;
+                filterItems(activeRarity, e.target.value, sort);
+            }, 300));
+            
+            // Rarity filter
+            document.querySelectorAll('#rarityPills .pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('#rarityPills .pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    const sort = document.getElementById('sortSelect').value;
+                    filterItems(pill.dataset.filter, searchInput.value, sort);
+                });
+            });
+            
+            // Sort
+            document.getElementById('sortSelect').addEventListener('change', (e) => {
+                const activeRarity = document.querySelector('#rarityPills .pill.active')?.dataset.filter || 'all';
+                filterItems(activeRarity, searchInput.value, e.target.value);
+            });
+        });
+    </script>
+</body>
+</html>

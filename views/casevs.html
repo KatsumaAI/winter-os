@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Vs - KatsuCases</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body>
+    <div class="page-wrapper">
+        <header class="header">
+            <div class="header-inner">
+                <a href="/" class="logo"><span>KatsuCases</span></a>
+                <nav class="nav">
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/cases" class="nav-link">Cases</a>
+                    <a href="/marketplace" class="nav-link">Marketplace</a>
+                    <a href="/trading" class="nav-link">Trading</a>
+                    <a href="/livepulls" class="nav-link">Live Pulls</a>
+                    <a href="/casevs" class="nav-link active">Case Vs</a>
+                    <a href="/guide" class="nav-link">Info</a>
+                </nav>
+                <div class="header-actions">
+                    <div class="balance-display">
+                        <i class="ri-wallet-3-line"></i>
+                        <span class="balance-value">$0.00</span>
+                    </div>
+                    <div class="auth-buttons">
+                        <a href="/signin" class="btn btn-ghost">Sign In</a>
+                        <a href="/signup" class="btn btn-primary">Sign Up</a>
+                    </div>
+                    <div class="user-area" style="display:none;">
+                        <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
+                        <div class="user-menu">
+                            <div class="user-menu-trigger">
+                                <div class="user-avatar"><span class="user-initial">U</span></div>
+                                <span class="user-name">Username</span>
+                            </div>
+                            <div class="user-menu-dropdown">
+                                <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                                <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                                <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section class="cases-hero section-sm">
+                <div class="container">
+                    <div class="section-title">
+                        <h1>Case Vs</h1>
+                        <p>Create rooms, watch battles unfold, and inspect who won each round.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section-sm">
+                <div class="container casevs-layout">
+                    <div>
+                        <div class="trade-compose-card" id="caseVsCreateCard">
+                            <div class="live-pull-head">
+                                <div>
+                                    <h3 style="margin-bottom:6px;">Create a Room</h3>
+                                    <p style="color:var(--text-secondary);">Choose a case, pick up to 3 rounds, then wait for another player to join.</p>
+                                </div>
+                                <span class="badge badge-epic">1v1</span>
+                            </div>
+                            <div style="display:grid; grid-template-columns: 1fr 160px auto; gap:12px; margin-top:18px;">
+                                <select id="caseSelect" class="select"><option value="">Select a case</option></select>
+                                <select id="roundSelect" class="select">
+                                    <option value="1">1 Round</option>
+                                    <option value="2">2 Rounds</option>
+                                    <option value="3">3 Rounds</option>
+                                </select>
+                                <button class="btn btn-primary" id="createRoomBtn"><i class="ri-add-line"></i> Create</button>
+                            </div>
+                            <p style="font-size:12px; color:var(--text-muted); margin-top:10px;">Players keep the Pokémon they pull. The room winner is decided by round wins, then by the best pull if tied.</p>
+                        </div>
+
+                        <div class="casevs-room-list" id="roomsList"></div>
+                    </div>
+
+                    <aside class="casevs-sidebar-card" id="roomViewer">
+                        <h3 style="margin-bottom:8px;">Room Viewer</h3>
+                        <p style="color:var(--text-secondary); margin-bottom:18px;">Open a room to spectate the battle, inspect seeds, and see the winner.</p>
+                        <div class="empty-state" style="padding:32px 16px;">
+                            <i class="ri-sword-line"></i>
+                            <h3>No room selected</h3>
+                            <p>Pick a room from the list to spectate what is going on.</p>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        let roomsData = [];
+        let casesData = [];
+
+        async function loadCases() {
+            const data = await KatsuCases.api.get('/api/cases');
+            casesData = Array.isArray(data.cases) ? data.cases : [];
+            const select = document.getElementById('caseSelect');
+            select.innerHTML = '<option value="">Select a case</option>' + casesData.map((item) => `
+                <option value="${item.id}">${KatsuCases.escapeHtml(item.name)} · ${KatsuCases.formatCurrency(item.price)}</option>
+            `).join('');
+        }
+
+        async function loadRooms() {
+            try {
+                const data = await KatsuCases.api.get('/api/casevs/rooms');
+                roomsData = Array.isArray(data.rooms) ? data.rooms : [];
+                renderRooms();
+            } catch (error) {
+                console.error('Failed to load rooms:', error);
+                KatsuCases.showToast('Failed to load Case Vs rooms', 'error');
+            }
+        }
+
+        function renderRooms() {
+            const list = document.getElementById('roomsList');
+            if (!roomsData.length) {
+                list.innerHTML = `
+                    <div class="casevs-room-card empty-state">
+                        <i class="ri-door-open-line"></i>
+                        <h3>No rooms yet</h3>
+                        <p>Create the first room and let someone challenge you.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = roomsData.map((room) => {
+                const playerA = room.players[0];
+                const playerB = room.players[1];
+                return `
+                    <article class="casevs-room-card">
+                        <div class="casevs-room-head">
+                            <div>
+                                <div style="font-weight:700; font-size:18px;">${KatsuCases.escapeHtml(room.case_name)}</div>
+                                <div style="color:var(--text-secondary); margin-top:6px;">Room #${room.id} · ${room.rounds} round${room.rounds > 1 ? 's' : ''} · ${KatsuCases.formatCurrency(room.case_price)} each</div>
+                            </div>
+                            <span class="badge badge-${room.status === 'finished' ? 'legendary' : room.status === 'waiting' ? 'common' : 'epic'}">${KatsuCases.escapeHtml(room.status)}</span>
+                        </div>
+                        <div class="casevs-player-row">
+                            <div class="casevs-player-pill">
+                                <div style="font-weight:600;">${playerA?.username ? `<a href="/profile?user=${encodeURIComponent(playerA.username)}">${KatsuCases.escapeHtml(playerA.username)}</a>` : 'Waiting'}</div>
+                                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Creator</div>
+                            </div>
+                            <div class="casevs-vs-badge">VS</div>
+                            <div class="casevs-player-pill">
+                                <div style="font-weight:600;">${playerB?.username ? `<a href="/profile?user=${encodeURIComponent(playerB.username)}">${KatsuCases.escapeHtml(playerB.username)}</a>` : 'Open Slot'}</div>
+                                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${playerB ? 'Joined' : 'Waiting'}</div>
+                            </div>
+                        </div>
+                        ${room.winner_username ? `<div style="margin-top:14px; color:var(--text-secondary);">Winner: <strong style="color:var(--text-primary);">${KatsuCases.escapeHtml(room.winner_username)}</strong>${room.summary?.pot_amount ? ` · Pot ${KatsuCases.formatCurrency(room.summary.pot_amount)}` : ''}</div>` : ''}
+                        <div class="live-pull-actions" style="margin-top:16px;">
+                            <button class="btn btn-ghost" onclick="viewRoom(${room.id})"><i class="ri-eye-line"></i> Spectate</button>
+                            ${room.can_join && KatsuCases.state.user ? `<button class="btn btn-primary" onclick="joinRoom(${room.id})"><i class="ri-login-box-line"></i> Join Room</button>` : ''}
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        async function createRoom() {
+            if (!KatsuCases.state.user) {
+                KatsuCases.showToast('Please sign in to create a room', 'error');
+                window.location.href = '/signin';
+                return;
+            }
+            const caseId = Number(document.getElementById('caseSelect').value);
+            const rounds = Number(document.getElementById('roundSelect').value);
+            if (!caseId) {
+                KatsuCases.showToast('Choose a case first', 'error');
+                return;
+            }
+            try {
+                const data = await KatsuCases.api.post('/api/casevs/rooms', { caseId, rounds });
+                KatsuCases.showToast('Room created', 'success');
+                await loadRooms();
+                viewRoom(data.room.id);
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to create room', 'error');
+            }
+        }
+
+        async function joinRoom(roomId) {
+            try {
+                const data = await KatsuCases.api.post(`/api/casevs/rooms/${roomId}/join`, {});
+                KatsuCases.showToast('Battle completed', 'success');
+                if (KatsuCases.state.user) {
+                    await KatsuCases.checkAuth();
+                    await KatsuCases.refreshNotifications({ silent: true });
+                }
+                await loadRooms();
+                renderRoomViewer(data.room);
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to join room', 'error');
+            }
+        }
+
+        async function viewRoom(roomId) {
+            try {
+                const data = await KatsuCases.api.get(`/api/casevs/rooms/${roomId}`);
+                renderRoomViewer(data.room);
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to load room', 'error');
+            }
+        }
+
+        function renderRoomViewer(room) {
+            const viewer = document.getElementById('roomViewer');
+            const players = room.players || [];
+            const summary = room.summary || null;
+            viewer.innerHTML = `
+                <div class="live-pull-head">
+                    <div>
+                        <h3 style="margin-bottom:6px;">${KatsuCases.escapeHtml(room.case_name)}</h3>
+                        <p style="color:var(--text-secondary);">Room #${room.id} · seed ${KatsuCases.escapeHtml(room.seed)}</p>
+                    </div>
+                    <span class="badge badge-${room.status === 'finished' ? 'legendary' : 'epic'}">${KatsuCases.escapeHtml(room.status)}</span>
+                </div>
+                <div class="casevs-player-row" style="margin-top:18px;">
+                    ${players.map((player, index) => `
+                        <div class="casevs-player-pill">
+                            <div style="font-weight:700;"><a href="/profile?user=${encodeURIComponent(player.username)}">${KatsuCases.escapeHtml(player.username)}</a></div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${summary?.wins?.[player.user_id] || 0} round wins</div>
+                        </div>
+                        ${index === 0 ? '<div class="casevs-vs-badge">VS</div>' : ''}
+                    `).join('')}
+                </div>
+                ${room.winner_username ? `<div style="margin-top:18px; padding:14px; border-radius:14px; background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.18);">Winner: <strong>${KatsuCases.escapeHtml(room.winner_username)}</strong>${summary?.pot_amount ? ` · Pot ${KatsuCases.formatCurrency(summary.pot_amount)}` : ''}</div>` : ''}
+                <div class="casevs-rounds">
+                    ${(room.rounds_data || []).map((round) => `
+                        <div class="casevs-round">
+                            <div class="live-pull-head">
+                                <div>
+                                    <strong>Round ${round.round}</strong>
+                                    <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Winner: ${KatsuCases.escapeHtml(round.winner_username)}</div>
+                                </div>
+                            </div>
+                            <div class="casevs-round-pulls">
+                                ${round.pulls.map((pull) => `
+                                    <div class="casevs-round-pull rarity-glow-${pull.rarity}">
+                                        <div style="display:flex; gap:12px; align-items:center;">
+                                            ${KatsuCases.buildSpriteImg({ pokemonName: pull.pokemon_name, isShiny: pull.is_shiny, spriteUrl: pull.sprite_url, alt: pull.pokemon_name, style: 'width:52px; height:52px;' })}
+                                            <div>
+                                                <div style="font-weight:700;"><a href="/profile?user=${encodeURIComponent(pull.username)}">${KatsuCases.escapeHtml(pull.username)}</a></div>
+                                                <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">${KatsuCases.escapeHtml(pull.pokemon_name)}</div>
+                                                <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">${KatsuCases.formatCurrency(pull.estimated_value || 0)} · 1 in ${Number(pull.odds || 0).toLocaleString()} · Seed ${KatsuCases.escapeHtml(pull.seed)}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('') || '<div class="empty-state"><i class="ri-time-line"></i><h3>Waiting for challenger</h3><p>This room has not started yet.</p></div>'}
+                </div>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            KatsuCases.applyBranding();
+            await KatsuCases.checkAuth();
+            await loadCases();
+            await loadRooms();
+            document.getElementById('createRoomBtn').addEventListener('click', createRoom);
+            window.setInterval(loadRooms, 10000);
+        });
+    </script>
+</body>
+</html>

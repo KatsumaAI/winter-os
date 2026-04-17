@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KatsuCases - Owner Console</title>
+    <meta name="description" content="Owner controls for KatsuCases live chat, rain, and site management.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body>
+    <div class="page-wrapper">
+        <header class="header">
+            <div class="header-inner">
+                <a href="/" class="logo">
+                    <div class="logo-icon"><i class="ri-gamepad-line"></i></div>
+                    <span>KatsuCases</span>
+                </a>
+                <nav class="nav">
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/cases" class="nav-link">Cases</a>
+                    <a href="/marketplace" class="nav-link">Marketplace</a>
+                    <a href="/trading" class="nav-link">Trading</a>
+                    <a href="/casevs" class="nav-link">Case Vs</a>
+                    <a href="/livepulls" class="nav-link">Live Pulls</a>
+                    <a href="/admin" class="nav-link active">Admin</a>
+                </nav>
+                <div class="header-actions">
+                    <div class="balance-display">
+                        <i class="ri-wallet-3-line"></i>
+                        <span class="balance-value">$0.00</span>
+                    </div>
+                    <div class="auth-buttons" style="display:flex; gap:8px;">
+                        <a href="/signin" class="btn btn-ghost">Sign In</a>
+                        <a href="/signup" class="btn btn-primary">Sign Up</a>
+                    </div>
+                    <div class="user-area" style="display:none; align-items:center; gap:16px;">
+                        <a href="/inventory" class="btn btn-icon btn-ghost" title="Inventory"><i class="ri-archive-line"></i></a>
+                        <div class="user-menu">
+                            <div class="user-menu-trigger">
+                                <div class="user-avatar"><span class="user-initial">U</span></div>
+                                <span class="user-name" style="font-weight:600;">Username</span>
+                                <i class="ri-arrow-down-s-line"></i>
+                            </div>
+                            <div class="user-menu-dropdown">
+                                <div class="user-menu-header">
+                                    <div class="user-menu-name user-name">Username</div>
+                                    <div class="user-menu-email user-email">user@example.com</div>
+                                </div>
+                                <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                                <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                                <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="mobile-menu-toggle"><i class="ri-menu-line"></i></button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content" style="padding-top:120px;">
+            <section class="hero-section compact-hero">
+                <div class="container">
+                    <div class="hero-grid single-column">
+                        <div class="hero-copy admin-hero-copy">
+                            <div class="hero-eyebrow"><span class="live-dot"></span>Owner Console</div>
+                            <h1>Launch drops, schedule cases, manage roles, and control the live site from one place.</h1>
+                            <p>Only the first account created on this install has owner access by default. Use this page to manage site-wide banners, reward links, custom roles, and scheduled case launches.</p>
+                            <div class="hero-actions">
+                                <span class="badge badge-legendary" id="ownerBadge">Checking access…</span>
+                                <a href="/casevs" class="btn btn-ghost"><i class="ri-eye-line"></i> Watch Rooms</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section-sm">
+                <div class="container">
+                    <div class="stats-grid admin-stats-grid" id="adminStatsGrid">
+                        <div class="stat-card"><div class="stat-label">Users</div><div class="stat-value">--</div></div>
+                        <div class="stat-card"><div class="stat-label">Cases Opened</div><div class="stat-value">--</div></div>
+                        <div class="stat-card"><div class="stat-label">Active Listings</div><div class="stat-value">--</div></div>
+                        <div class="stat-card"><div class="stat-label">Active Rooms</div><div class="stat-value">--</div></div>
+                        <div class="stat-card"><div class="stat-label">Pending Trades</div><div class="stat-value">--</div></div>
+                        <div class="stat-card"><div class="stat-label">Completed Trades</div><div class="stat-value">--</div></div>
+                        <div class="stat-card"><div class="stat-label">Marketplace Volume</div><div class="stat-value">--</div></div>
+                        <div class="stat-card"><div class="stat-label">User Balance Float</div><div class="stat-value">--</div></div>
+                    </div>
+
+                    <div class="admin-grid">
+                        <section class="panel admin-panel">
+                            <div class="panel-head">
+                                <div>
+                                    <h3>Rain Control</h3>
+                                    <p>Create giveaway drops for players who enter in chat.</p>
+                                </div>
+                            </div>
+                            <div id="activeRainCard" class="admin-rain-card empty">No active rain.</div>
+                            <form id="rainForm" class="stack-form">
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="rainTitle">Rain Title</label>
+                                        <input id="rainTitle" name="rainTitle" type="text" class="input" maxlength="60" placeholder="Night Drop">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="rainAmount">Amount</label>
+                                        <input id="rainAmount" name="rainAmount" type="number" step="0.01" min="1" class="input" placeholder="250">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rainDuration">Duration (minutes)</label>
+                                    <input id="rainDuration" name="rainDuration" type="number" min="1" max="120" class="input" value="5">
+                                </div>
+                                <button class="btn btn-primary" type="submit"><i class="ri-drop-line"></i> Launch Rain</button>
+                            </form>
+                        </section>
+
+                        <section class="panel admin-panel">
+                            <div class="panel-head">
+                                <div>
+                                    <h3>Announcement</h3>
+                                    <p>Display a site-wide banner above the website instead of pushing admin messages into chat.</p>
+                                </div>
+                            </div>
+                            <form id="announcementForm" class="stack-form">
+                                <div class="form-group">
+                                    <label for="announcementText">Message</label>
+                                    <textarea id="announcementText" class="textarea" rows="5" maxlength="240" placeholder="A new featured case is dropping in 5 minutes."></textarea>
+                                </div>
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="announcementLink">Link</label>
+                                        <input id="announcementLink" class="input" type="text" placeholder="/cases">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="announcementExpires">Expires (minutes)</label>
+                                        <input id="announcementExpires" class="input" type="number" min="5" max="1440" value="60">
+                                    </div>
+                                </div>
+                                <button class="btn btn-secondary" type="submit"><i class="ri-megaphone-line"></i> Publish Website Banner</button>
+                            </form>
+                        </section>
+                        <section class="panel admin-panel">
+                            <div class="panel-head">
+                                <div>
+                                    <h3>User Balance Tools</h3>
+                                    <p>Search any player and add credits or set their balance directly.</p>
+                                </div>
+                            </div>
+                            <form id="adminBalanceForm" class="stack-form">
+                                <div class="form-group">
+                                    <label for="adminUserSearch">Find user</label>
+                                    <input id="adminUserSearch" class="input" type="text" placeholder="Search username or email">
+                                    <div id="adminUserResults" class="trade-search-results" style="margin-top:10px;"></div>
+                                </div>
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="balanceMode">Mode</label>
+                                        <select id="balanceMode" class="input">
+                                            <option value="add">Add / Remove Amount</option>
+                                            <option value="set">Set Exact Balance</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="balanceAmount">Amount</label>
+                                        <input id="balanceAmount" class="input" type="number" step="0.01" placeholder="50">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="balanceReason">Reason</label>
+                                    <input id="balanceReason" class="input" type="text" maxlength="120" placeholder="Launch bonus">
+                                </div>
+                                <div id="selectedAdminUser" class="admin-rain-card empty">No user selected.</div>
+                                <button class="btn btn-primary" type="submit"><i class="ri-wallet-3-line"></i> Apply Balance Change</button>
+                            </form>
+                        </section>
+                                            <section class="panel admin-panel">
+                            <div class="panel-head">
+                                <div>
+                                    <h3>Role & Badge Tools</h3>
+                                    <p>Assign owner-visible tags, regions, and bonus rolls to any user.</p>
+                                </div>
+                            </div>
+                            <form id="adminRoleForm" class="stack-form">
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="adminBadgeKey">Badge</label>
+                                        <select id="adminBadgeKey" class="input">
+                                            <option value="">No badge change</option>
+                                            <option value="owner">Owner</option>
+                                            <option value="vip">VIP</option>
+                                            <option value="beta">Beta Tester</option>
+                                            <option value="partner">Partner</option>
+                                            <option value="staff">Staff</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="adminCustomRole">Custom Role</label>
+                                        <input id="adminCustomRole" class="input" maxlength="30" placeholder="Creator Club">
+                                    </div>
+                                </div>
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="adminRegion">Region</label>
+                                        <input id="adminRegion" class="input" maxlength="40" placeholder="NA-East">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="adminFreeRolls">Free Rolls</label>
+                                        <input id="adminFreeRolls" class="input" type="number" min="0" value="0">
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" type="submit"><i class="ri-vip-crown-line"></i> Save User Role Data</button>
+                            </form>
+                        </section>
+
+                        <section class="panel admin-panel">
+                            <div class="panel-head">
+                                <div>
+                                    <h3>Create / Schedule Case</h3>
+                                    <p>Build a new case from the owner console and optionally schedule its launch time.</p>
+                                </div>
+                            </div>
+                            <form id="adminCaseForm" class="stack-form">
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="caseName">Case Name</label>
+                                        <input id="caseName" class="input" maxlength="80" placeholder="Midnight Vault">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="casePrice">Case Price</label>
+                                        <input id="casePrice" class="input" type="number" min="1" step="0.01" placeholder="49.99">
+                                    </div>
+                                </div>
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="caseCategory">Category</label>
+                                        <input id="caseCategory" class="input" maxlength="40" placeholder="featured">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="caseLaunchAt">Launch Time</label>
+                                        <input id="caseLaunchAt" class="input" type="datetime-local">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="caseDescription">Description</label>
+                                    <input id="caseDescription" class="input" maxlength="180" placeholder="High-value night drop with tease-heavy odds.">
+                                </div>
+                                <div class="form-group">
+                                    <label for="caseItemsText">Items</label>
+                                    <textarea id="caseItemsText" class="textarea" rows="8" placeholder="Pikachu|rare|250
+Gengar|epic|5000|shiny
+Mewtwo|legendary|1000000"></textarea>
+                                </div>
+                                <button class="btn btn-primary" type="submit"><i class="ri-box-3-line"></i> Create Case</button>
+                            </form>
+                        </section>
+
+                        <section class="panel admin-panel">
+                            <div class="panel-head">
+                                <div>
+                                    <h3>Reward Link Generator</h3>
+                                    <p>Create claimable drops for balance, rolls, badges, or rare Pokémon.</p>
+                                </div>
+                            </div>
+                            <form id="adminClaimForm" class="stack-form">
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="claimTitle">Title</label>
+                                        <input id="claimTitle" class="input" maxlength="60" placeholder="Beta Launch Bonus">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="claimType">Type</label>
+                                        <select id="claimType" class="input">
+                                            <option value="balance">Balance</option>
+                                            <option value="rolls">Free Rolls</option>
+                                            <option value="badge">Badge</option>
+                                            <option value="pokemon">Pokémon</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="claimAmount">Amount / Rolls / Odds</label>
+                                        <input id="claimAmount" class="input" type="number" min="1" value="100">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="claimMax">Max Claims</label>
+                                        <input id="claimMax" class="input" type="number" min="1" value="25">
+                                    </div>
+                                </div>
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="claimExpires">Expires (minutes)</label>
+                                        <input id="claimExpires" class="input" type="number" min="1" value="60">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="claimLockedUserId">Lock to User ID</label>
+                                        <input id="claimLockedUserId" class="input" type="number" min="1" placeholder="Optional user id">
+                                    </div>
+                                </div>
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="claimBadge">Badge</label>
+                                        <select id="claimBadge" class="input">
+                                            <option value="vip">VIP</option>
+                                            <option value="beta">Beta Tester</option>
+                                            <option value="partner">Partner</option>
+                                            <option value="staff">Staff</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="claimPokemonName">Pokémon Name</label>
+                                        <input id="claimPokemonName" class="input" maxlength="60" placeholder="Rayquaza">
+                                    </div>
+                                </div>
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="claimPokemonRarity">Pokémon Rarity</label>
+                                        <select id="claimPokemonRarity" class="input">
+                                            <option value="rare">Rare</option>
+                                            <option value="epic">Epic</option>
+                                            <option value="legendary">Legendary</option>
+                                            <option value="mythical">Mythical</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="claimPokemonShiny">Shiny</label>
+                                        <select id="claimPokemonShiny" class="input">
+                                            <option value="0">No</option>
+                                            <option value="1">Yes</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" type="submit"><i class="ri-links-line"></i> Generate Claim Link</button>
+                                <div id="claimCreateResult" class="admin-rain-card empty">No claim link generated yet.</div>
+                            </form>
+                        </section>
+
+                    </div>
+
+                    <div class="admin-grid lower admin-grid-quad">
+                        <section class="panel admin-panel">
+                            <div class="panel-head"><div><h3>Recent Chat</h3><p>Latest community messages and owner notices.</p></div></div>
+                            <div id="adminRecentMessages" class="admin-feed-list"></div>
+                        </section>
+                        <section class="panel admin-panel">
+                            <div class="panel-head"><div><h3>Rain History</h3><p>Review finished drops and payout totals.</p></div></div>
+                            <div id="adminRainHistory" class="admin-feed-list"></div>
+                        </section>
+                        <section class="panel admin-panel">
+                            <div class="panel-head"><div><h3>Recent Trades</h3><p>See what players are offering and requesting.</p></div></div>
+                            <div id="adminRecentTrades" class="admin-feed-list"></div>
+                        </section>
+                        <section class="panel admin-panel">
+                            <div class="panel-head"><div><h3>Recent Users</h3><p>Newest signups and current balances.</p></div></div>
+                            <div id="adminRecentUsers" class="admin-feed-list"></div>
+                        </section>
+                        <section class="panel admin-panel">
+                            <div class="panel-head"><div><h3>Marketplace Activity</h3><p>Latest listings and sold items.</p></div></div>
+                            <div id="adminRecentListings" class="admin-feed-list"></div>
+                        </section>
+                        <section class="panel admin-panel">
+                            <div class="panel-head"><div><h3>Case Vs Rooms</h3><p>Watch current rooms and finished match results.</p></div></div>
+                            <div id="adminActiveRooms" class="admin-feed-list"></div>
+                        </section>
+                        <section class="panel admin-panel">
+                            <div class="panel-head"><div><h3>Website Announcements</h3><p>Current top-of-site banners visible to players.</p></div></div>
+                            <div id="adminAnnouncements" class="admin-feed-list"></div>
+                        </section>
+                        <section class="panel admin-panel">
+                            <div class="panel-head"><div><h3>Active Claim Links</h3><p>Track currently available balance, roll, badge, and Pokémon drops.</p></div></div>
+                            <div id="adminClaimDrops" class="admin-feed-list"></div>
+                        </section>
+                        <section class="panel admin-panel">
+                            <div class="panel-head"><div><h3>Latest Cases</h3><p>Recently created cases and upcoming launches.</p></div></div>
+                            <div id="adminCases" class="admin-feed-list"></div>
+                        </section>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        let adminSummary = null;
+        let selectedAdminUser = null;
+
+        function countdownLabel(endAt) {
+            if (!endAt) return 'No timer';
+            const diff = new Date(endAt).getTime() - Date.now();
+            if (diff <= 0) return 'Ending now';
+            const totalMinutes = Math.ceil(diff / 60000);
+            if (totalMinutes < 60) return `${totalMinutes}m remaining`;
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            return `${hours}h ${minutes}m remaining`;
+        }
+
+        function renderSummary() {
+            const stats = adminSummary?.stats || {};
+            const statCards = document.querySelectorAll('#adminStatsGrid .stat-card');
+            const values = [
+                stats.totalUsers || 0,
+                stats.totalCasesOpened || 0,
+                stats.activeListings || 0,
+                stats.activeRooms || 0,
+                stats.pendingTrades || 0,
+                stats.completedTrades || 0,
+                KatsuCases.formatCurrency(stats.totalMarketplaceVolume || 0),
+                KatsuCases.formatCurrency(stats.siteBalanceFloat || 0)
+            ];
+            statCards.forEach((card, index) => {
+                const value = card.querySelector('.stat-value');
+                if (value) value.textContent = typeof values[index] === 'string' ? values[index] : KatsuCases.formatNumber(values[index] || 0);
+            });
+
+            const badge = document.getElementById('ownerBadge');
+            badge.textContent = 'Owner Access Active';
+            badge.className = 'badge badge-legendary';
+
+            const activeRain = adminSummary?.activeRain;
+            const activeCard = document.getElementById('activeRainCard');
+            if (activeRain) {
+                activeCard.className = 'admin-rain-card';
+                activeCard.innerHTML = `
+                    <div class="rain-card-top">
+                        <div>
+                            <div class="rain-title">${KatsuCases.escapeHtml(activeRain.title)}</div>
+                            <div class="rain-meta">$${Number(activeRain.amount || 0).toFixed(2)} · ${activeRain.entrant_count || 0} entrants</div>
+                        </div>
+                        <span class="badge badge-uncommon">${KatsuCases.escapeHtml(countdownLabel(activeRain.ends_at))}</span>
+                    </div>
+                    <div class="rain-card-actions">
+                        <button class="btn btn-danger" type="button" onclick="finalizeRain(${activeRain.id})"><i class="ri-stop-circle-line"></i> End Now</button>
+                    </div>
+                `;
+            } else {
+                activeCard.className = 'admin-rain-card empty';
+                activeCard.textContent = 'No active rain.';
+            }
+
+            const messageFeed = document.getElementById('adminRecentMessages');
+            const recentMessages = Array.isArray(adminSummary?.recentMessages) ? adminSummary.recentMessages.slice().reverse() : [];
+            if (!recentMessages.length) {
+                messageFeed.innerHTML = '<div class="admin-feed-empty">No messages yet.</div>';
+            } else {
+                messageFeed.innerHTML = recentMessages.map((message) => `
+                    <div class="admin-feed-item">
+                        <div class="admin-feed-head">
+                            <strong>${KatsuCases.escapeHtml(message.username)}</strong>
+                            <span>${KatsuCases.formatRelativeTime(message.created_at)}</span>
+                        </div>
+                        <div class="admin-feed-body">${KatsuCases.escapeHtml(message.message)}</div>
+                    </div>
+                `).join('');
+            }
+
+            const rainHistory = Array.isArray(adminSummary?.rainHistory) ? adminSummary.rainHistory : [];
+            const historyFeed = document.getElementById('adminRainHistory');
+            if (!rainHistory.length) {
+                historyFeed.innerHTML = '<div class="admin-feed-empty">No finished rain drops yet.</div>';
+            } else {
+                historyFeed.innerHTML = rainHistory.map((rain) => `
+                    <div class="admin-feed-item">
+                        <div class="admin-feed-head">
+                            <strong>${KatsuCases.escapeHtml(rain.title)}</strong>
+                            <span>${KatsuCases.escapeHtml(KatsuCases.formatRelativeTime(rain.ended_at || rain.created_at))}</span>
+                        </div>
+                        <div class="admin-feed-body">Entrants: ${rain.entrant_count || 0} · Paid: $${Number(rain.distributed_amount || 0).toFixed(2)}</div>
+                    </div>
+                `).join('');
+            }
+
+            const recentTrades = Array.isArray(adminSummary?.recentTrades) ? adminSummary.recentTrades : [];
+            document.getElementById('adminRecentTrades').innerHTML = recentTrades.length ? recentTrades.map((trade) => `
+                <div class="admin-feed-item">
+                    <div class="admin-feed-head">
+                        <strong>${KatsuCases.escapeHtml(trade.sender_username)} → ${KatsuCases.escapeHtml(trade.receiver_username)}</strong>
+                        <span>${KatsuCases.escapeHtml(trade.status)}</span>
+                    </div>
+                    <div class="admin-feed-body">Giving ${trade.offerCount || 0} · Wants ${trade.requestCount || 0} · ${KatsuCases.formatRelativeTime(trade.created_at)}</div>
+                </div>
+            `).join('') : '<div class="admin-feed-empty">No trade activity yet.</div>';
+
+            const recentUsers = Array.isArray(adminSummary?.recentUsers) ? adminSummary.recentUsers : [];
+            document.getElementById('adminRecentUsers').innerHTML = recentUsers.length ? recentUsers.map((user) => `
+                <div class="admin-feed-item">
+                    <div class="admin-feed-head">
+                        <strong>${KatsuCases.escapeHtml(user.username)}</strong>
+                        <span>${user.is_admin ? 'OWNER' : KatsuCases.formatRelativeTime(user.created_at)}</span>
+                    </div>
+                    <div class="admin-feed-body">${KatsuCases.escapeHtml(user.email || '')}<br>Balance: ${KatsuCases.formatCurrency(user.balance || 0)}</div>
+                </div>
+            `).join('') : '<div class="admin-feed-empty">No recent signups.</div>';
+
+            const recentListings = Array.isArray(adminSummary?.recentListings) ? adminSummary.recentListings : [];
+            document.getElementById('adminRecentListings').innerHTML = recentListings.length ? recentListings.map((listing) => `
+                <div class="admin-feed-item">
+                    <div class="admin-feed-head">
+                        <strong>${KatsuCases.escapeHtml(listing.pokemon_name)}</strong>
+                        <span>${KatsuCases.escapeHtml(listing.status)}</span>
+                    </div>
+                    <div class="admin-feed-body">${KatsuCases.escapeHtml(listing.seller_username)} · ${KatsuCases.formatCurrency(listing.price || 0)} · ${KatsuCases.escapeHtml(listing.rarity)}</div>
+                </div>
+            `).join('') : '<div class="admin-feed-empty">No listing activity yet.</div>';
+
+            const activeRooms = Array.isArray(adminSummary?.activeRooms) ? adminSummary.activeRooms : [];
+            document.getElementById('adminActiveRooms').innerHTML = activeRooms.length ? activeRooms.map((room) => `
+                <div class="admin-feed-item">
+                    <div class="admin-feed-head">
+                        <strong>Room #${room.id} · ${KatsuCases.escapeHtml(room.case_name)}</strong>
+                        <span>${KatsuCases.escapeHtml(room.status)}</span>
+                    </div>
+                    <div class="admin-feed-body">${(room.players || []).map((player) => KatsuCases.escapeHtml(player.username)).join(' vs ') || 'Waiting'}${room.winner_username ? `<br>Winner: ${KatsuCases.escapeHtml(room.winner_username)}` : ''}</div>
+                </div>
+            `).join('') : '<div class="admin-feed-empty">No rooms yet.</div>';
+
+            const announcements = Array.isArray(adminSummary?.announcements) ? adminSummary.announcements : [];
+            document.getElementById('adminAnnouncements').innerHTML = announcements.length ? announcements.map((announcement) => `
+                <div class="admin-feed-item">
+                    <div class="admin-feed-head">
+                        <strong>${KatsuCases.escapeHtml(announcement.message)}</strong>
+                        <span>${KatsuCases.formatRelativeTime(announcement.created_at)}</span>
+                    </div>
+                    <div class="admin-feed-body">${announcement.link ? `Link: ${KatsuCases.escapeHtml(announcement.link)}` : 'No link'}${announcement.expires_at ? `<br>Expires ${KatsuCases.escapeHtml(countdownLabel(announcement.expires_at))}` : ''}</div>
+                </div>
+            `).join('') : '<div class="admin-feed-empty">No website banners live.</div>';
+
+            const claimDrops = Array.isArray(adminSummary?.claimDrops) ? adminSummary.claimDrops : [];
+            document.getElementById('adminClaimDrops').innerHTML = claimDrops.length ? claimDrops.map((claim) => `
+                <div class="admin-feed-item">
+                    <div class="admin-feed-head">
+                        <strong>${KatsuCases.escapeHtml(claim.title)}</strong>
+                        <span>${KatsuCases.escapeHtml(claim.code || claim.type)}</span>
+                    </div>
+                    <div class="admin-feed-body">${KatsuCases.escapeHtml(claim.type)} · ${Number(claim.claimed_count || 0)}/${Number(claim.max_claims || 1)} used${claim.expires_at ? `<br>Expires ${KatsuCases.escapeHtml(countdownLabel(claim.expires_at))}` : ''}</div>
+                </div>
+            `).join('') : '<div class="admin-feed-empty">No active claim links.</div>';
+
+            const cases = Array.isArray(adminSummary?.cases) ? adminSummary.cases : [];
+            document.getElementById('adminCases').innerHTML = cases.length ? cases.map((siteCase) => `
+                <div class="admin-feed-item">
+                    <div class="admin-feed-head">
+                        <strong>${KatsuCases.escapeHtml(siteCase.name)}</strong>
+                        <span>${KatsuCases.formatCurrency(siteCase.price || 0)}</span>
+                    </div>
+                    <div class="admin-feed-body">${siteCase.launch_at ? `Launches ${new Date(siteCase.launch_at).toLocaleString()}` : 'Live now'} · ${siteCase.category ? KatsuCases.escapeHtml(siteCase.category) : 'uncategorized'} · opened ${KatsuCases.formatNumber(siteCase.times_opened || 0)}x</div>
+                </div>
+            `).join('') : '<div class="admin-feed-empty">No cases created yet.</div>';
+        }
+
+        async function loadAdminSummary() {
+            const data = await KatsuCases.api.get('/api/admin/summary');
+            adminSummary = data;
+            renderSummary();
+        }
+
+        async function finalizeRain(rainId) {
+            try {
+                await KatsuCases.api.post(`/api/admin/rain/${rainId}/finalize`, {});
+                KatsuCases.showToast('Rain ended', 'success');
+                await loadAdminSummary();
+                await KatsuCases.loadCommunityChat(true);
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to end rain', 'error');
+            }
+        }
+
+        async function searchAdminUsers(query = '') {
+            const container = document.getElementById('adminUserResults');
+            const data = await KatsuCases.api.get(`/api/admin/users/search?query=${encodeURIComponent(query)}`);
+            const users = Array.isArray(data.users) ? data.users : [];
+            if (!users.length) {
+                container.innerHTML = '<div class="admin-feed-empty">No matching users.</div>';
+                return;
+            }
+            container.innerHTML = users.map((user) => `
+                <button class="trade-select-item ${selectedAdminUser?.id === user.id ? 'selected' : ''}" type="button" onclick='selectAdminUser(${user.id}, ${JSON.stringify(String(user.username))}, ${JSON.stringify(String(user.email || ""))}, ${Number(user.balance || 0)}, ${JSON.stringify(String(user.display_name || user.username))}, ${JSON.stringify(String(user.custom_role || ""))}, ${JSON.stringify(String(user.region || ""))})'>
+                    <i class="ri-user-line"></i>
+                    <div style="text-align:left;">
+                        <div style="font-weight:600; font-size:13px;">${KatsuCases.escapeHtml(user.display_name || user.username)}</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">@${KatsuCases.escapeHtml(user.username)} · ${KatsuCases.escapeHtml(user.email || '')}${user.region ? ' · ' + KatsuCases.escapeHtml(user.region) : ''}</div>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function selectAdminUser(id, username, email, balance, displayName = '', customRole = '', region = '') {
+            selectedAdminUser = { id, username, email, balance, display_name: displayName || username, custom_role: customRole || '', region: region || '' };
+            document.getElementById('selectedAdminUser').className = 'admin-rain-card';
+            document.getElementById('selectedAdminUser').innerHTML = `<div><strong>${KatsuCases.escapeHtml(displayName || username)}</strong><div class="rain-meta">@${KatsuCases.escapeHtml(username)} · ${KatsuCases.escapeHtml(email || '')}${region ? ' · ' + KatsuCases.escapeHtml(region) : ''} · Current balance ${KatsuCases.formatCurrency(balance || 0)}</div></div>`;
+            document.getElementById('adminCustomRole').value = customRole || '';
+            document.getElementById('adminRegion').value = region || '';
+            searchAdminUsers(document.getElementById('adminUserSearch').value || '');
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            KatsuCases.applyBranding();
+            const user = await KatsuCases.checkAuth();
+            if (!user) {
+                window.location.href = '/signin';
+                return;
+            }
+            if (!user.is_admin) {
+                document.getElementById('ownerBadge').textContent = 'Owner Access Required';
+                KatsuCases.showToast('Only the site owner can open this page', 'error');
+                setTimeout(() => { window.location.href = '/'; }, 1200);
+                return;
+            }
+
+            try {
+                await loadAdminSummary();
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to load owner console', 'error');
+            }
+
+            document.getElementById('rainForm').addEventListener('submit', async (event) => {
+                event.preventDefault();
+                try {
+                    await KatsuCases.api.post('/api/admin/rain', {
+                        title: document.getElementById('rainTitle').value,
+                        amount: Number(document.getElementById('rainAmount').value || 0),
+                        durationMinutes: Number(document.getElementById('rainDuration').value || 5)
+                    });
+                    KatsuCases.showToast('Rain launched', 'success');
+                    event.target.reset();
+                    document.getElementById('rainDuration').value = 5;
+                    await loadAdminSummary();
+                    await KatsuCases.loadCommunityChat(true);
+                } catch (error) {
+                    KatsuCases.showToast(error.message || 'Failed to launch rain', 'error');
+                }
+            });
+
+            document.getElementById('announcementForm').addEventListener('submit', async (event) => {
+                event.preventDefault();
+                try {
+                    await KatsuCases.api.post('/api/admin/announcement', {
+                        message: document.getElementById('announcementText').value,
+                        link: document.getElementById('announcementLink').value,
+                        expires_minutes: Number(document.getElementById('announcementExpires').value || 60)
+                    });
+                    document.getElementById('announcementText').value = '';
+                    document.getElementById('announcementLink').value = '';
+                    document.getElementById('announcementExpires').value = 60;
+                    KatsuCases.showToast('Website banner published', 'success');
+                    await loadAdminSummary();
+                    await KatsuCases.loadCommunityChat(true);
+                } catch (error) {
+                    KatsuCases.showToast(error.message || 'Failed to send announcement', 'error');
+                }
+            });
+
+            document.getElementById('adminUserSearch').addEventListener('input', KatsuCases.debounce((event) => {
+                searchAdminUsers(event.target.value).catch(() => undefined);
+            }, 250));
+
+            document.getElementById('adminBalanceForm').addEventListener('submit', async (event) => {
+                event.preventDefault();
+                if (!selectedAdminUser) {
+                    KatsuCases.showToast('Select a user first', 'error');
+                    return;
+                }
+                try {
+                    const result = await KatsuCases.api.post(`/api/admin/users/${selectedAdminUser.id}/balance`, {
+                        mode: document.getElementById('balanceMode').value,
+                        amount: Number(document.getElementById('balanceAmount').value || 0),
+                        reason: document.getElementById('balanceReason').value
+                    });
+                    selectedAdminUser.balance = result.user.balance;
+                    selectAdminUser(selectedAdminUser.id, selectedAdminUser.username, selectedAdminUser.email, selectedAdminUser.balance);
+                    document.getElementById('balanceAmount').value = '';
+                    document.getElementById('balanceReason').value = '';
+                    KatsuCases.showToast('Balance updated', 'success');
+                    await loadAdminSummary();
+                } catch (error) {
+                    KatsuCases.showToast(error.message || 'Failed to update balance', 'error');
+                }
+            });
+
+
+            document.getElementById('adminRoleForm').addEventListener('submit', async (event) => {
+                event.preventDefault();
+                if (!selectedAdminUser) {
+                    KatsuCases.showToast('Select a user first', 'error');
+                    return;
+                }
+                try {
+                    await KatsuCases.api.post(`/api/admin/users/${selectedAdminUser.id}/roles`, {
+                        badge: document.getElementById('adminBadgeKey').value,
+                        custom_role: document.getElementById('adminCustomRole').value,
+                        region: document.getElementById('adminRegion').value,
+                        free_rolls: Number(document.getElementById('adminFreeRolls').value || 0)
+                    });
+                    KatsuCases.showToast('User role data updated', 'success');
+                    document.getElementById('adminBadgeKey').value = '';
+                    document.getElementById('adminFreeRolls').value = 0;
+                    await loadAdminSummary();
+                } catch (error) {
+                    KatsuCases.showToast(error.message || 'Failed to update user role data', 'error');
+                }
+            });
+
+            document.getElementById('adminCaseForm').addEventListener('submit', async (event) => {
+                event.preventDefault();
+                try {
+                    const data = await KatsuCases.api.post('/api/admin/cases', {
+                        name: document.getElementById('caseName').value,
+                        price: Number(document.getElementById('casePrice').value || 0),
+                        category: document.getElementById('caseCategory').value,
+                        description: document.getElementById('caseDescription').value,
+                        launch_at: document.getElementById('caseLaunchAt').value ? new Date(document.getElementById('caseLaunchAt').value).toISOString() : null,
+                        items_text: document.getElementById('caseItemsText').value
+                    });
+                    KatsuCases.showToast(`Case ${data.case?.launch_at ? 'scheduled' : 'created'}`, 'success');
+                    event.target.reset();
+                    await loadAdminSummary();
+                    await KatsuCases.loadSiteState(true);
+                } catch (error) {
+                    KatsuCases.showToast(error.message || 'Failed to create case', 'error');
+                }
+            });
+
+            document.getElementById('adminClaimForm').addEventListener('submit', async (event) => {
+                event.preventDefault();
+                try {
+                    const claimType = document.getElementById('claimType').value;
+                    const amountValue = Number(document.getElementById('claimAmount').value || 0);
+                    const data = await KatsuCases.api.post('/api/admin/claims', {
+                        title: document.getElementById('claimTitle').value,
+                        type: claimType,
+                        max_claims: Number(document.getElementById('claimMax').value || 1),
+                        expires_minutes: Number(document.getElementById('claimExpires').value || 60),
+                        locked_user_id: Number(document.getElementById('claimLockedUserId').value || 0) || null,
+                        amount: claimType === 'balance' ? amountValue : undefined,
+                        rolls: claimType === 'rolls' ? amountValue : undefined,
+                        badge: claimType === 'badge' ? document.getElementById('claimBadge').value : undefined,
+                        pokemon_name: claimType === 'pokemon' ? document.getElementById('claimPokemonName').value : undefined,
+                        rarity: claimType === 'pokemon' ? document.getElementById('claimPokemonRarity').value : undefined,
+                        is_shiny: claimType === 'pokemon' ? Number(document.getElementById('claimPokemonShiny').value || 0) : undefined,
+                        odds: claimType === 'pokemon' ? amountValue : undefined
+                    });
+                    document.getElementById('claimCreateResult').className = 'admin-rain-card';
+                    document.getElementById('claimCreateResult').innerHTML = `<div><strong>${KatsuCases.escapeHtml(data.claim.title)}</strong><div class="rain-meta">Code ${KatsuCases.escapeHtml(data.claim.code)} · ${KatsuCases.escapeHtml(data.url)}</div></div>`;
+                    KatsuCases.showToast('Claim link created', 'success');
+                    await loadAdminSummary();
+                    await KatsuCases.loadCommunityChat(true);
+                } catch (error) {
+                    KatsuCases.showToast(error.message || 'Failed to create claim link', 'error');
+                }
+            });
+
+            searchAdminUsers('').catch(() => undefined);
+
+            window.setInterval(() => {
+                loadAdminSummary().catch(() => undefined);
+            }, 15000);
+        });
+    </script>
+</body>
+</html>

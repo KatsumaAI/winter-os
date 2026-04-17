@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading - KatsuCases</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body>
+    <div class="page-wrapper">
+        <header class="header">
+            <div class="header-inner">
+                <a href="/" class="logo"><span>KatsuCases</span></a>
+                <nav class="nav">
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/cases" class="nav-link">Cases</a>
+                    <a href="/marketplace" class="nav-link">Marketplace</a>
+                    <a href="/trading" class="nav-link active">Trading</a>
+                    <a href="/livepulls" class="nav-link">Live Pulls</a>
+                    <a href="/casevs" class="nav-link">Case Vs</a>
+                    <a href="/guide" class="nav-link">Info</a>
+                </nav>
+                <div class="header-actions">
+                    <div class="balance-display">
+                        <i class="ri-wallet-3-line"></i>
+                        <span class="balance-value">$0.00</span>
+                    </div>
+                    <div class="auth-buttons">
+                        <a href="/signin" class="btn btn-ghost">Sign In</a>
+                        <a href="/signup" class="btn btn-primary">Sign Up</a>
+                    </div>
+                    <div class="user-area" style="display:none;">
+                        <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
+                        <div class="user-menu">
+                            <div class="user-menu-trigger">
+                                <div class="user-avatar"><span class="user-initial">U</span></div>
+                                <span class="user-name">Username</span>
+                            </div>
+                            <div class="user-menu-dropdown">
+                                <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                                <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                                <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section class="cases-hero section-sm">
+                <div class="container">
+                    <div class="section-title">
+                        <h1>Trading</h1>
+                        <p>Send real offers, add return items on accept, and complete swaps instantly.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section-sm">
+                <div class="container trading-layout">
+                    <div>
+                        <div class="tabs" style="margin-bottom:24px;">
+                            <button class="tab active" data-tab="incoming">Incoming</button>
+                            <button class="tab" data-tab="sent">Sent</button>
+                            <button class="tab" data-tab="history">History</button>
+                        </div>
+                        <div class="trades-list">
+                            <div class="trades-header">
+                                <h4 id="tradesTitle">Incoming Trades</h4>
+                            </div>
+                            <div id="tradesContainer"></div>
+                        </div>
+                    </div>
+
+                    <aside>
+                        <div class="trade-compose-card">
+                            <h4 style="margin-bottom:10px;">Create Trade</h4>
+                            <p style="color:var(--text-secondary); margin-bottom:16px;">Pick a player and choose the items you want to offer. The receiver can add return items before accepting.</p>
+                            <div style="display:grid; gap:12px;">
+                                <input id="tradeUserSearch" class="input" placeholder="Search username or email">
+                                <div id="tradeUserResults" style="display:grid; gap:8px;"></div>
+                                <div class="profile-section" style="padding:12px;">
+                                    <div class="live-pull-head" style="margin-bottom:10px;">
+                                        <div>
+                                            <h4 style="margin:0 0 4px;">Requested From Receiver</h4>
+                                            <p style="color:var(--text-secondary); font-size:12px;">Choose what you want them to send back.</p>
+                                        </div>
+                                        <span class="badge badge-rare" id="requestedCountBadge">0 wanted</span>
+                                    </div>
+                                    <div id="requestedItemsPanel" class="trade-collection-grid"><div style="color:var(--text-muted); font-size:13px;">Select a player to load their tradable items.</div></div>
+                                </div>
+                                <button class="btn btn-primary" id="sendTradeBtn"><i class="ri-send-plane-line"></i> Send Trade</button>
+                            </div>
+                        </div>
+
+                        <div class="profile-section">
+                            <div class="live-pull-head">
+                                <div>
+                                    <h4 class="profile-section-title">Your Trade Inventory</h4>
+                                    <p style="color:var(--text-secondary); font-size:13px;">Select items to include in a trade.</p>
+                                </div>
+                                <span class="badge badge-uncommon" id="selectedCountBadge">0 selected</span>
+                            </div>
+                            <div id="tradeInventory" class="trade-collection-grid" style="margin-top:16px;"></div>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="trade-modal">
+        <div class="modal" style="max-width: 760px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Trade Details</h3>
+                <button class="modal-close" onclick="KatsuCases.closeModal('trade-modal')"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="tradeDetails"></div>
+            </div>
+            <div class="modal-footer" id="tradeActions"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        let tradesData = [];
+        let inventoryData = [];
+        let selectedItems = [];
+        let currentTab = 'incoming';
+        let currentTrade = null;
+        let selectedReceiver = null;
+        let selectedRequestedItems = [];
+        let receiverInventoryData = [];
+        let selectedReturnItems = [];
+
+        async function loadTrades() {
+            const data = await KatsuCases.api.get('/api/trades');
+            tradesData = Array.isArray(data.trades) ? data.trades : [];
+            renderTrades();
+        }
+
+        async function loadInventory() {
+            const data = await KatsuCases.api.get('/api/inventory');
+            inventoryData = Array.isArray(data.items) ? data.items.filter((item) => !item.is_listed) : [];
+            renderTradeInventory();
+        }
+
+        async function searchUsers(query = '') {
+            if (!KatsuCases.state.user) return;
+            const data = await KatsuCases.api.get(`/api/users/search?query=${encodeURIComponent(query)}`);
+            const container = document.getElementById('tradeUserResults');
+            const users = Array.isArray(data.users) ? data.users : [];
+            if (!users.length) {
+                container.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">No users found.</div>';
+                return;
+            }
+            container.innerHTML = users.map((user) => `
+                <button class="trade-select-item ${selectedReceiver?.id === user.id ? 'selected' : ''}" type="button" onclick='selectReceiver(${user.id}, ${JSON.stringify(String(user.username))}, ${JSON.stringify(String(user.display_name || user.username))})'>
+                    ${KatsuCases.buildAvatarMarkup ? KatsuCases.buildAvatarMarkup(user, 'community-avatar') : '<i class="ri-user-line"></i>'}
+                    <div style="text-align:left;">
+                        <div style="font-weight:600; font-size:13px;">${KatsuCases.escapeHtml(user.display_name || user.username)}</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">@${KatsuCases.escapeHtml(user.username)}${user.region ? ' · ' + KatsuCases.escapeHtml(user.region) : ''}</div>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        async function loadReceiverItems() {
+            const panel = document.getElementById('requestedItemsPanel');
+            const badge = document.getElementById('requestedCountBadge');
+            if (badge) badge.textContent = `${selectedRequestedItems.length} wanted`;
+            if (!selectedReceiver) {
+                panel.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">Select a player to load their tradable items.</div>';
+                receiverInventoryData = [];
+                return;
+            }
+            try {
+                const data = await KatsuCases.api.get(`/api/users/${selectedReceiver.id}/tradable-items`);
+                receiverInventoryData = Array.isArray(data.items) ? data.items : [];
+                renderRequestedItems();
+            } catch (error) {
+                panel.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">Could not load that player&#39;s items.</div>';
+            }
+        }
+
+        function renderRequestedItems() {
+            const panel = document.getElementById('requestedItemsPanel');
+            const badge = document.getElementById('requestedCountBadge');
+            if (badge) badge.textContent = `${selectedRequestedItems.length} wanted`;
+            if (!selectedReceiver) {
+                panel.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">Select a player to load their tradable items.</div>';
+                return;
+            }
+            if (!receiverInventoryData.length) {
+                panel.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">This player has no tradable items right now.</div>';
+                return;
+            }
+            panel.innerHTML = receiverInventoryData.map((item) => `
+                <button class="trade-select-item ${selectedRequestedItems.includes(item.id) ? 'selected' : ''}" onclick="toggleRequestedItem(${item.id})">
+                    ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:32px; height:32px;' })}
+                    <div style="text-align:left;">
+                        <div style="font-weight:600; font-size:12px;">${KatsuCases.escapeHtml(item.pokemon_name)}</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">${KatsuCases.escapeHtml(item.rarity)} · ${KatsuCases.formatCurrency(item.estimated_value || 0)}</div>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function toggleRequestedItem(itemId) {
+            if (selectedRequestedItems.includes(itemId)) {
+                selectedRequestedItems = selectedRequestedItems.filter((id) => id !== itemId);
+            } else {
+                selectedRequestedItems.push(itemId);
+            }
+            renderRequestedItems();
+        }
+
+        function selectReceiver(id, username, displayName = '') {
+            selectedReceiver = { id, username, display_name: displayName || username };
+            selectedRequestedItems = [];
+            searchUsers(document.getElementById('tradeUserSearch').value || '');
+            loadReceiverItems().catch(() => undefined);
+        }
+
+        function renderTrades() {
+            const container = document.getElementById('tradesContainer');
+            let filtered = tradesData;
+            const me = KatsuCases.state.user?.id;
+            if (currentTab === 'incoming') {
+                filtered = tradesData.filter((trade) => Number(trade.receiver_id) === Number(me) && trade.status === 'pending');
+            } else if (currentTab === 'sent') {
+                filtered = tradesData.filter((trade) => Number(trade.sender_id) === Number(me) && trade.status === 'pending');
+            } else {
+                filtered = tradesData.filter((trade) => trade.status !== 'pending');
+            }
+            if (!filtered.length) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="ri-exchange-line"></i>
+                        <h3>No trades here</h3>
+                        <p>Send a new offer or wait for another player to trade with you.</p>
+                    </div>
+                `;
+                return;
+            }
+            container.innerHTML = filtered.map((trade) => `
+                <div class="trade-card" onclick="showTradeDetails(${trade.id})">
+                    <div class="trade-users">
+                        <span style="font-weight:600;">${KatsuCases.escapeHtml(trade.sender_username)}</span>
+                        <span class="trade-vs">↔</span>
+                        <span style="font-weight:600;">${KatsuCases.escapeHtml(trade.receiver_username)}</span>
+                    </div>
+                    <div class="trade-info">
+                        <div class="trade-items-count">Giving ${trade.offer_count || trade.item_count || 0} (${KatsuCases.formatCurrency(trade.offer_value || 0)}) · Wants ${trade.request_count || 0} (${KatsuCases.formatCurrency(trade.request_value || 0)})</div>
+                        <div class="trade-time">${KatsuCases.formatRelativeTime(trade.created_at)}</div>
+                    </div>
+                    <span class="trade-status ${trade.status}">${KatsuCases.escapeHtml(trade.status)}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderTradeInventory() {
+            const container = document.getElementById('tradeInventory');
+            document.getElementById('selectedCountBadge').textContent = `${selectedItems.length} selected`;
+            if (!inventoryData.length) {
+                container.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">You have no tradable items right now.</div>';
+                return;
+            }
+            container.innerHTML = inventoryData.map((item) => `
+                <button class="trade-select-item ${selectedItems.includes(item.id) ? 'selected' : ''}" onclick="toggleTradeItem(${item.id})">
+                    ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:42px; height:42px;' })}
+                    <div style="text-align:left;">
+                        <div style="font-weight:600; font-size:13px;">${KatsuCases.escapeHtml(item.pokemon_name)}</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">${KatsuCases.escapeHtml(item.rarity)} · ${KatsuCases.formatCurrency(item.estimated_value || 0)}</div>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function toggleTradeItem(itemId) {
+            if (selectedItems.includes(itemId)) {
+                selectedItems = selectedItems.filter((id) => id !== itemId);
+            } else {
+                selectedItems.push(itemId);
+            }
+            renderTradeInventory();
+        }
+
+        async function sendTrade() {
+            if (!selectedReceiver) {
+                KatsuCases.showToast('Choose a user first', 'error');
+                return;
+            }
+            if (!selectedItems.length) {
+                KatsuCases.showToast('Select at least one item', 'error');
+                return;
+            }
+            try {
+                await KatsuCases.api.post('/api/trades', { receiverId: selectedReceiver.id, items: selectedItems, requestedItemIds: selectedRequestedItems });
+                KatsuCases.showToast('Trade request sent', 'success');
+                selectedItems = [];
+                selectedReceiver = null;
+                selectedRequestedItems = [];
+                receiverInventoryData = [];
+                document.getElementById('tradeUserSearch').value = '';
+                document.getElementById('tradeUserResults').innerHTML = '';
+                document.getElementById('requestedItemsPanel').innerHTML = '<div style="color:var(--text-muted); font-size:13px;">Select a player to load their tradable items.</div>';
+                renderTradeInventory();
+                await loadTrades();
+                await KatsuCases.refreshNotifications({ silent: true });
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to send trade', 'error');
+            }
+        }
+
+        function toggleReturnItem(itemId) {
+            if (selectedReturnItems.includes(itemId)) {
+                selectedReturnItems = selectedReturnItems.filter((id) => id !== itemId);
+            } else {
+                selectedReturnItems.push(itemId);
+            }
+            showTradeDetails(currentTrade.id);
+        }
+
+        function showTradeDetails(tradeId) {
+            currentTrade = tradesData.find((trade) => Number(trade.id) === Number(tradeId));
+            if (!currentTrade) return;
+            const me = KatsuCases.state.user?.id;
+            const incoming = Number(currentTrade.receiver_id) === Number(me);
+            const offered = currentTrade.items.filter((item) => Number(item.from_user) === Number(currentTrade.sender_id));
+            const requested = currentTrade.items.filter((item) => Number(item.from_user) === Number(currentTrade.receiver_id));
+            const availableReturnItems = inventoryData.filter((item) => !selectedItems.includes(item.id));
+
+            document.getElementById('tradeDetails').innerHTML = `
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+                    <div>
+                        <h4 style="margin-bottom:12px;"><a href="/profile?user=${encodeURIComponent(currentTrade.sender_username)}">${KatsuCases.escapeHtml(currentTrade.sender_username)}</a> gives</h4>
+                        <div style="display:grid; gap:8px;">
+                            ${offered.map((item) => `
+                                <div class="trade-select-item" style="cursor:default;">
+                                    ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:42px; height:42px;' })}
+                                    <div>
+                                        <div style="font-weight:600; font-size:13px;">${KatsuCases.escapeHtml(item.pokemon_name)}</div>
+                                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">${KatsuCases.escapeHtml(item.rarity)} · ${KatsuCases.formatCurrency(item.estimated_value || 0)}</div>
+                                    </div>
+                                </div>
+                            `).join('') || '<div style="color:var(--text-muted); font-size:13px;">No items offered.</div>'}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom:12px;">${incoming ? 'What they want from you' : KatsuCases.escapeHtml(currentTrade.receiver_username + ' gives back')}</h4>
+                        <div style="display:grid; gap:8px;">
+                            ${requested.map((item) => `
+                                <div class="trade-select-item" style="cursor:default;">
+                                    ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:42px; height:42px;' })}
+                                    <div>
+                                        <div style="font-weight:600; font-size:13px;">${KatsuCases.escapeHtml(item.pokemon_name)}</div>
+                                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">${KatsuCases.escapeHtml(item.rarity)} · ${KatsuCases.formatCurrency(item.estimated_value || 0)}</div>
+                                    </div>
+                                </div>
+                            `).join('') || '<div style="color:var(--text-muted); font-size:13px;">Nothing requested on this side yet.</div>'}
+                        </div>
+                        ${incoming && currentTrade.status === 'pending' ? `
+                            <div class="trade-return-grid">
+                                ${availableReturnItems.map((item) => `
+                                    <button class="trade-select-item ${selectedReturnItems.includes(item.id) ? 'selected' : ''}" onclick="toggleReturnItem(${item.id})">
+                                        ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:32px; height:32px;' })}
+                                        <span style="font-size:12px;">${KatsuCases.escapeHtml(item.pokemon_name)}</span>
+                                    </button>
+                                `).join('') || '<div style="color:var(--text-muted); font-size:13px;">No extra items available to add.</div>'}
+                            </div>
+                            <p style="font-size:12px; color:var(--text-muted); margin-top:10px;">You can keep the requested items as-is, remove them, or add more before accepting.</p>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('tradeActions').innerHTML = incoming && currentTrade.status === 'pending'
+                ? `
+                    <button class="btn btn-danger" onclick="respondToTrade('declined')">Decline</button>
+                    <button class="btn btn-success" onclick="respondToTrade('accepted')">Accept Trade</button>
+                `
+                : '<button class="btn btn-ghost" onclick="KatsuCases.closeModal(\'trade-modal\')">Close</button>';
+
+            KatsuCases.openModal('trade-modal');
+        }
+
+        async function respondToTrade(status) {
+            if (!currentTrade) return;
+            try {
+                await KatsuCases.api.put(`/api/trades/${currentTrade.id}`, { status, receiverItemIds: selectedReturnItems });
+                KatsuCases.showToast(status === 'accepted' ? 'Trade completed' : 'Trade declined', status === 'accepted' ? 'success' : 'info');
+                selectedReturnItems = [];
+                KatsuCases.closeModal('trade-modal');
+                await loadInventory();
+                await loadTrades();
+                await KatsuCases.refreshNotifications({ silent: true });
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to update trade', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            KatsuCases.applyBranding();
+            await KatsuCases.checkAuth();
+            if (!KatsuCases.state.user) {
+                window.location.href = '/signin';
+                return;
+            }
+            await loadTrades();
+            await loadInventory();
+            document.querySelectorAll('.tabs .tab').forEach((tab) => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tabs .tab').forEach((button) => button.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentTab = tab.dataset.tab;
+                    document.getElementById('tradesTitle').textContent = currentTab === 'incoming' ? 'Incoming Trades' : currentTab === 'sent' ? 'Sent Trades' : 'Trade History';
+                    renderTrades();
+                });
+            });
+            document.getElementById('sendTradeBtn').addEventListener('click', sendTrade);
+            document.getElementById('tradeUserSearch').addEventListener('input', KatsuCases.debounce((event) => searchUsers(event.target.value), 250));
+            searchUsers('');
+        });
+    </script>
+</body>
+</html>
