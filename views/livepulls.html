@@ -99,6 +99,8 @@
     <script>
         let pullsData = [];
         let currentFilter = 'all';
+        let livePullIds = new Set();
+        let freshPullIds = new Set();
 
         function rarityPassesFilter(rarity) {
             if (currentFilter === 'all') return true;
@@ -108,10 +110,25 @@
             return rarity === 'mythical';
         }
 
-        async function loadPulls() {
+        async function loadPulls(initial = false) {
             try {
                 const data = await KatsuCases.api.get('/api/livepulls?limit=40');
-                pullsData = Array.isArray(data.pulls) ? data.pulls : [];
+                const incoming = Array.isArray(data.pulls) ? data.pulls : [];
+                if (initial || !pullsData.length) {
+                    pullsData = incoming;
+                    livePullIds = new Set(incoming.map((pull) => Number(pull.id)));
+                    freshPullIds = new Set();
+                } else {
+                    const fresh = incoming.filter((pull) => !livePullIds.has(Number(pull.id)));
+                    if (fresh.length) {
+                        freshPullIds = new Set(fresh.map((pull) => Number(pull.id)));
+                        fresh.forEach((pull) => livePullIds.add(Number(pull.id)));
+                        pullsData = [...fresh, ...pullsData].slice(0, 40);
+                        window.setTimeout(() => { freshPullIds.clear(); renderPulls(); }, 2200);
+                    } else {
+                        pullsData = incoming;
+                    }
+                }
                 renderPulls();
             } catch (error) {
                 console.error('Failed to load pulls:', error);
@@ -135,7 +152,7 @@
             }
 
             container.innerHTML = filtered.map((pull) => `
-                <article class="live-pull-card rarity-glow-${pull.rarity}">
+                <article class="live-pull-card rarity-glow-${pull.rarity} ${freshPullIds.has(Number(pull.id)) ? "live-pull-fresh" : ""}">
                     <div class="live-pull-head">
                         <div>
                             <div class="live-pull-user"><a href="/profile?user=${encodeURIComponent(pull.username)}">${KatsuCases.escapeHtml(pull.username)}</a></div>
@@ -231,7 +248,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             KatsuCases.applyBranding();
             await KatsuCases.checkAuth();
-            await loadPulls();
+            await loadPulls(true);
             document.querySelectorAll('#rarityPills .pill').forEach((pill) => {
                 pill.addEventListener('click', () => {
                     document.querySelectorAll('#rarityPills .pill').forEach((button) => button.classList.remove('active'));
@@ -240,7 +257,7 @@
                     renderPulls();
                 });
             });
-            window.setInterval(loadPulls, 12000);
+            window.setInterval(() => loadPulls(false), 4000);
         });
     </script>
 </body>

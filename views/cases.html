@@ -143,8 +143,11 @@
                 <button class="btn btn-secondary" onclick="openCase(1)">
                     <i class="ri-gamepad-line"></i> Open 1
                 </button>
-                <button class="btn btn-primary" onclick="openCase(10)">
-                    <i class="ri-gamepad-line"></i> Open 10
+                <button class="btn btn-secondary" onclick="openCase(2)">
+                    <i class="ri-stack-line"></i> Open 2
+                </button>
+                <button class="btn btn-primary" onclick="openCase(3)">
+                    <i class="ri-stack-fill"></i> Open 3
                 </button>
             </div>
         </div>
@@ -213,6 +216,8 @@
         let currentCase = null;
         let currentCaseContents = [];
         let casesData = [];
+        let currentOpeningAmount = 1;
+        let openingBusy = false;
         function rarityWeightLabel(item) {
             if (!item?.odds) return 'Unknown';
             if (item.odds >= 1000000000) return 'Ultra chase';
@@ -372,14 +377,16 @@
         }
         
         async function openCase(amount = 1) {
-            if (!currentCase) return;
-            
-            const totalCost = currentCase.price * amount;
+            if (!currentCase || openingBusy) return;
+
+            currentOpeningAmount = Math.max(1, Math.min(3, Number(amount) || 1));
+            const totalCost = currentCase.price * currentOpeningAmount;
             if (KatsuCases.state.user.balance < totalCost) {
                 KatsuCases.showToast('Insufficient balance', 'error');
                 return;
             }
-            
+
+            openingBusy = true;
             KatsuCases.closeModal('case-modal');
             document.getElementById('openingCaseName').textContent = currentCase.name;
             document.getElementById('rewardReveal').classList.remove('active');
@@ -387,28 +394,32 @@
             document.getElementById('roller').innerHTML = '';
             renderOpeningPresentation();
             if (window.KatsuAnimations?.setAnimationPool) window.KatsuAnimations.setAnimationPool(currentCaseContents);
-            if (window.KatsuAnimations?.setOpeningHint) window.KatsuAnimations.setOpeningHint('Preparing the reel and loading the drop pool…');
+            if (window.KatsuAnimations?.setOpeningHint) window.KatsuAnimations.setOpeningHint(`Preparing ${currentOpeningAmount} roll${currentOpeningAmount > 1 ? 's' : ''}…`);
+            if (window.KatsuAnimations?.setOpenAnotherHandler) {
+                window.KatsuAnimations.setOpenAnotherHandler(() => openCase(currentOpeningAmount));
+            }
             KatsuCases.openModal('opening-modal');
-            
+
             try {
-                const data = await KatsuCases.api.post(`/api/cases/${currentCase.id}/open`, { amount });
-                
-                // Update balance
+                const data = await KatsuCases.api.post(`/api/cases/${currentCase.id}/open`, { amount: currentOpeningAmount });
+
                 KatsuCases.state.user.balance = data.newBalance;
-                document.querySelector('.balance-value').textContent = KatsuCases.formatCurrency(data.newBalance);
-                
-                // Animate opening
+                document.querySelectorAll('.balance-value').forEach((el) => {
+                    el.textContent = KatsuCases.formatCurrency(data.newBalance);
+                });
+
                 await window.KatsuAnimations.animateCaseOpen(
                     data.results,
                     document.getElementById('roller'),
                     document.getElementById('rewardReveal')
                 );
-                
-                // Refresh live pulls
+
                 loadCases(document.querySelector('#categoryPills .pill.active')?.dataset.filter || 'all');
             } catch (error) {
                 KatsuCases.showToast(error.message || 'Failed to open case', 'error');
                 KatsuCases.closeModal('opening-modal');
+            } finally {
+                openingBusy = false;
             }
         }
         
@@ -435,6 +446,8 @@
                     }
                 });
             }
+
+            window.openAnotherCurrentCase = () => openCase(currentOpeningAmount || 1);
             
             // Category filter
             document.querySelectorAll('#categoryPills .pill').forEach(pill => {

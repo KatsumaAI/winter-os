@@ -110,6 +110,69 @@
     <script>
         let roomsData = [];
         let casesData = [];
+        let selectedRoomId = null;
+        let roomPollHandle = null;
+        let roomPlaybackTimer = null;
+
+
+
+        function stopRoomPlayback() {
+            if (roomPlaybackTimer) {
+                window.clearTimeout(roomPlaybackTimer);
+                roomPlaybackTimer = null;
+            }
+        }
+
+        function getRoomWinCount(room, userId, uptoRound = null) {
+            const rounds = Array.isArray(room.rounds_data) ? room.rounds_data : [];
+            return rounds.filter((round) => (uptoRound === null || Number(round.round) <= Number(uptoRound)) && Number(round.winner_user_id) === Number(userId)).length;
+        }
+
+        function renderRoomRoundPair(round) {
+            return `
+                <div class="casevs-round casevs-round-live">
+                    <div class="live-pull-head">
+                        <div>
+                            <strong>Round ${round.round}</strong>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Winner: ${KatsuCases.escapeHtml(round.winner_username)}</div>
+                        </div>
+                    </div>
+                    <div class="casevs-round-pulls live-pair">
+                        ${round.pulls.map((pull) => `
+                            <div class="casevs-round-pull rarity-glow-${pull.rarity}">
+                                <div class="casevs-live-pull-top">
+                                    <strong><a href="/profile?user=${encodeURIComponent(pull.username)}">${KatsuCases.escapeHtml(pull.username)}</a></strong>
+                                    <span class="badge badge-${pull.rarity}">${KatsuCases.escapeHtml(pull.rarity)}</span>
+                                </div>
+                                <div style="display:flex; gap:14px; align-items:center; margin-top:10px;">
+                                    ${KatsuCases.buildSpriteImg({ pokemonName: pull.pokemon_name, isShiny: pull.is_shiny, spriteUrl: pull.sprite_url, alt: pull.pokemon_name, style: 'width:62px; height:62px;' })}
+                                    <div>
+                                        <div style="font-weight:700; font-size:15px;">${KatsuCases.escapeHtml(pull.pokemon_name)}</div>
+                                        <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">${KatsuCases.formatCurrency(pull.estimated_value || 0)} · 1 in ${Number(pull.odds || 0).toLocaleString()}</div>
+                                        <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">Seed ${KatsuCases.escapeHtml(pull.seed)}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function startRoomPlayback(room) {
+            stopRoomPlayback();
+            const rounds = Array.isArray(room.rounds_data) ? room.rounds_data : [];
+            if (!rounds.length) return;
+            let index = 0;
+            const step = () => {
+                renderRoomViewer(room, { playbackRound: index + 1, autoplay: false });
+                index += 1;
+                if (index < rounds.length) {
+                    roomPlaybackTimer = window.setTimeout(step, 1600);
+                }
+            };
+            step();
+        }
 
         async function loadCases() {
             const data = await KatsuCases.api.get('/api/cases');
@@ -202,13 +265,15 @@
         async function joinRoom(roomId) {
             try {
                 const data = await KatsuCases.api.post(`/api/casevs/rooms/${roomId}/join`, {});
-                KatsuCases.showToast('Battle completed', 'success');
+                KatsuCases.showToast('Battle started', 'success');
                 if (KatsuCases.state.user) {
                     await KatsuCases.checkAuth();
                     await KatsuCases.refreshNotifications({ silent: true });
                 }
                 await loadRooms();
-                renderRoomViewer(data.room);
+                selectedRoomId = data.room.id;
+                renderRoomViewer(data.room, { playbackRound: 1, autoplay: false });
+                startRoomPlayback(data.room);
             } catch (error) {
                 KatsuCases.showToast(error.message || 'Failed to join room', 'error');
             }
@@ -217,59 +282,43 @@
         async function viewRoom(roomId) {
             try {
                 const data = await KatsuCases.api.get(`/api/casevs/rooms/${roomId}`);
-                renderRoomViewer(data.room);
+                selectedRoomId = roomId;
+                renderRoomViewer(data.room, { playbackRound: data.room.status === 'finished' ? 1 : null, autoplay: false });
+                if (data.room.status === 'finished') startRoomPlayback(data.room);
             } catch (error) {
                 KatsuCases.showToast(error.message || 'Failed to load room', 'error');
             }
         }
 
-        function renderRoomViewer(room) {
+        function renderRoomViewer(room, options = {}) {
             const viewer = document.getElementById('roomViewer');
             const players = room.players || [];
             const summary = room.summary || null;
+            const playbackRound = Number(options.playbackRound || 0);
+            const rounds = Array.isArray(room.rounds_data) ? room.rounds_data : [];
+            const activeRounds = playbackRound > 0 ? rounds.filter((round) => Number(round.round) <= playbackRound) : rounds;
+            const activeRound = playbackRound > 0 ? rounds.find((round) => Number(round.round) === playbackRound) : null;
             viewer.innerHTML = `
                 <div class="live-pull-head">
                     <div>
                         <h3 style="margin-bottom:6px;">${KatsuCases.escapeHtml(room.case_name)}</h3>
                         <p style="color:var(--text-secondary);">Room #${room.id} · seed ${KatsuCases.escapeHtml(room.seed)}</p>
                     </div>
-                    <span class="badge badge-${room.status === 'finished' ? 'legendary' : 'epic'}">${KatsuCases.escapeHtml(room.status)}</span>
+                    <span class="badge badge-${room.status === 'finished' ? 'legendary' : room.status === 'waiting' ? 'common' : 'epic'}">${KatsuCases.escapeHtml(room.status)}</span>
                 </div>
                 <div class="casevs-player-row" style="margin-top:18px;">
                     ${players.map((player, index) => `
                         <div class="casevs-player-pill">
                             <div style="font-weight:700;"><a href="/profile?user=${encodeURIComponent(player.username)}">${KatsuCases.escapeHtml(player.username)}</a></div>
-                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${summary?.wins?.[player.user_id] || 0} round wins</div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${getRoomWinCount(room, player.user_id, playbackRound || null)} round wins</div>
                         </div>
                         ${index === 0 ? '<div class="casevs-vs-badge">VS</div>' : ''}
                     `).join('')}
                 </div>
-                ${room.winner_username ? `<div style="margin-top:18px; padding:14px; border-radius:14px; background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.18);">Winner: <strong>${KatsuCases.escapeHtml(room.winner_username)}</strong>${summary?.pot_amount ? ` · Pot ${KatsuCases.formatCurrency(summary.pot_amount)}` : ''}</div>` : ''}
+                ${activeRound ? `<div class="admin-rain-card" style="margin-top:18px;"><strong>Live Round ${activeRound.round}</strong><div class="rain-meta">Watching both rolls resolve live with the saved seeds and the exact stored result data.</div></div>${renderRoomRoundPair(activeRound)}` : ''}
+                ${room.winner_username && (!playbackRound || playbackRound >= rounds.length) ? `<div style="margin-top:18px; padding:14px; border-radius:14px; background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.18);">Winner: <strong>${KatsuCases.escapeHtml(room.winner_username)}</strong>${summary?.pot_amount ? ` · Pot ${KatsuCases.formatCurrency(summary.pot_amount)}` : ''}</div>` : ''}
                 <div class="casevs-rounds">
-                    ${(room.rounds_data || []).map((round) => `
-                        <div class="casevs-round">
-                            <div class="live-pull-head">
-                                <div>
-                                    <strong>Round ${round.round}</strong>
-                                    <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Winner: ${KatsuCases.escapeHtml(round.winner_username)}</div>
-                                </div>
-                            </div>
-                            <div class="casevs-round-pulls">
-                                ${round.pulls.map((pull) => `
-                                    <div class="casevs-round-pull rarity-glow-${pull.rarity}">
-                                        <div style="display:flex; gap:12px; align-items:center;">
-                                            ${KatsuCases.buildSpriteImg({ pokemonName: pull.pokemon_name, isShiny: pull.is_shiny, spriteUrl: pull.sprite_url, alt: pull.pokemon_name, style: 'width:52px; height:52px;' })}
-                                            <div>
-                                                <div style="font-weight:700;"><a href="/profile?user=${encodeURIComponent(pull.username)}">${KatsuCases.escapeHtml(pull.username)}</a></div>
-                                                <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">${KatsuCases.escapeHtml(pull.pokemon_name)}</div>
-                                                <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">${KatsuCases.formatCurrency(pull.estimated_value || 0)} · 1 in ${Number(pull.odds || 0).toLocaleString()} · Seed ${KatsuCases.escapeHtml(pull.seed)}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `).join('') || '<div class="empty-state"><i class="ri-time-line"></i><h3>Waiting for challenger</h3><p>This room has not started yet.</p></div>'}
+                    ${activeRounds.length ? activeRounds.map((round) => renderRoomRoundPair(round)).join('') : '<div class="empty-state"><i class="ri-time-line"></i><h3>Waiting for challenger</h3><p>This room has not started yet.</p></div>'}
                 </div>
             `;
         }
@@ -280,7 +329,23 @@
             await loadCases();
             await loadRooms();
             document.getElementById('createRoomBtn').addEventListener('click', createRoom);
-            window.setInterval(loadRooms, 10000);
+            roomPollHandle = window.setInterval(async () => {
+                await loadRooms();
+                if (selectedRoomId) {
+                    try {
+                        const data = await KatsuCases.api.get(`/api/casevs/rooms/${selectedRoomId}`);
+                        if (data.room.status === 'finished') {
+                            if (!roomPlaybackTimer) {
+                                renderRoomViewer(data.room, { playbackRound: 0, autoplay: false });
+                            }
+                        } else {
+                            renderRoomViewer(data.room, { playbackRound: 0, autoplay: false });
+                        }
+                    } catch (error) {
+                        return;
+                    }
+                }
+            }, 3000);
         });
     </script>
 </body>

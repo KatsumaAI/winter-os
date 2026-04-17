@@ -252,10 +252,50 @@
                                     <input id="caseDescription" class="input" maxlength="180" placeholder="High-value night drop with tease-heavy odds.">
                                 </div>
                                 <div class="form-group">
-                                    <label for="caseItemsText">Items</label>
-                                    <textarea id="caseItemsText" class="textarea" rows="8" placeholder="Pikachu|rare|250
+                                    <label>Case Builder</label>
+                                    <div class="admin-case-builder">
+                                        <div class="admin-pokemon-picker">
+                                            <input id="casePokemonSearch" class="input" maxlength="40" placeholder="Search Pokémon from PokeAPI">
+                                            <div id="casePokemonSearchResults" class="admin-pokemon-search-results"></div>
+                                        </div>
+                                        <div class="form-grid two-col">
+                                            <div class="form-group">
+                                                <label for="caseItemRarity">Rarity</label>
+                                                <select id="caseItemRarity" class="input">
+                                                    <option value="common">Common</option>
+                                                    <option value="uncommon">Uncommon</option>
+                                                    <option value="rare" selected>Rare</option>
+                                                    <option value="epic">Epic</option>
+                                                    <option value="legendary">Legendary</option>
+                                                    <option value="mythical">Mythical</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="caseItemOdds">Odds</label>
+                                                <input id="caseItemOdds" class="input" type="number" min="1" step="1" value="250" placeholder="250">
+                                            </div>
+                                        </div>
+                                        <div class="form-grid two-col">
+                                            <div class="form-group">
+                                                <label for="caseItemShiny">Variant</label>
+                                                <select id="caseItemShiny" class="input">
+                                                    <option value="0">Regular</option>
+                                                    <option value="1">Shiny Effect</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group" style="align-self:end;">
+                                                <button class="btn btn-secondary" type="button" id="addCaseItemBtn"><i class="ri-add-line"></i> Add To Case</button>
+                                            </div>
+                                        </div>
+                                        <div id="selectedCasePokemon" class="admin-rain-card empty">Pick a Pokémon to add it to the case.</div>
+                                        <div id="caseBuilderList" class="admin-case-builder-list"></div>
+                                        <div class="form-group">
+                                            <label for="caseItemsText">Generated Item Data</label>
+                                            <textarea id="caseItemsText" class="textarea" rows="8" placeholder="Pikachu|rare|250
 Gengar|epic|5000|shiny
 Mewtwo|legendary|1000000"></textarea>
+                                        </div>
+                                    </div>
                                 </div>
                                 <button class="btn btn-primary" type="submit"><i class="ri-box-3-line"></i> Create Case</button>
                             </form>
@@ -392,6 +432,9 @@ Mewtwo|legendary|1000000"></textarea>
     <script>
         let adminSummary = null;
         let selectedAdminUser = null;
+        let adminCaseItems = [];
+        let selectedCasePokemon = null;
+        let pokemonSearchTimer = null;
 
         function countdownLabel(endAt) {
             if (!endAt) return 'No timer';
@@ -557,6 +600,106 @@ Mewtwo|legendary|1000000"></textarea>
             `).join('') : '<div class="admin-feed-empty">No cases created yet.</div>';
         }
 
+
+        function syncCaseItemsText() {
+            const textarea = document.getElementById('caseItemsText');
+            const list = document.getElementById('caseBuilderList');
+            if (textarea) {
+                textarea.value = adminCaseItems.map((item) => `${item.name}|${item.rarity}|${item.odds}${item.is_shiny ? '|shiny' : ''}`).join('\n');
+            }
+            if (list) {
+                if (!adminCaseItems.length) {
+                    list.innerHTML = '<div class="admin-feed-empty">No case items added yet.</div>';
+                    return;
+                }
+                list.innerHTML = adminCaseItems.map((item, index) => `
+                    <div class="admin-case-item-chip rarity-glow-${item.rarity}">
+                        <div class="admin-case-item-sprite">${KatsuCases.buildSpriteImg({ pokemonName: item.name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.label, style: 'width:40px; height:40px;' })}</div>
+                        <div class="admin-case-item-meta">
+                            <div class="admin-case-item-name">${KatsuCases.escapeHtml(item.label)}</div>
+                            <div class="admin-case-item-sub">${KatsuCases.escapeHtml(item.rarity)} · 1 in ${Number(item.odds).toLocaleString()}${item.is_shiny ? ' · shiny' : ''}</div>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" type="button" onclick="removeCaseItem(${index})">Remove</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function selectPokemonForCase(name, label, spriteUrl) {
+            selectedCasePokemon = { name, label, sprite_url: spriteUrl };
+            const panel = document.getElementById('selectedCasePokemon');
+            if (panel) {
+                panel.className = 'admin-rain-card';
+                panel.innerHTML = `<div style="display:flex; align-items:center; gap:12px;">${KatsuCases.buildSpriteImg({ pokemonName: name, spriteUrl: spriteUrl, alt: label, style: 'width:48px; height:48px;' })}<div><strong>${KatsuCases.escapeHtml(label)}</strong><div class="rain-meta">${KatsuCases.escapeHtml(name)}</div></div></div>`;
+            }
+            const results = document.getElementById('casePokemonSearchResults');
+            if (results) results.innerHTML = '';
+            const input = document.getElementById('casePokemonSearch');
+            if (input) input.value = label;
+        }
+
+        function removeCaseItem(index) {
+            adminCaseItems.splice(index, 1);
+            syncCaseItemsText();
+        }
+
+        function renderPokemonResults(entries = []) {
+            const results = document.getElementById('casePokemonSearchResults');
+            if (!results) return;
+            if (!entries.length) {
+                results.innerHTML = '<div class="admin-feed-empty">No Pokémon found.</div>';
+                return;
+            }
+            results.innerHTML = entries.map((entry) => `
+                <button class="trade-select-item" type="button" onclick='selectPokemonForCase(${JSON.stringify(entry.name)}, ${JSON.stringify(entry.label)}, ${JSON.stringify(entry.sprite_url || '')})'>
+                    ${KatsuCases.buildSpriteImg({ pokemonName: entry.name, spriteUrl: entry.sprite_url, alt: entry.label, style: 'width:36px; height:36px;' })}
+                    <div style="text-align:left;">
+                        <div style="font-weight:600; font-size:13px;">${KatsuCases.escapeHtml(entry.label)}</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">${KatsuCases.escapeHtml(entry.name)}</div>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        async function runCasePokemonSearch(query = '') {
+            const results = document.getElementById('casePokemonSearchResults');
+            if (!results) return;
+            if (!query.trim()) {
+                results.innerHTML = '';
+                return;
+            }
+            try {
+                const data = await KatsuCases.api.get(`/api/pokemon/search?limit=10&query=${encodeURIComponent(query)}`);
+                renderPokemonResults(Array.isArray(data.pokemon) ? data.pokemon : []);
+            } catch (error) {
+                results.innerHTML = '<div class="admin-feed-empty">Pokémon search is unavailable right now.</div>';
+            }
+        }
+
+        function addCaseItemFromSelection() {
+            if (!selectedCasePokemon) {
+                KatsuCases.showToast('Pick a Pokémon first', 'error');
+                return;
+            }
+            const rarity = document.getElementById('caseItemRarity').value;
+            const odds = Math.max(1, Number(document.getElementById('caseItemOdds').value || 1));
+            const isShiny = Number(document.getElementById('caseItemShiny').value || 0);
+            adminCaseItems.push({
+                name: selectedCasePokemon.name,
+                label: selectedCasePokemon.label,
+                sprite_url: selectedCasePokemon.sprite_url,
+                rarity,
+                odds,
+                is_shiny: isShiny
+            });
+            syncCaseItemsText();
+            document.getElementById('casePokemonSearch').value = '';
+            document.getElementById('casePokemonSearchResults').innerHTML = '';
+            selectedCasePokemon = null;
+            document.getElementById('selectedCasePokemon').className = 'admin-rain-card empty';
+            document.getElementById('selectedCasePokemon').innerHTML = 'Pick a Pokémon to add it to the case.';
+        }
+
         async function loadAdminSummary() {
             const data = await KatsuCases.api.get('/api/admin/summary');
             adminSummary = data;
@@ -663,6 +806,15 @@ Mewtwo|legendary|1000000"></textarea>
                 searchAdminUsers(event.target.value).catch(() => undefined);
             }, 250));
 
+            document.getElementById('casePokemonSearch').addEventListener('input', (event) => {
+                window.clearTimeout(pokemonSearchTimer);
+                pokemonSearchTimer = window.setTimeout(() => {
+                    runCasePokemonSearch(event.target.value).catch(() => undefined);
+                }, 220);
+            });
+            document.getElementById('addCaseItemBtn').addEventListener('click', addCaseItemFromSelection);
+            syncCaseItemsText();
+
             document.getElementById('adminBalanceForm').addEventListener('submit', async (event) => {
                 event.preventDefault();
                 if (!selectedAdminUser) {
@@ -722,6 +874,11 @@ Mewtwo|legendary|1000000"></textarea>
                     });
                     KatsuCases.showToast(`Case ${data.case?.launch_at ? 'scheduled' : 'created'}`, 'success');
                     event.target.reset();
+                    adminCaseItems = [];
+                    selectedCasePokemon = null;
+                    document.getElementById('selectedCasePokemon').className = 'admin-rain-card empty';
+                    document.getElementById('selectedCasePokemon').innerHTML = 'Pick a Pokémon to add it to the case.';
+                    syncCaseItemsText();
                     await loadAdminSummary();
                     await KatsuCases.loadSiteState(true);
                 } catch (error) {

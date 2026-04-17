@@ -1,26 +1,9 @@
 {
-  "nextMessageId": 2,
+  "nextMessageId": 1,
   "nextRainId": 1,
   "nextAnnouncementId": 1,
   "nextClaimId": 1,
-  "messages": [
-    {
-      "id": 1,
-      "created_at": "2026-04-16T20:05:00.000Z",
-      "type": "system",
-      "user_id": null,
-      "username": "KatsuCases",
-      "display_name": "KatsuCases",
-      "is_admin": false,
-      "avatar_url": null,
-      "region": "",
-      "pronouns": "",
-      "badges": [],
-      "custom_role": "",
-      "message": "Community chat is live. Trade, talk pulls, and watch for rain drops from the owner.",
-      "meta": null
-    }
-  ],
+  "messages": [],
   "activeRain": null,
   "rainHistory": [],
   "announcements": [],

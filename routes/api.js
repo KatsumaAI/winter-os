@@ -1,4 +1,5 @@
 const express = require('express');
+const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const router = express.Router();
@@ -38,6 +39,9 @@ const BADGE_META = {
     moderator: { label: 'MOD', className: 'badge-uncommon' },
     creator: { label: 'CREATOR', className: 'badge-mythical' }
 };
+
+const POKEMON_CACHE = { fetchedAt: 0, names: [] };
+const POKEMON_CACHE_TTL = 1000 * 60 * 60 * 12;
 
 function safeArray(value) {
     return Array.isArray(value) ? value : [];
@@ -562,6 +566,51 @@ function searchUsersList(query, excludeUserId = null, limit = 8) {
             badges: getUserBadges(user).map(serializeBadge),
             custom_role: user.custom_role || ''
         }));
+}
+
+function computeTradeSummaryFromItems(senderItems, receiverItems) {
+    const offerValue = Number(senderItems.reduce((sum, item) => sum + Number(item.estimated_value || 0), 0).toFixed(2));
+    const requestValue = Number(receiverItems.reduce((sum, item) => sum + Number(item.estimated_value || 0), 0).toFixed(2));
+    const richerSide = Math.max(offerValue, requestValue);
+    const poorerSide = Math.min(offerValue, requestValue);
+    const difference = Number(Math.abs(offerValue - requestValue).toFixed(2));
+    const ratio = richerSide > 0 ? Number((poorerSide / richerSide).toFixed(3)) : 1;
+    const isFreeTrade = (offerValue === 0 && requestValue > 0) || (requestValue === 0 && offerValue > 0);
+    const warningLevel = isFreeTrade ? 'danger' : ratio < 0.45 ? 'warning' : ratio < 0.7 ? 'notice' : 'balanced';
+    return { offerValue, requestValue, difference, ratio, isFreeTrade, warningLevel };
+}
+
+function saveTradeMeta(tradeId, meta) {
+    const state = readAppState();
+    const tradeRow = safeArray(state.tables?.trades).find((row) => Number(row.id) === Number(tradeId));
+    if (!tradeRow) return null;
+    Object.assign(tradeRow, meta || {});
+    writeJson(appDataPath, state);
+    return tradeRow;
+}
+
+async function getPokemonNameCache() {
+    const now = Date.now();
+    if (POKEMON_CACHE.names.length && now - POKEMON_CACHE.fetchedAt < POKEMON_CACHE_TTL) {
+        return POKEMON_CACHE.names;
+    }
+    try {
+        const response = await axios.get('https://pokeapi.co/api/v2/pokemon?limit=2000&offset=0', { timeout: 12000 });
+        const names = safeArray(response.data?.results).map((entry) => normalizeText(entry.name)).filter(Boolean);
+        if (names.length) {
+            POKEMON_CACHE.names = names;
+            POKEMON_CACHE.fetchedAt = now;
+        }
+    } catch (error) {
+        if (!POKEMON_CACHE.names.length) {
+            const fallback = new Set();
+            getTable('case_contents').forEach((entry) => fallback.add(normalizeText(entry.pokemon_name).toLowerCase()));
+            getTable('inventory').forEach((entry) => fallback.add(normalizeText(entry.pokemon_name).toLowerCase()));
+            POKEMON_CACHE.names = Array.from(fallback).filter(Boolean);
+            POKEMON_CACHE.fetchedAt = now;
+        }
+    }
+    return POKEMON_CACHE.names;
 }
 
 function getTradableInventoryForUser(userId, limit = 24) {
@@ -1194,6 +1243,7 @@ router.get('/trades', isAuthenticated, (req, res) => {
             const items = db.prepare('SELECT * FROM trade_items WHERE trade_id = ?').all(trade.id).map((item) => enrichInventoryLikeItem(item, { odds: item.odds }));
             const offeredItems = items.filter((item) => Number(item.from_user) === Number(trade.sender_id));
             const requestedItems = items.filter((item) => Number(item.from_user) === Number(trade.receiver_id));
+            const fairness = computeTradeSummaryFromItems(offeredItems, requestedItems);
             return {
                 ...trade,
                 items,
@@ -1201,8 +1251,9 @@ router.get('/trades', isAuthenticated, (req, res) => {
                 requestedItems,
                 offer_count: offeredItems.length,
                 request_count: requestedItems.length,
-                offer_value: Number(offeredItems.reduce((sum, item) => sum + Number(item.estimated_value || 0), 0).toFixed(2)),
-                request_value: Number(requestedItems.reduce((sum, item) => sum + Number(item.estimated_value || 0), 0).toFixed(2))
+                offer_value: fairness.offerValue,
+                request_value: fairness.requestValue,
+                fairness
             };
         });
 
@@ -1277,10 +1328,24 @@ router.post('/trades', isAuthenticated, (req, res) => {
             insertTradeItem.run(result.lastInsertRowid, item.id, item.pokemon_name, item.rarity, item.sprite_url, item.is_shiny, receiver.id);
         }
 
-        notifyUser(receiver.id, 'trade_request', 'New trade request', `${req.user.username} sent you a trade request with ${validItems.length} offered item(s)${requestedItems.length ? ` and requested ${requestedItems.length} item(s) from you` : ''}.`, '/trading', { tradeId: result.lastInsertRowid, senderId });
-        notifyUser(senderId, 'trade_sent', 'Trade request sent', `Your trade request to ${receiver.username} is pending.`, '/trading', { tradeId: result.lastInsertRowid, receiverId: receiver.id });
+        const offeredItems = validItems.map((item) => enrichInventoryLikeItem(item, { case_id: item.case_id, odds: item.odds }));
+        const requestedPreviewItems = requestedItems.map((item) => enrichInventoryLikeItem(item, { case_id: item.case_id, odds: item.odds }));
+        const fairness = computeTradeSummaryFromItems(offeredItems, requestedPreviewItems);
+        saveTradeMeta(result.lastInsertRowid, {
+            offer_value: fairness.offerValue,
+            request_value: fairness.requestValue,
+            trade_difference: fairness.difference,
+            trade_ratio: fairness.ratio,
+            trade_warning_level: fairness.warningLevel,
+            requires_free_accept: fairness.isFreeTrade ? 1 : 0,
+            sender_accepts_free: fairness.isFreeTrade ? 1 : 0,
+            receiver_accepts_free: 0
+        });
 
-        res.json({ success: true, tradeId: result.lastInsertRowid, requestedCount: requestedItems.length });
+        notifyUser(receiver.id, 'trade_request', 'New trade request', `${req.user.username} sent you a trade request with ${validItems.length} offered item(s)${requestedItems.length ? ` and requested ${requestedItems.length} item(s) from you` : ''}${fairness.isFreeTrade ? '. This is a one-sided trade and requires your confirmation.' : ''}.`, '/trading', { tradeId: result.lastInsertRowid, senderId, fairness });
+        notifyUser(senderId, 'trade_sent', 'Trade request sent', `Your trade request to ${receiver.username} is pending.${fairness.warningLevel !== 'balanced' ? ` Trade balance: ${fairness.offerValue > fairness.requestValue ? 'you are overpaying' : fairness.requestValue > fairness.offerValue ? 'you are asking for more value' : 'review the balance before it is accepted'}.` : ''}`, '/trading', { tradeId: result.lastInsertRowid, receiverId: receiver.id, fairness });
+
+        res.json({ success: true, tradeId: result.lastInsertRowid, requestedCount: requestedItems.length, fairness });
     } catch (error) {
         console.error('Create trade error:', error);
         res.status(500).json({ error: 'Failed to create trade' });
@@ -1291,7 +1356,7 @@ router.post('/trades', isAuthenticated, (req, res) => {
 router.put('/trades/:id', isAuthenticated, (req, res) => {
     try {
         const tradeId = Number(req.params.id);
-        const { status, receiverItemIds = [] } = req.body;
+        const { status, receiverItemIds = [], receiverAcceptFree = false } = req.body;
         const userId = req.user.id;
 
         const trade = db.prepare('SELECT * FROM trades WHERE id = ?').get(tradeId);
@@ -1366,6 +1431,22 @@ router.put('/trades/:id', isAuthenticated, (req, res) => {
                 }
             }
 
+            const senderPreview = senderItems.map((item) => enrichInventoryLikeItem(item, { odds: item.odds }));
+            const receiverPreview = nextReceiverItems.map((item) => enrichInventoryLikeItem(item, { odds: item.odds }));
+            const fairness = computeTradeSummaryFromItems(senderPreview, receiverPreview);
+            if (fairness.isFreeTrade && !receiverAcceptFree) {
+                return res.status(400).json({ error: 'This is a one-sided trade. The receiver must explicitly agree before it can be completed.' });
+            }
+            saveTradeMeta(tradeId, {
+                offer_value: fairness.offerValue,
+                request_value: fairness.requestValue,
+                trade_difference: fairness.difference,
+                trade_ratio: fairness.ratio,
+                trade_warning_level: fairness.warningLevel,
+                requires_free_accept: fairness.isFreeTrade ? 1 : 0,
+                receiver_accepts_free: fairness.isFreeTrade && receiverAcceptFree ? 1 : 0
+            });
+
             for (const item of senderItems) {
                 db.prepare('UPDATE inventory SET user_id = ?, is_listed = 0, listed_price = NULL WHERE id = ?').run(trade.receiver_id, item.item_id);
             }
@@ -1422,6 +1503,35 @@ router.get('/users/:id/tradable-items', isAuthenticated, (req, res) => {
     }
 });
 
+
+router.get('/pokemon/search', isAuthenticated, async (req, res) => {
+    try {
+        const query = normalizeText(req.query.query || req.query.q || '').toLowerCase();
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 24);
+        const names = await getPokemonNameCache();
+        let matches = [];
+        if (query) {
+            matches = names.filter((name) => name.includes(query));
+            matches.sort((a, b) => {
+                const aStarts = a.startsWith(query) ? 0 : 1;
+                const bStarts = b.startsWith(query) ? 0 : 1;
+                if (aStarts !== bStarts) return aStarts - bStarts;
+                return a.localeCompare(b);
+            });
+        } else {
+            matches = names.slice().sort((a, b) => a.localeCompare(b));
+        }
+        const results = matches.slice(0, limit).map((name) => ({
+            name,
+            label: name.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' '),
+            sprite_url: buildSpriteUrl(name)
+        }));
+        res.json({ pokemon: results });
+    } catch (error) {
+        console.error('Pokemon search error:', error);
+        res.status(500).json({ error: 'Failed to search Pokémon' });
+    }
+});
 
 router.get('/profiles/:identifier', optionalAuth, (req, res) => {
     try {

@@ -99,6 +99,7 @@
                                     <div id="requestedItemsPanel" class="trade-collection-grid"><div style="color:var(--text-muted); font-size:13px;">Select a player to load their tradable items.</div></div>
                                 </div>
                                 <button class="btn btn-primary" id="sendTradeBtn"><i class="ri-send-plane-line"></i> Send Trade</button>
+                                <div id="tradeComposeInsight" class="admin-rain-card empty" style="margin:0;">Choose items on both sides to preview trade fairness.</div>
                             </div>
                         </div>
 
@@ -143,6 +144,44 @@
         let selectedRequestedItems = [];
         let receiverInventoryData = [];
         let selectedReturnItems = [];
+        let tradePollHandle = null;
+
+        function getSelectedInventoryItems() {
+            return inventoryData.filter((item) => selectedItems.includes(item.id));
+        }
+
+        function getSelectedRequestedInventoryItems() {
+            return receiverInventoryData.filter((item) => selectedRequestedItems.includes(item.id));
+        }
+
+        function getTradeFairness(offerItems = [], requestItems = []) {
+            const offerValue = Number(offerItems.reduce((sum, item) => sum + Number(item.estimated_value || 0), 0).toFixed(2));
+            const requestValue = Number(requestItems.reduce((sum, item) => sum + Number(item.estimated_value || 0), 0).toFixed(2));
+            const richerSide = Math.max(offerValue, requestValue);
+            const poorerSide = Math.min(offerValue, requestValue);
+            const difference = Number(Math.abs(offerValue - requestValue).toFixed(2));
+            const ratio = richerSide > 0 ? Number((poorerSide / richerSide).toFixed(3)) : 1;
+            const isFreeTrade = (offerValue === 0 && requestValue > 0) || (requestValue === 0 && offerValue > 0);
+            const status = isFreeTrade ? 'danger' : ratio < 0.45 ? 'warning' : ratio < 0.7 ? 'notice' : 'balanced';
+            return { offerValue, requestValue, difference, ratio, isFreeTrade, status };
+        }
+
+        function fairnessCopy(fairness) {
+            if (!fairness) return 'Choose items on both sides to preview trade fairness.';
+            if (fairness.isFreeTrade) return `One-sided trade · difference ${KatsuCases.formatCurrency(fairness.difference)}. The receiver must explicitly agree.`;
+            if (fairness.status === 'warning') return `Unbalanced trade · difference ${KatsuCases.formatCurrency(fairness.difference)}.`;
+            if (fairness.status === 'notice') return `Leaning trade · difference ${KatsuCases.formatCurrency(fairness.difference)}.`;
+            return `Balanced trade · difference ${KatsuCases.formatCurrency(fairness.difference)}.`;
+        }
+
+        function updateTradeComposeInsight() {
+            const panel = document.getElementById('tradeComposeInsight');
+            if (!panel) return;
+            const fairness = getTradeFairness(getSelectedInventoryItems(), getSelectedRequestedInventoryItems());
+            const titleMap = { balanced: 'Balanced', notice: 'Heads Up', warning: 'Unfair', danger: 'One-Sided' };
+            panel.className = `admin-rain-card ${fairness.status === 'balanced' ? 'empty' : ''}`;
+            panel.innerHTML = `<div><strong>${titleMap[fairness.status] || 'Trade Insight'}</strong><div class="rain-meta">Offering ${KatsuCases.formatCurrency(fairness.offerValue)} · Asking ${KatsuCases.formatCurrency(fairness.requestValue)}<br>${fairnessCopy(fairness)}</div></div>`;
+        }
 
         async function loadTrades() {
             const data = await KatsuCases.api.get('/api/trades');
@@ -154,6 +193,7 @@
             const data = await KatsuCases.api.get('/api/inventory');
             inventoryData = Array.isArray(data.items) ? data.items.filter((item) => !item.is_listed) : [];
             renderTradeInventory();
+            updateTradeComposeInsight();
         }
 
         async function searchUsers(query = '') {
@@ -215,6 +255,7 @@
                     </div>
                 </button>
             `).join('');
+            updateTradeComposeInsight();
         }
 
         function toggleRequestedItem(itemId) {
@@ -224,6 +265,7 @@
                 selectedRequestedItems.push(itemId);
             }
             renderRequestedItems();
+            updateTradeComposeInsight();
         }
 
         function selectReceiver(id, username, displayName = '') {
@@ -231,6 +273,7 @@
             selectedRequestedItems = [];
             searchUsers(document.getElementById('tradeUserSearch').value || '');
             loadReceiverItems().catch(() => undefined);
+            updateTradeComposeInsight();
         }
 
         function renderTrades() {
@@ -262,7 +305,7 @@
                         <span style="font-weight:600;">${KatsuCases.escapeHtml(trade.receiver_username)}</span>
                     </div>
                     <div class="trade-info">
-                        <div class="trade-items-count">Giving ${trade.offer_count || trade.item_count || 0} (${KatsuCases.formatCurrency(trade.offer_value || 0)}) · Wants ${trade.request_count || 0} (${KatsuCases.formatCurrency(trade.request_value || 0)})</div>
+                        <div class="trade-items-count">Giving ${trade.offer_count || trade.item_count || 0} (${KatsuCases.formatCurrency(trade.offer_value || 0)}) · Wants ${trade.request_count || 0} (${KatsuCases.formatCurrency(trade.request_value || 0)})${trade.fairness ? ` · ${trade.fairness.isFreeTrade ? 'One-sided' : trade.fairness.status === 'balanced' ? 'Balanced' : 'Review balance'}` : ''}</div>
                         <div class="trade-time">${KatsuCases.formatRelativeTime(trade.created_at)}</div>
                     </div>
                     <span class="trade-status ${trade.status}">${KatsuCases.escapeHtml(trade.status)}</span>
@@ -317,6 +360,7 @@
                 document.getElementById('tradeUserResults').innerHTML = '';
                 document.getElementById('requestedItemsPanel').innerHTML = '<div style="color:var(--text-muted); font-size:13px;">Select a player to load their tradable items.</div>';
                 renderTradeInventory();
+                updateTradeComposeInsight();
                 await loadTrades();
                 await KatsuCases.refreshNotifications({ silent: true });
             } catch (error) {
@@ -342,7 +386,12 @@
             const requested = currentTrade.items.filter((item) => Number(item.from_user) === Number(currentTrade.receiver_id));
             const availableReturnItems = inventoryData.filter((item) => !selectedItems.includes(item.id));
 
+            const fairness = currentTrade.fairness || getTradeFairness(offered, requested);
             document.getElementById('tradeDetails').innerHTML = `
+                <div class="admin-rain-card ${fairness.status === 'balanced' ? 'empty' : ''}" style="margin-bottom:16px;">
+                    <strong>${fairness.isFreeTrade ? 'One-Sided Trade' : fairness.status === 'balanced' ? 'Balanced Trade' : 'Trade Warning'}</strong>
+                    <div class="rain-meta">Offering ${KatsuCases.formatCurrency(fairness.offerValue)} · Asking ${KatsuCases.formatCurrency(fairness.requestValue)} · ${fairnessCopy(fairness)}</div>
+                </div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
                     <div>
                         <h4 style="margin-bottom:12px;"><a href="/profile?user=${encodeURIComponent(currentTrade.sender_username)}">${KatsuCases.escapeHtml(currentTrade.sender_username)}</a> gives</h4>
@@ -381,6 +430,7 @@
                                 `).join('') || '<div style="color:var(--text-muted); font-size:13px;">No extra items available to add.</div>'}
                             </div>
                             <p style="font-size:12px; color:var(--text-muted); margin-top:10px;">You can keep the requested items as-is, remove them, or add more before accepting.</p>
+                            ${fairness.isFreeTrade ? `<label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:12px; color:var(--text-secondary);"><input type="checkbox" id="receiverFreeTradeAgree"> I understand this is one-sided and I still want to accept it.</label>` : ''}
                         ` : ''}
                     </div>
                 </div>
@@ -398,8 +448,9 @@
 
         async function respondToTrade(status) {
             if (!currentTrade) return;
+            const receiverAcceptFree = Boolean(document.getElementById('receiverFreeTradeAgree')?.checked);
             try {
-                await KatsuCases.api.put(`/api/trades/${currentTrade.id}`, { status, receiverItemIds: selectedReturnItems });
+                await KatsuCases.api.put(`/api/trades/${currentTrade.id}`, { status, receiverItemIds: selectedReturnItems, receiverAcceptFree });
                 KatsuCases.showToast(status === 'accepted' ? 'Trade completed' : 'Trade declined', status === 'accepted' ? 'success' : 'info');
                 selectedReturnItems = [];
                 KatsuCases.closeModal('trade-modal');
@@ -431,7 +482,19 @@
             });
             document.getElementById('sendTradeBtn').addEventListener('click', sendTrade);
             document.getElementById('tradeUserSearch').addEventListener('input', KatsuCases.debounce((event) => searchUsers(event.target.value), 250));
+            updateTradeComposeInsight();
             searchUsers('');
+            tradePollHandle = window.setInterval(async () => {
+                await loadTrades();
+                await loadInventory();
+                if (currentTrade && document.getElementById('trade-modal')?.classList.contains('active')) {
+                    const refreshed = tradesData.find((trade) => Number(trade.id) === Number(currentTrade.id));
+                    if (refreshed) {
+                        currentTrade = refreshed;
+                        showTradeDetails(refreshed.id);
+                    }
+                }
+            }, 5000);
         });
     </script>
 </body>

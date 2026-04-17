@@ -57,6 +57,7 @@ function createTimeline(config = {}) {
 let caseAnimationPool = [];
 let activeRollTimeline = null;
 let activeRevealOverlay = null;
+let currentOpenAnotherHandler = null;
 
 function setAnimationPool(items) {
     caseAnimationPool = Array.isArray(items) ? items.slice() : [];
@@ -281,6 +282,8 @@ function createParticles(container, color, count) {
 function updateRevealContent(revealElement, results) {
     const result = results[results.length - 1];
     const rarityClass = `badge-${result.rarity}`;
+    const extraResults = results.slice(0, -1);
+    const totalValue = Number(results.reduce((sum, item) => sum + Number(item.estimated_value || 0), 0).toFixed(2));
 
     revealElement.innerHTML = `
         <div class="reward-sprite ${result.rarity === 'legendary' || result.rarity === 'mythical' ? result.rarity : ''}">
@@ -293,14 +296,28 @@ function updateRevealContent(revealElement, results) {
                 ${result.odds ? `<span class="badge badge-uncommon">1 IN ${KatsuCases.formatNumber(result.odds)}</span>` : ''}
                 ${result.estimated_value ? `<span class="badge badge-epic">${KatsuCases.formatCurrency(result.estimated_value)}</span>` : ''}
                 ${result.seed ? `<span class="badge badge-common">SEED ${result.seed}</span>` : ''}
+                ${results.length > 1 ? `<span class="badge badge-legendary">${results.length} ROLLS · ${KatsuCases.formatCurrency(totalValue)}</span>` : ''}
             </div>
             ${result.seed ? `<div class="opening-seed">Replay seed: ${result.seed}</div>` : ''}
+            ${extraResults.length ? `
+                <div class="multi-roll-summary">
+                    ${extraResults.map((item) => `
+                        <div class="multi-roll-chip rarity-glow-${item.rarity}">
+                            ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:40px; height:40px;' })}
+                            <div class="multi-roll-chip-meta">
+                                <div class="multi-roll-chip-name">${item.pokemon_name}</div>
+                                <div class="multi-roll-chip-value">${KatsuCases.formatCurrency(item.estimated_value || 0)}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
         </div>
         <div class="reward-actions">
             <button class="btn btn-ghost" onclick="KatsuCases.closeModal('opening-modal'); KatsuCases.showToast('Added to inventory', 'success');">
                 <i class="ri-check-line"></i> Done
             </button>
-            <button class="btn btn-primary" onclick="KatsuCases.closeModal('opening-modal');">
+            <button class="btn btn-primary" onclick="window.KatsuAnimations.openAnotherCase()">
                 <i class="ri-add-line"></i> Open Another
             </button>
         </div>
@@ -392,10 +409,24 @@ function animateNotification(notification) {
     playAnimation({ targets: notification, translateX: [100, 0], opacity: [0, 1], duration: 300, easing: 'easeOutQuad' });
 }
 
+function setOpenAnotherHandler(handler) {
+    currentOpenAnotherHandler = typeof handler === 'function' ? handler : null;
+}
+
+function openAnotherCase() {
+    if (typeof currentOpenAnotherHandler === 'function') {
+        currentOpenAnotherHandler();
+    } else {
+        KatsuCases.closeModal('opening-modal');
+    }
+}
+
 window.KatsuAnimations = {
     animateCaseOpen,
     setAnimationPool,
     setOpeningHint,
+    setOpenAnotherHandler,
+    openAnotherCase,
     skipCurrentRoll,
     initCardAnimations,
     animateGridStagger,
