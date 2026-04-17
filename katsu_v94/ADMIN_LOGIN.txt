@@ -1,0 +1,13 @@
+KatsuCases Admin Test Login
+===========================
+
+Login email:
+admin@katsucases.local
+
+Password:
+KatsuOwner!2026
+
+Notes:
+- Use the email field on the sign-in page.
+- This seeded account is the site owner/admin for this package.
+- Starting balance: $5000
