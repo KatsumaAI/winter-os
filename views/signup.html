@@ -4,100 +4,162 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - KatsuCases</title>
-    
+    <meta name="description" content="Create your KatsuCases account and start opening Pokémon cases, collecting drops, and joining the live economy.">
+    <meta name="theme-color" content="#0a0e1a">
+    <meta name="robots" content="noindex,nofollow">
+    <meta property="og:site_name" content="KatsuCases">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Sign Up - KatsuCases">
+    <meta property="og:description" content="Create your KatsuCases account and start opening Pokémon cases, collecting drops, and joining the live economy.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Sign Up - KatsuCases">
+    <meta name="twitter:description" content="Create your KatsuCases account and start opening Pokémon cases, collecting drops, and joining the live economy.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
-    
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/pages.css">
 </head>
 <body>
-    <div class="auth-page">
-        <div class="auth-card">
-            <div class="auth-header">
-                <a href="/" class="logo">
-                    <div class="logo-icon">
-                        <i class="ri-gamepad-line"></i>
-                    </div>
-                    <span>KatsuCases</span>
+    <div class="auth-page auth-page--split">
+        <div class="auth-shell">
+            <section class="auth-showcase auth-showcase--signup">
+                <a href="/" class="auth-brand" aria-label="KatsuCases home">
+                    <img src="/assets/katsucases-topbar-logo.png" alt="KatsuCases" class="auth-brand-logo">
                 </a>
-                <h1>Create Account</h1>
-                <p>Join thousands of trainers building their collection</p>
-            </div>
-            
-            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); border-radius: 12px; padding: 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
-                <i class="ri-gift-line" style="font-size: 24px; color: var(--success);"></i>
-                <div>
-                    <strong style="color: var(--success);">Get $100 Welcome Bonus!</strong>
-                    <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Start opening cases immediately</p>
+                <div class="auth-showcase-copy">
+                    <div class="auth-kicker"><span class="live-dot"></span> New account bonus ready</div>
+                    <h1>Create your account and start opening immediately.</h1>
+                    <p>Build your profile, collect drops with full value tracking, join the live economy, and move straight into your first openings.</p>
                 </div>
-            </div>
-            
-            <form id="signupForm">
-                <div class="form-group">
-                    <label class="form-label">Username</label>
-                    <input type="text" class="form-input" id="username" placeholder="Choose a username" required minlength="3" maxlength="20">
-                    <span class="form-hint">3-20 characters, letters, numbers, and underscores only</span>
+
+                <div class="auth-bonus-card">
+                    <div class="auth-bonus-icon"><i class="ri-gift-2-line"></i></div>
+                    <div>
+                        <strong>$100 welcome balance</strong>
+                        <p>New accounts get a starting bonus so you can test cases right away.</p>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" class="form-input" id="email" placeholder="you@example.com" required>
+
+                <div class="auth-checklist">
+                    <div class="auth-checklist-item"><i class="ri-check-line"></i><span>Profile, display name, region, badges, and inventory visibility controls.</span></div>
+                    <div class="auth-checklist-item"><i class="ri-check-line"></i><span>Trading, market listings, Case Vs rooms, and live pull replay support.</span></div>
+                    <div class="auth-checklist-item"><i class="ri-check-line"></i><span>Original owner history, values, and more detailed player profiles.</span></div>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-input" id="password" placeholder="Create a password" required minlength="6">
-                    <span class="form-hint">At least 6 characters</span>
+            </section>
+
+            <section class="auth-panel">
+                <div class="auth-card auth-card--discordish auth-card--wide-form">
+                    <div class="auth-header auth-header--left">
+                        <div class="auth-chip">Create account</div>
+                        <h2>Claim your KatsuCases profile</h2>
+                        <p>Set up your account details below and jump into the site with your welcome bonus.</p>
+                    </div>
+
+                    <form id="signupForm" class="auth-form auth-form--enhanced">
+                        <div class="form-group">
+                            <label class="form-label" for="username">Username</label>
+                            <div class="auth-input-wrap">
+                                <i class="ri-at-line auth-input-icon"></i>
+                                <input type="text" class="form-input auth-input" id="username" placeholder="Choose a username" autocomplete="username" required minlength="3" maxlength="20">
+                            </div>
+                            <span class="form-hint">3–20 characters. Letters, numbers, and underscores only.</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="email">Email Address</label>
+                            <div class="auth-input-wrap">
+                                <i class="ri-mail-line auth-input-icon"></i>
+                                <input type="email" class="form-input auth-input" id="email" placeholder="you@example.com" autocomplete="email" required>
+                            </div>
+                        </div>
+
+                        <div class="auth-grid-two">
+                            <div class="form-group">
+                                <label class="form-label" for="password">Password</label>
+                                <div class="auth-input-wrap">
+                                    <i class="ri-lock-2-line auth-input-icon"></i>
+                                    <input type="password" class="form-input auth-input auth-input--password" id="password" placeholder="Create a password" autocomplete="new-password" required minlength="6">
+                                    <button type="button" class="auth-input-action" data-toggle-password="#password" aria-label="Show password">
+                                        <i class="ri-eye-line"></i>
+                                    </button>
+                                </div>
+                                <span class="form-hint">At least 6 characters.</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="confirmPassword">Confirm Password</label>
+                                <div class="auth-input-wrap">
+                                    <i class="ri-shield-check-line auth-input-icon"></i>
+                                    <input type="password" class="form-input auth-input auth-input--password" id="confirmPassword" placeholder="Repeat password" autocomplete="new-password" required minlength="6">
+                                    <button type="button" class="auth-input-action" data-toggle-password="#confirmPassword" aria-label="Show password">
+                                        <i class="ri-eye-line"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="auth-action-row auth-action-row--stacked">
+                            <label class="form-checkbox auth-checkbox">
+                                <input type="checkbox" id="terms" required>
+                                <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
+                            </label>
+                            <div class="auth-security-note"><i class="ri-shield-star-line"></i> Your account is protected with secure session storage.</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg auth-submit">
+                            <i class="ri-user-add-line"></i> Create Account
+                        </button>
+                    </form>
+
+                    <div class="auth-footer auth-footer--compact">
+                        Already have an account? <a href="/signin">Sign in</a>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-checkbox">
-                        <input type="checkbox" id="terms" required>
-                        <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
-                    </label>
-                </div>
-                
-                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
-                    <i class="ri-user-add-line"></i> Create Account
-                </button>
-            </form>
-            
-            <div class="auth-footer">
-                Already have an account? <a href="/signin">Sign in</a>
-            </div>
+            </section>
         </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
     <script src="/js/main.js"></script>
     <script>
+        document.querySelectorAll('[data-toggle-password]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const input = document.querySelector(button.getAttribute('data-toggle-password'));
+                if (!input) return;
+                const icon = button.querySelector('i');
+                const nextType = input.type === 'password' ? 'text' : 'password';
+                input.type = nextType;
+                if (icon) {
+                    icon.className = nextType === 'password' ? 'ri-eye-line' : 'ri-eye-off-line';
+                }
+            });
+        });
+
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
             const button = e.target.querySelector('button[type="submit"]');
-            
-            // Validate username
+
             if (!/^[a-zA-Z0-9_]+$/.test(username)) {
                 KatsuCases.showToast('Username can only contain letters, numbers, and underscores', 'error');
                 return;
             }
-            
+            if (password !== confirmPassword) {
+                KatsuCases.showToast('Passwords do not match', 'error');
+                return;
+            }
+
             KatsuCases.setLoading(true, button);
-            
             try {
                 const data = await KatsuCases.api.post('/api/auth/register', { username, email, password });
-                
                 KatsuCases.showToast('Account created! $100 bonus added!', 'success');
                 KatsuCases.updateUserUI(data.user);
-                
-                // Redirect to home
                 window.location.href = '/';
             } catch (error) {
                 KatsuCases.showToast(error.message || 'Registration failed', 'error');

@@ -876,3 +876,56 @@ h5 {
 .site-announcement-item.jackpot .site-announcement-icon {
     color: #facc15;
 }
+
+
+/* Responsive foundation */
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+    max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+    font: inherit;
+}
+
+@media (max-width: 1200px) {
+    h1 { font-size: clamp(2.35rem, 6vw, 3.5rem); }
+    h2 { font-size: clamp(1.85rem, 4.2vw, 2.5rem); }
+    h3 { font-size: clamp(1.25rem, 3.2vw, 1.8rem); }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0 14px;
+    }
+
+    .section {
+        padding: 40px 0;
+    }
+
+    .section-sm {
+        padding: 28px 0;
+    }
+
+    .section-title {
+        margin-bottom: 28px;
+    }
+
+    .section-title p {
+        font-size: 15px;
+    }
+}
