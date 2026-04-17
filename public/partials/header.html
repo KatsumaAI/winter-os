@@ -1,0 +1,97 @@
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <div class="logo-icon">
+                <i class="ri-gamepad-line"></i>
+            </div>
+            <span>KatsuCases</span>
+        </a>
+        
+        <nav class="nav">
+            <a href="/" class="nav-link">Home</a>
+            
+            <div class="nav-dropdown">
+                <a href="/cases" class="nav-link nav-dropdown-trigger">
+                    Cases <i class="ri-arrow-down-s-line"></i>
+                </a>
+                <div class="nav-dropdown-menu">
+                    <a href="/cases" class="nav-dropdown-item">Featured Cases</a>
+                    <a href="/cases?category=daily" class="nav-dropdown-item">Daily Cases</a>
+                    <a href="/casevs" class="nav-dropdown-item">Case Vs</a>
+                    <a href="/livepulls" class="nav-dropdown-item">Live Pulls</a>
+                </div>
+            </div>
+            
+            <div class="nav-dropdown">
+                <a href="/marketplace" class="nav-link nav-dropdown-trigger">
+                    Market <i class="ri-arrow-down-s-line"></i>
+                </a>
+                <div class="nav-dropdown-menu">
+                    <a href="/marketplace" class="nav-dropdown-item">Marketplace</a>
+                    <a href="/trading" class="nav-dropdown-item">Trading</a>
+                    <a href="/inventory" class="nav-dropdown-item">Inventory</a>
+                </div>
+            </div>
+            
+            <a href="/livepulls" class="nav-link">Live Pulls</a>
+            <a href="/casevs" class="nav-link">Case Vs</a>
+            
+            <div class="nav-dropdown">
+                <a href="/guide" class="nav-link nav-dropdown-trigger">
+                    Info <i class="ri-arrow-down-s-line"></i>
+                </a>
+                <div class="nav-dropdown-menu">
+                    <a href="/guide" class="nav-dropdown-item">Guide</a>
+                    <a href="/faq" class="nav-dropdown-item">FAQ</a>
+                </div>
+            </div>
+        </nav>
+        
+        <div class="header-actions">
+            <div class="balance-display">
+                <i class="ri-wallet-3-line"></i>
+                <span class="balance-value">$0.00</span>
+            </div>
+            
+            <div class="auth-buttons" style="display: flex; gap: 8px;">
+                <a href="/signin" class="btn btn-ghost">Sign In</a>
+                <a href="/signup" class="btn btn-primary">Sign Up</a>
+            </div>
+            
+            <div class="user-area" style="display: none; align-items: center; gap: 16px;">
+                <a href="/inventory" class="btn btn-icon btn-ghost" title="Inventory">
+                    <i class="ri-archive-line"></i>
+                </a>
+                
+                <div class="user-menu">
+                    <div class="user-menu-trigger">
+                        <div class="user-avatar">
+                            <span class="user-initial">U</span>
+                        </div>
+                        <span class="user-name" style="font-weight: 600;">Username</span>
+                        <i class="ri-arrow-down-s-line"></i>
+                    </div>
+                    <div class="user-menu-dropdown">
+                        <div class="user-menu-header">
+                            <div class="user-menu-name user-name">Username</div>
+                            <div class="user-menu-email user-email">user@example.com</div>
+                        </div>
+                        <a href="/profile" class="user-menu-item">
+                            <i class="ri-user-line"></i> Profile
+                        </a>
+                        <a href="/inventory" class="user-menu-item">
+                            <i class="ri-archive-line"></i> Inventory
+                        </a>
+                        <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;">
+                            <i class="ri-logout-box-line"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                <i class="ri-menu-line"></i>
+            </button>
+        </div>
+    </div>
+</header>
