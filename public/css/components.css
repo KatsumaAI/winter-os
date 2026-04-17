@@ -1024,7 +1024,7 @@
 
 
 .brand-logo-img {
-    height: 42px;
+    height: 160px;
     width: auto;
     display: block;
     object-fit: contain;
@@ -1049,7 +1049,7 @@
 
 @media (max-width: 900px) {
     .brand-logo-img {
-        height: 34px;
+        height: 96px;
     }
 
     .logo {

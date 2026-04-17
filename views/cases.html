@@ -152,24 +152,55 @@
     
     <!-- Opening Modal -->
     <div class="modal-overlay opening-modal" id="opening-modal">
-        <div class="modal" style="max-width: 900px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Opening <span id="openingCaseName">Case</span>...</h3>
-                <button class="modal-close" onclick="KatsuCases.closeModal('opening-modal')">
-                    <i class="ri-close-line"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="opening-area">
-                    <div class="opening-roller" id="roller">
-                        <div class="roller-track" id="rollerTrack">
-                            <!-- Slots populated by JS -->
-                        </div>
+        <div class="modal opening-modal-shell">
+            <div class="opening-chrome">
+                <div class="opening-topbar">
+                    <button class="opening-back-btn" onclick="KatsuCases.closeModal('opening-modal')">
+                        <i class="ri-arrow-left-s-line"></i>
+                        <span>Back</span>
+                    </button>
+                    <div class="opening-title-wrap">
+                        <div class="opening-title-eyebrow">Case Opening</div>
+                        <h3 class="opening-title">Opening <span id="openingCaseName">Case</span></h3>
+                        <div class="opening-subtitle" id="openingCaseMeta">Provably fair replay-ready roll</div>
                     </div>
-                    
+                    <div class="opening-topbar-actions">
+                        <div class="opening-top-pill">
+                            <i class="ri-shield-check-line"></i>
+                            <span>Provably Fair</span>
+                        </div>
+                        <button class="opening-top-icon" id="openingSkipBtn" type="button">
+                            <i class="ri-skip-forward-mini-fill"></i>
+                        </button>
+                        <button class="opening-top-icon" type="button" onclick="KatsuCases.closeModal('opening-modal')">
+                            <i class="ri-close-line"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="opening-stage">
+                    <div class="opening-stage-copy">
+                        <div class="opening-stage-kicker">Live Roll</div>
+                        <div class="opening-stage-hint" id="openingStageHint">Preparing the reel and loading the drop pool…</div>
+                    </div>
+                    <div class="opening-roller-shell">
+                        <div class="opening-shell-glow glow-left"></div>
+                        <div class="opening-shell-glow glow-right"></div>
+                        <div class="roller-fade left"></div>
+                        <div class="roller-fade right"></div>
+                        <div class="roller-center-line"></div>
+                        <div class="roller-pointer"></div>
+                        <div class="opening-roller" id="roller"></div>
+                    </div>
                     <div class="reward-reveal" id="rewardReveal">
                         <!-- Reveal populated by JS -->
                     </div>
+                </div>
+                <div class="opening-lower-rail">
+                    <div class="opening-lower-rail-header">
+                        <span>Case Highlights</span>
+                        <span id="openingDropCount">0 drops</span>
+                    </div>
+                    <div class="opening-drop-rail" id="openingDropRail"></div>
                 </div>
             </div>
         </div>
@@ -182,6 +213,52 @@
         let currentCase = null;
         let currentCaseContents = [];
         let casesData = [];
+        function rarityWeightLabel(item) {
+            if (!item?.odds) return 'Unknown';
+            if (item.odds >= 1000000000) return 'Ultra chase';
+            if (item.odds >= 1000000) return 'Jackpot';
+            if (item.odds >= 100000) return 'Chase';
+            if (item.odds >= 1000) return 'Rare';
+            return 'Popular';
+        }
+
+        function renderOpeningPresentation() {
+            const dropRail = document.getElementById('openingDropRail');
+            const countEl = document.getElementById('openingDropCount');
+            const metaEl = document.getElementById('openingCaseMeta');
+            const hintEl = document.getElementById('openingStageHint');
+            const bestDrops = [...currentCaseContents]
+                .sort((a, b) => (b.estimated_value || 0) - (a.estimated_value || 0))
+                .slice(0, 12);
+
+            if (metaEl && currentCase) {
+                const chaseCount = currentCaseContents.filter((item) => Number(item.odds || 0) >= 1000000).length;
+                metaEl.textContent = `${KatsuCases.formatCurrency(currentCase.price)} · ${currentCaseContents.length} drops · ${chaseCount} chase pulls`;
+            }
+
+            if (countEl) {
+                countEl.textContent = `${currentCaseContents.length} possible drops`;
+            }
+
+            if (hintEl) {
+                hintEl.textContent = 'Preparing the reel and loading the drop pool…';
+            }
+
+            if (dropRail) {
+                dropRail.innerHTML = bestDrops.map((item) => `
+                    <div class="opening-drop-chip rarity-glow-${item.rarity}">
+                        <div class="opening-drop-chip-sprite ${item.is_shiny ? 'shiny' : ''}">
+                            ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name })}
+                        </div>
+                        <div class="opening-drop-chip-meta">
+                            <div class="opening-drop-chip-name">${item.pokemon_name}</div>
+                            <div class="opening-drop-chip-sub">${rarityWeightLabel(item)} · ${KatsuCases.formatCurrency(item.estimated_value || 0)}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
         
         async function loadCases(category = 'all') {
             try {
@@ -306,8 +383,11 @@
             KatsuCases.closeModal('case-modal');
             document.getElementById('openingCaseName').textContent = currentCase.name;
             document.getElementById('rewardReveal').classList.remove('active');
+            document.getElementById('rewardReveal').innerHTML = '';
             document.getElementById('roller').innerHTML = '';
+            renderOpeningPresentation();
             if (window.KatsuAnimations?.setAnimationPool) window.KatsuAnimations.setAnimationPool(currentCaseContents);
+            if (window.KatsuAnimations?.setOpeningHint) window.KatsuAnimations.setOpeningHint('Preparing the reel and loading the drop pool…');
             KatsuCases.openModal('opening-modal');
             
             try {
@@ -346,6 +426,15 @@
             });
             
             await loadCases(category);
+
+            const skipBtn = document.getElementById('openingSkipBtn');
+            if (skipBtn) {
+                skipBtn.addEventListener('click', () => {
+                    if (window.KatsuAnimations?.skipCurrentRoll) {
+                        window.KatsuAnimations.skipCurrentRoll();
+                    }
+                });
+            }
             
             // Category filter
             document.querySelectorAll('#categoryPills .pill').forEach(pill => {

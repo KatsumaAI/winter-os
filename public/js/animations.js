@@ -14,14 +14,14 @@ function playAnimation(options) {
         if (typeof options.complete === 'function') {
             try { options.complete(); } catch (error) { console.error(error); }
         }
-        return { finished: Promise.resolve() };
+        return { finished: Promise.resolve(), instance: null };
     }
 
     let resolveFinished;
     const finished = new Promise((resolve) => { resolveFinished = resolve; });
     const originalComplete = options.complete;
 
-    anime({
+    const instance = anime({
         ...options,
         complete: (...args) => {
             if (typeof originalComplete === 'function') originalComplete(...args);
@@ -29,13 +29,13 @@ function playAnimation(options) {
         }
     });
 
-    return { finished };
+    return { finished, instance };
 }
 
 function createTimeline(config = {}) {
     const anime = getAnimeLib();
     if (!anime || typeof anime.timeline !== 'function') {
-        return { add() { return this; }, finished: Promise.resolve() };
+        return { add() { return this; }, finished: Promise.resolve(), duration: 0, seek() {} };
     }
 
     let resolveFinished;
@@ -55,19 +55,91 @@ function createTimeline(config = {}) {
 }
 
 let caseAnimationPool = [];
+let activeRollTimeline = null;
+let activeRevealOverlay = null;
 
 function setAnimationPool(items) {
     caseAnimationPool = Array.isArray(items) ? items.slice() : [];
 }
 
+function setOpeningHint(text) {
+    const hintEl = document.getElementById('openingStageHint');
+    if (hintEl) hintEl.textContent = text;
+}
+
+function rarityScore(item) {
+    const order = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4, mythical: 5 };
+    return order[item?.rarity] || 0;
+}
+
+function buildReplayTrack(pool, winner, slots = 56) {
+    const source = (Array.isArray(pool) ? pool : []).filter(Boolean);
+    if (!source.length && winner) {
+        return Array.from({ length: slots }, () => ({ ...winner }));
+    }
+
+    const sorted = source.slice().sort((a, b) => {
+        const rarityDelta = rarityScore(a) - rarityScore(b);
+        if (rarityDelta !== 0) return rarityDelta;
+        return (a.estimated_value || 0) - (b.estimated_value || 0);
+    });
+
+    const winnerIndex = Math.max(16, slots - 10);
+    const track = [];
+    for (let index = 0; index < slots; index += 1) {
+        if (index === winnerIndex) {
+            track.push({ ...winner });
+            continue;
+        }
+        let poolIndex = (index * 7 + index * index) % sorted.length;
+        if (index > winnerIndex - 5 && index < winnerIndex) {
+            poolIndex = (sorted.length - 1) - ((winnerIndex - index) % Math.min(sorted.length, 6));
+        }
+        track.push({ ...sorted[poolIndex] });
+    }
+    return track;
+}
+
+function createSlotElement(result, isPlaceholder = false, isWinner = false) {
+    const slot = document.createElement('div');
+    slot.className = `roller-slot rarity-glow-${result?.rarity || 'common'}${isPlaceholder ? ' roller-slot-placeholder' : ''}${isWinner ? ' winner' : ''}`;
+
+    if (isPlaceholder) {
+        slot.innerHTML = '<span class="roller-slot-placeholder">?</span>';
+    } else if (result) {
+        slot.innerHTML = `
+            ${KatsuCases.buildSpriteImg({ pokemonName: result.pokemon_name, isShiny: result.is_shiny, spriteUrl: result.sprite_url, alt: result.pokemon_name })}
+            <span class="roller-slot-name">${result.pokemon_name}</span>
+            <span class="roller-slot-value">${KatsuCases.formatCurrency(result.estimated_value || 0)}</span>
+            ${result.odds ? `<span class="roller-slot-odds">1 in ${KatsuCases.formatNumber(result.odds)}</span>` : ''}
+        `;
+    }
+    return slot;
+}
+
+function getWinnerIndex(trackLength) {
+    return Math.max(16, trackLength - 10);
+}
+
+function clearActiveOverlay() {
+    if (activeRevealOverlay && activeRevealOverlay.remove) {
+        activeRevealOverlay.remove();
+    }
+    activeRevealOverlay = null;
+}
+
 async function animateCaseOpen(results, rollerElement, revealElement) {
-    rollerElement.innerHTML = '<div class="roller-center-line"></div>';
+    rollerElement.innerHTML = '';
     rollerElement.style.opacity = '1';
     revealElement.classList.remove('active');
+    revealElement.innerHTML = '';
+    setOpeningHint('Shuffling the reel and lining up the final result…');
 
     const winner = results[results.length - 1];
-    const trackData = Array.isArray(winner?.track) && winner.track.length ? winner.track : buildReplayTrack(caseAnimationPool.length ? caseAnimationPool : results, winner);
-    const winnerIndex = Math.max(8, trackData.length - 7);
+    const trackData = Array.isArray(winner?.track) && winner.track.length
+        ? winner.track
+        : buildReplayTrack(caseAnimationPool.length ? caseAnimationPool : results, winner);
+    const winnerIndex = typeof winner?.winning_index === 'number' ? winner.winning_index : getWinnerIndex(trackData.length);
 
     const track = document.createElement('div');
     track.className = 'roller-track';
@@ -79,20 +151,23 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
 
     const slots = Array.from(track.querySelectorAll('.roller-slot'));
     if (!slots.length) return winner;
+
     const firstRect = slots[0].getBoundingClientRect();
     const secondRect = slots[1] ? slots[1].getBoundingClientRect() : null;
-    const step = secondRect ? (secondRect.left - firstRect.left) : (firstRect.width + 16);
+    const step = secondRect ? (secondRect.left - firstRect.left) : (firstRect.width + 18);
     const trackPaddingLeft = parseFloat(window.getComputedStyle(track).paddingLeft || '0') || 0;
     const slotWidth = firstRect.width;
     const centerOffset = Math.max(0, (rollerElement.clientWidth / 2) - (slotWidth / 2));
     const targetX = -(winnerIndex * step) - trackPaddingLeft + centerOffset;
 
     const timeline = createTimeline({ easing: 'easeOutQuart' });
+    activeRollTimeline = timeline;
+
     timeline.add({
         targets: track,
         translateX: [0, targetX],
-        duration: 5200,
-        easing: 'cubicBezier(.08,.74,.16,1)',
+        duration: 6200,
+        easing: 'cubicBezier(.08,.8,.14,1)',
         update() {
             const lineX = rollerElement.getBoundingClientRect().left + (rollerElement.clientWidth / 2);
             let closest = null;
@@ -107,55 +182,51 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
                 }
             });
             if (closest) closest.classList.add('highlight');
+        },
+        begin() {
+            setOpeningHint('Rolling through the drop pool… watch the center marker.');
         }
     });
 
-    await timeline.finished;
+    try {
+        await timeline.finished;
+    } finally {
+        activeRollTimeline = null;
+    }
 
     const winnerSlot = slots[winnerIndex];
+    setOpeningHint('Locking the result and revealing the pull…');
     if (winnerSlot) {
         winnerSlot.classList.add('winner');
         await playAnimation({
             targets: winnerSlot,
-            scale: [1, 1.08, 1],
-            duration: 460,
-            easing: 'easeOutElastic(1, .5)'
+            scale: [1, 1.075, 1],
+            translateY: [0, -10, 0],
+            duration: 540,
+            easing: 'easeOutElastic(1, .55)'
         }).finished;
     }
 
     if (winner && ['epic', 'legendary', 'mythical'].includes(winner.rarity)) {
         await showSpecialReveal(winner, revealElement, track);
     } else {
-        await new Promise((resolve) => setTimeout(resolve, 320));
+        await new Promise((resolve) => setTimeout(resolve, 240));
         revealElement.classList.add('active');
         updateRevealContent(revealElement, results);
+        setOpeningHint('Result locked. Replay-ready and added to inventory.');
     }
 
     return winner;
 }
 
-function createSlotElement(result, isPlaceholder = false, isWinner = false) {
-    const slot = document.createElement('div');
-    slot.className = `roller-slot rarity-glow-${result?.rarity || 'common'}${isPlaceholder ? ' roller-slot-placeholder' : ''}${isWinner ? ' winner' : ''}`;
-
-    if (isPlaceholder) {
-        slot.innerHTML = '<span class="roller-slot-placeholder">?</span>';
-    } else if (result) {
-        slot.innerHTML = `
-            ${KatsuCases.buildSpriteImg({ pokemonName: result.pokemon_name, isShiny: result.is_shiny, spriteUrl: result.sprite_url, alt: result.pokemon_name })}
-            <span class="roller-slot-name">${result.pokemon_name}</span>
-            <span class="roller-slot-value">${KatsuCases.formatCurrency(result.estimated_value || 0)}</span>
-        `;
-    }
-    return slot;
-}
-
 async function showSpecialReveal(result, revealElement, rollerTrack) {
+    clearActiveOverlay();
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1999; opacity:0;';
+    overlay.style.cssText = 'position:fixed; inset:0; background:radial-gradient(circle at center, rgba(30,41,59,0.55), rgba(0,0,0,0.9)); z-index:1999; opacity:0;';
+    activeRevealOverlay = overlay;
     document.body.appendChild(overlay);
 
-    await playAnimation({ targets: overlay, opacity: [0, 1], duration: 500, easing: 'easeOutQuad' }).finished;
+    await playAnimation({ targets: overlay, opacity: [0, 1], duration: 400, easing: 'easeOutQuad' }).finished;
     rollerTrack.style.opacity = '0';
 
     revealElement.classList.add('active');
@@ -164,21 +235,22 @@ async function showSpecialReveal(result, revealElement, rollerTrack) {
     const spriteElement = revealElement.querySelector('.reward-sprite');
     if (spriteElement && result.rarity === 'legendary') {
         spriteElement.classList.add('legendary');
-        await playAnimation({ targets: spriteElement, scale: [0.5, 1], rotate: [10, 0], duration: 800, easing: 'easeOutElastic(1, .5)' }).finished;
-        createParticles(spriteElement, '#fbbf24', 20);
+        await playAnimation({ targets: spriteElement, scale: [0.72, 1.02, 1], rotate: [8, 0], duration: 880, easing: 'easeOutElastic(1, .5)' }).finished;
+        createParticles(spriteElement, '#fbbf24', 22);
     } else if (spriteElement && result.rarity === 'mythical') {
         spriteElement.classList.add('mythical');
-        await playAnimation({ targets: spriteElement, scale: [0.3, 1.2, 1], rotate: [20, -10, 0], duration: 1000, easing: 'easeOutElastic(1, .4)' }).finished;
-        createParticles(spriteElement, '#ec4899', 30);
+        await playAnimation({ targets: spriteElement, scale: [0.58, 1.12, 1], rotate: [14, -4, 0], duration: 1000, easing: 'easeOutElastic(1, .42)' }).finished;
+        createParticles(spriteElement, '#ec4899', 28);
         createParticles(spriteElement, '#8b5cf6', 20);
     } else if (spriteElement) {
-        await playAnimation({ targets: spriteElement, scale: [0.5, 1], duration: 600, easing: 'easeOutBack' }).finished;
-        createParticles(spriteElement, '#8b5cf6', 15);
+        await playAnimation({ targets: spriteElement, scale: [0.72, 1], duration: 600, easing: 'easeOutBack' }).finished;
+        createParticles(spriteElement, '#8b5cf6', 16);
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    await playAnimation({ targets: overlay, opacity: 0, duration: 500 }).finished;
-    overlay.remove();
+    await new Promise((resolve) => setTimeout(resolve, 760));
+    setOpeningHint('Result locked. Replay-ready and added to inventory.');
+    await playAnimation({ targets: overlay, opacity: 0, duration: 420 }).finished;
+    clearActiveOverlay();
 }
 
 function createParticles(container, color, count) {
@@ -233,6 +305,16 @@ function updateRevealContent(revealElement, results) {
             </button>
         </div>
     `;
+}
+
+function skipCurrentRoll() {
+    if (activeRollTimeline && typeof activeRollTimeline.seek === 'function') {
+        setOpeningHint('Skipping to the final result…');
+        activeRollTimeline.seek(activeRollTimeline.duration || 0);
+    }
+    if (activeRevealOverlay) {
+        clearActiveOverlay();
+    }
 }
 
 function initCardAnimations() {
@@ -313,6 +395,8 @@ function animateNotification(notification) {
 window.KatsuAnimations = {
     animateCaseOpen,
     setAnimationPool,
+    setOpeningHint,
+    skipCurrentRoll,
     initCardAnimations,
     animateGridStagger,
     initButtonRipples,
