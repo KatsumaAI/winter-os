@@ -217,6 +217,19 @@ function badgeMarkup(badges = []) {
     return (Array.isArray(badges) ? badges : []).map((badge) => `<span class="badge ${escapeHtml(badge.className || 'badge-common')} community-message-badge">${escapeHtml(badge.label || badge.key || 'TAG')}</span>`).join('');
 }
 
+function canDeleteCommunityMessage(message) {
+    if (!state.user || !message) return false;
+    if (Boolean(state.user.is_admin)) return true;
+
+    const isAuthor = Number(message.user_id) === Number(state.user.id);
+    if (!isAuthor) return false;
+
+    const createdAt = new Date(message.created_at || 0).getTime();
+    if (!Number.isFinite(createdAt) || createdAt <= 0) return false;
+
+    return Date.now() - createdAt < 5 * 60 * 1000;
+}
+
 function ensureSiteAnnouncementUI() {
     let bar = document.querySelector('.site-announcement-bar');
     if (!bar) {
