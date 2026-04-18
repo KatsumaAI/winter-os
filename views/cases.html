@@ -71,12 +71,18 @@
         </header>
         
         <!-- Main Content -->
-        <main class="main-content">
+        <main class="main-content discord-page discord-cases-page">
             <section class="cases-hero section-sm">
-                <div class="container">
-                    <div class="section-title">
+                <div class="container discord-content-shell">
+                    <div class="section-title discord-section-title">
+                        <div class="discord-page-kicker"><i class="ri-box-3-line"></i> Case Browser</div>
                         <h1>Case Collection</h1>
                         <p>Browse our selection of premium cases, claim daily rewards, track missions, and favorite the crates you want to quick-open.</p>
+                    </div>
+                    <div class="discord-hero-rail">
+                        <div class="discord-hero-chip"><i class="ri-star-line"></i><span>Favorite quick-open rail</span></div>
+                        <div class="discord-hero-chip"><i class="ri-magic-line"></i><span>Pity-tracked rolls</span></div>
+                        <div class="discord-hero-chip"><i class="ri-task-line"></i><span>Daily ops board</span></div>
                     </div>
                     <div class="cases-ops-grid">
                         <section class="cases-ops-card" id="dailyOpsPanel">
@@ -99,8 +105,8 @@
             </section>
             
             <section class="section-sm">
-                <div class="container">
-                    <div class="cases-filters">
+                <div class="container discord-content-shell">
+                    <div class="cases-filters discord-filterbar">
                         <div class="pills" id="categoryPills">
                             <button class="pill active" data-filter="all">All Cases</button>
                             <button class="pill" data-filter="featured">Featured</button>
@@ -536,8 +542,12 @@
             }
             
             grid.innerHTML = cases.map(c => `
-                <div class="card case-card case-card-previewable ${c.is_favorite ? 'is-favorite' : ''}" style="--case-color: ${c.image_color}">
+                <div class="card case-card case-card-previewable discord-case-card ${c.is_favorite ? 'is-favorite' : ''}" style="--case-color: ${c.image_color}">
                     <div class="case-card-image">
+                        <div class="case-card-top-meta">
+                            <span class="case-card-channel"># ${KatsuCases.escapeHtml(c.category || (c.is_featured ? 'featured' : 'standard'))}</span>
+                            <span class="case-card-online"><i class="ri-flashlight-line"></i> ${c.total_items} drops</span>
+                        </div>
                         <button class="case-favorite-btn ${c.is_favorite ? 'active' : ''}" type="button" onclick="toggleFavoriteCase(${c.id}, event)"><i class="${c.is_favorite ? 'ri-star-fill' : 'ri-star-line'}"></i></button>
                         <div class="case-card-glow"></div>
                         <div class="case-card-icon">
@@ -549,9 +559,10 @@
                             <h3 class="card-title">${c.name}</h3>
                             ${c.is_favorite ? '<span class="case-favorite-tag">Pinned</span>' : ''}
                         </div>
+                        <div class="case-card-subline">Case room · pity tracked · replay ready</div>
                         <p class="card-description">${c.description || `${c.total_items} items inside`}</p>
                         ${c.rarity_breakdown ? `
-                            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+                            <div class="case-card-badge-row">
                                 ${c.rarity_breakdown.slice(0, 3).map(r => `
                                     <span class="badge badge-${r.rarity}">${r.rarity}: ${r.count}</span>
                                 `).join('')}
@@ -611,9 +622,9 @@
                     ${Object.entries(data.byRarity).filter(([_, items]) => items.length > 0).map(([rarity, items]) => {
                         const avgOdds = Math.round(items.reduce((sum, i) => sum + i.odds, 0) / items.length);
                         return `
-                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                            <div class="case-odds-row">
                                 <span class="badge badge-${rarity}">${rarity.toUpperCase()}</span>
-                                <span style="color: var(--text-muted);">1 in ${KatsuCases.formatNumber(avgOdds)}</span>
+                                <span class="case-odds-value">1 in ${KatsuCases.formatNumber(avgOdds)}</span>
                             </div>
                         `;
                     }).join('')}
@@ -623,13 +634,13 @@
                 const contentsPreview = document.getElementById('caseContentsPreview');
                 const allItems = Array.isArray(data.contents) ? data.contents : [];
                 contentsPreview.innerHTML = allItems.map(item => `
-                    <div style="display: flex; align-items: center; gap: 12px; padding: 8px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 8px;">
+                    <div class="case-preview-row">
                         ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width: 40px; height: 40px; image-rendering: pixelated;' })}
                         <div style="flex: 1;">
                             <div style="font-weight: 600;">${item.pokemon_name}</div>
                             <span class="badge badge-${item.rarity}" style="font-size: 10px;">${item.rarity}</span>
                         </div>
-                        <span style="color: var(--text-muted); font-size: 12px; text-align:right;">1/${item.odds}<br>${KatsuCases.formatCurrency(item.estimated_value || 0)}</span>
+                        <span class="case-preview-value">1/${item.odds}<br>${KatsuCases.formatCurrency(item.estimated_value || 0)}</span>
                     </div>
                 `).join('');
                 

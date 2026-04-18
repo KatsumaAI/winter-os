@@ -4855,3 +4855,434 @@ body.has-community-sidebar {
         grid-column: 1 / -1;
     }
 }
+
+/* ============================================
+   DISCORD-STYLE PAGE REFRESH
+   ============================================ */
+
+.discord-page .cases-hero {
+    position: relative;
+    padding-top: calc(var(--space-2xl) + 4px);
+}
+
+.discord-page .cases-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(88, 101, 242, 0.07) 0%, rgba(88, 101, 242, 0) 72%);
+    pointer-events: none;
+}
+
+.discord-section-title {
+    position: relative;
+    z-index: 1;
+}
+
+.discord-page-kicker,
+.discord-panel-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(88, 101, 242, 0.12);
+    border: 1px solid rgba(88, 101, 242, 0.25);
+    color: #c6d0ff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.discord-hero-rail {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: -10px;
+}
+
+.discord-hero-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    padding: 0 14px;
+    border-radius: 14px;
+    background: rgba(20, 24, 43, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.discord-hero-chip i {
+    color: #c6d0ff;
+}
+
+.discord-filterbar {
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: rgba(17, 24, 39, 0.74);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.discord-panel,
+.discord-panel-header,
+.discord-side-stack > .profile-section,
+.discord-side-stack > .trade-compose-card,
+.discord-cases-page .cases-ops-card,
+.discord-cases-page .card.case-card,
+.discord-marketplace-page .item-card,
+.discord-livepulls-page .replay-panel,
+.discord-casevs-page .casevs-room-card,
+.discord-casevs-page .casevs-sidebar-card,
+.discord-casevs-page #caseVsCreateCard,
+.discord-trading-page .trades-list {
+    background: linear-gradient(180deg, rgba(23, 28, 47, 0.98) 0%, rgba(17, 22, 38, 0.98) 100%);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.28);
+}
+
+.discord-tabbar {
+    padding: 8px;
+    border-radius: 16px;
+    background: rgba(17, 22, 38, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.discord-tabbar .tab {
+    border-radius: 12px;
+}
+
+.discord-tabbar .tab.active {
+    background: rgba(88, 101, 242, 0.18);
+    color: #eef2ff;
+    box-shadow: inset 0 0 0 1px rgba(88, 101, 242, 0.35);
+}
+
+.trade-card {
+    padding: 18px 20px;
+    border-bottom-color: rgba(148, 163, 184, 0.08);
+}
+
+.trade-card-main {
+    flex: 1;
+    display: grid;
+    gap: 10px;
+}
+
+.trade-card-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+}
+
+.trade-user-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.trade-vs {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: rgba(88, 101, 242, 0.12);
+    color: #c6d0ff;
+    font-size: 13px;
+}
+
+.trade-status {
+    border-radius: 999px;
+    letter-spacing: 0.06em;
+}
+
+.trade-select-item {
+    align-items: center;
+    gap: 12px;
+    min-height: 68px;
+    border-radius: 14px;
+    background: rgba(11, 16, 28, 0.85);
+    border-color: rgba(148, 163, 184, 0.1);
+}
+
+.trade-select-item:hover {
+    transform: translateY(-1px);
+    border-color: rgba(88, 101, 242, 0.3);
+    background: rgba(20, 27, 47, 0.96);
+}
+
+.live-pull-headline,
+.live-pull-head-tags,
+.casevs-player-pill-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.casevs-player-pill-main.compact {
+    gap: 10px;
+}
+
+.live-pull-avatar,
+.casevs-player-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: rgba(88, 101, 242, 0.16);
+    color: #eef2ff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.live-pull-card.discord-live-card,
+.casevs-room-card.discord-room-card,
+.discord-market-card,
+.discord-case-card {
+    overflow: hidden;
+}
+
+.live-pull-card.discord-live-card::before,
+.casevs-room-card.discord-room-card::before,
+.discord-market-card::before,
+.discord-case-card::before {
+    content: '';
+    display: block;
+    height: 3px;
+    background: linear-gradient(90deg, rgba(88, 101, 242, 0.9) 0%, rgba(139, 92, 246, 0.9) 100%);
+}
+
+.live-pull-head {
+    align-items: center;
+}
+
+.live-pull-head-tags {
+    margin-left: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.live-pull-value {
+    margin-top: 10px;
+    color: #dbe4ff;
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+
+.replay-panel-head {
+    align-items: flex-start;
+}
+
+.replay-summary-row {
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(9, 13, 24, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.casevs-room-title {
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.casevs-room-eyebrow,
+.market-item-channel,
+.case-card-channel {
+    color: #b8c1ff;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.casevs-room-meta,
+.market-item-meta,
+.case-card-badge-row,
+.case-card-top-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.casevs-room-meta {
+    margin-top: 8px;
+}
+
+.casevs-room-chip,
+.case-card-online {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.casevs-room-winner {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.18);
+    color: var(--text-secondary);
+}
+
+.casevs-player-pill {
+    background: rgba(10, 14, 26, 0.95);
+    border-color: rgba(148, 163, 184, 0.1);
+}
+
+.discord-round-card .casevs-round-pull {
+    background: rgba(9, 13, 24, 0.88);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.discord-market-card .item-card-sprite-wrap {
+    padding: 14px 14px 0;
+}
+
+.market-item-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.market-item-badge-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.discord-market-card .item-card-sprite {
+    min-height: 180px;
+    border-radius: 18px;
+    background: radial-gradient(circle at top, rgba(88, 101, 242, 0.16), rgba(88, 101, 242, 0.04) 42%, rgba(10, 14, 26, 0.9) 100%);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.market-item-meta {
+    justify-content: space-between;
+    margin-top: 14px;
+}
+
+.item-card-seller {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.discord-case-card .case-card-image {
+    min-height: 208px;
+}
+
+.case-card-top-meta {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    right: 56px;
+    justify-content: space-between;
+    z-index: 2;
+}
+
+.case-card-subline {
+    margin-top: -4px;
+    margin-bottom: 12px;
+    color: #b9c4ff;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+}
+
+.case-card-badge-row {
+    margin-bottom: 16px;
+}
+
+.case-odds-row,
+.case-preview-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(12, 17, 30, 0.88);
+    border: 1px solid rgba(148, 163, 184, 0.08);
+    margin-bottom: 8px;
+}
+
+.case-odds-value,
+.case-preview-value {
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: right;
+}
+
+.discord-cases-page #case-modal .modal,
+.discord-trading-page #trade-modal .modal {
+    background: linear-gradient(180deg, rgba(23, 28, 47, 0.99) 0%, rgba(16, 20, 34, 0.99) 100%);
+}
+
+.discord-cases-page .cases-ops-grid {
+    gap: 18px;
+}
+
+@media (max-width: 992px) {
+    .trade-card-top,
+    .live-pull-head,
+    .market-item-topline,
+    .case-card-top-meta {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .live-pull-head-tags {
+        margin-left: 0;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 700px) {
+    .discord-hero-rail {
+        justify-content: flex-start;
+    }
+
+    .trade-user-chip,
+    .casevs-room-chip,
+    .case-card-online,
+    .discord-hero-chip {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .market-item-meta {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

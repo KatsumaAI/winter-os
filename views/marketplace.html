@@ -71,25 +71,31 @@
         </header>
         
         <!-- Main Content -->
-        <main class="main-content">
+        <main class="main-content discord-page discord-marketplace-page">
             <section class="cases-hero section-sm">
                 <div class="container">
-                    <div class="section-title">
+                    <div class="section-title discord-section-title">
+                        <div class="discord-page-kicker"><i class="ri-store-2-line"></i> Community Market</div>
                         <h1>Marketplace</h1>
                         <p>Buy and sell Pokémon items directly with other traders</p>
+                    </div>
+                    <div class="discord-hero-rail">
+                        <div class="discord-hero-chip"><i class="ri-search-eye-line"></i><span>Fast listing search</span></div>
+                        <div class="discord-hero-chip"><i class="ri-price-tag-3-line"></i><span>Recent offers</span></div>
+                        <div class="discord-hero-chip"><i class="ri-user-star-line"></i><span>Player-to-player sales</span></div>
                     </div>
                 </div>
             </section>
             
             <section class="section-sm">
                 <div class="container">
-                    <div class="marketplace-header">
+                    <div class="marketplace-header discord-panel-header">
                         <div class="marketplace-search search-input">
                             <i class="ri-search-line"></i>
                             <input type="text" class="form-input" placeholder="Search Pokémon..." id="searchInput">
                         </div>
                         
-                        <div class="marketplace-filters">
+                        <div class="marketplace-filters discord-filterbar">
                             <div class="pills" id="rarityPills">
                                 <button class="pill active" data-filter="all">All</button>
                                 <button class="pill" data-filter="common">Common</button>
@@ -157,18 +163,25 @@
             }
             
             grid.innerHTML = items.map(item => `
-                <div class="card item-card rarity-glow-${item.rarity}">
-                    <div class="item-card-sprite">
-                        ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name })}
+                <div class="card item-card discord-market-card rarity-glow-${item.rarity}">
+                    <div class="item-card-sprite-wrap">
+                        <div class="market-item-topline">
+                            <span class="market-item-channel"># listing-${item.id}</span>
+                            <div class="market-item-badge-row">
+                                ${item.is_shiny ? `<span class="badge badge-legendary" style="font-size: 10px;">SHINY</span>` : ''}
+                                <span class="badge badge-${item.rarity}">${item.rarity}</span>
+                            </div>
+                        </div>
+                        <div class="item-card-sprite">
+                            ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name })}
+                        </div>
                     </div>
                     <div class="card-body">
                         <h4 class="item-card-name">${item.pokemon_name}</h4>
                         ${item.pokemon_form ? `<p class="item-card-form">${item.pokemon_form}</p>` : ''}
-                        ${item.is_shiny ? `<span class="badge badge-legendary" style="font-size: 10px;">SHINY</span>` : ''}
-                        <span class="badge badge-${item.rarity}" style="margin-left: 4px;">${item.rarity}</span>
-                        <div style="margin-top: 12px;">
+                        <div class="market-item-meta">
                             <div class="item-card-price">${KatsuCases.formatCurrency(item.price)}</div>
-                            <div class="item-card-seller">by ${item.seller_username}</div>
+                            <div class="item-card-seller"><i class="ri-user-3-line"></i> ${KatsuCases.escapeHtml(item.seller_username)}</div>
                         </div>
                         ${KatsuCases.state.user && KatsuCases.state.user.id !== item.seller_id ? `
                             <button class="btn btn-primary btn-sm" style="width: 100%; margin-top: 12px;" onclick="buyItem(${item.id})">

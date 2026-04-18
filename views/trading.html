@@ -65,25 +65,31 @@
             </div>
         </header>
 
-        <main class="main-content">
+        <main class="main-content discord-page discord-trading-page">
             <section class="cases-hero section-sm">
                 <div class="container">
-                    <div class="section-title">
+                    <div class="section-title discord-section-title">
+                        <div class="discord-page-kicker"><i class="ri-exchange-line"></i> Trade Hub</div>
                         <h1>Trading</h1>
                         <p>Send real offers, add return items on accept, and complete swaps instantly.</p>
+                    </div>
+                    <div class="discord-hero-rail">
+                        <div class="discord-hero-chip"><i class="ri-inbox-archive-line"></i><span>Inbox-style offer feed</span></div>
+                        <div class="discord-hero-chip"><i class="ri-scales-3-line"></i><span>Fairness checks</span></div>
+                        <div class="discord-hero-chip"><i class="ri-user-shared-line"></i><span>Return-item swaps</span></div>
                     </div>
                 </div>
             </section>
 
             <section class="section-sm">
-                <div class="container trading-layout">
+                <div class="container trading-layout discord-layout-shell">
                     <div>
-                        <div class="tabs" style="margin-bottom:24px;">
+                        <div class="tabs discord-tabbar" style="margin-bottom:24px;">
                             <button class="tab active" data-tab="incoming">Incoming</button>
                             <button class="tab" data-tab="sent">Sent</button>
                             <button class="tab" data-tab="history">History</button>
                         </div>
-                        <div class="trades-list">
+                        <div class="trades-list discord-panel">
                             <div class="trades-header">
                                 <h4 id="tradesTitle">Incoming Trades</h4>
                             </div>
@@ -91,8 +97,8 @@
                         </div>
                     </div>
 
-                    <aside>
-                        <div class="trade-compose-card">
+                    <aside class="discord-side-stack">
+                        <div class="trade-compose-card discord-panel">
                             <h4 style="margin-bottom:10px;">Create Trade</h4>
                             <p style="color:var(--text-secondary); margin-bottom:16px;">Pick a player and choose the items you want to offer. The receiver can add return items before accepting.</p>
                             <div style="display:grid; gap:12px;">
@@ -113,7 +119,7 @@
                             </div>
                         </div>
 
-                        <div class="profile-section">
+                        <div class="profile-section discord-panel">
                             <div class="live-pull-head">
                                 <div>
                                     <h4 class="profile-section-title">Your Trade Inventory</h4>
@@ -319,16 +325,20 @@
             }
             container.innerHTML = filtered.map((trade) => `
                 <div class="trade-card" onclick="showTradeDetails(${trade.id})">
-                    <div class="trade-users">
-                        <span style="font-weight:600;">${KatsuCases.escapeHtml(trade.sender_username)}</span>
-                        <span class="trade-vs">↔</span>
-                        <span style="font-weight:600;">${KatsuCases.escapeHtml(trade.receiver_username)}</span>
+                    <div class="trade-card-main">
+                        <div class="trade-card-top">
+                            <div class="trade-users">
+                                <span class="trade-user-chip">${KatsuCases.escapeHtml(trade.sender_username)}</span>
+                                <span class="trade-vs"><i class="ri-arrow-left-right-line"></i></span>
+                                <span class="trade-user-chip">${KatsuCases.escapeHtml(trade.receiver_username)}</span>
+                            </div>
+                            <span class="trade-status ${trade.status}">${KatsuCases.escapeHtml(trade.status)}</span>
+                        </div>
+                        <div class="trade-info">
+                            <div class="trade-items-count">Giving ${trade.offer_count || trade.item_count || 0} (${KatsuCases.formatCurrency(trade.offer_value || 0)}) · Wants ${trade.request_count || 0} (${KatsuCases.formatCurrency(trade.request_value || 0)})${trade.fairness ? ` · ${trade.fairness.isFreeTrade ? 'One-sided' : trade.fairness.status === 'balanced' ? 'Balanced' : 'Review balance'}` : ''}</div>
+                            <div class="trade-time">Trade #${trade.id} · ${KatsuCases.formatRelativeTime(trade.created_at)}</div>
+                        </div>
                     </div>
-                    <div class="trade-info">
-                        <div class="trade-items-count">Giving ${trade.offer_count || trade.item_count || 0} (${KatsuCases.formatCurrency(trade.offer_value || 0)}) · Wants ${trade.request_count || 0} (${KatsuCases.formatCurrency(trade.request_value || 0)})${trade.fairness ? ` · ${trade.fairness.isFreeTrade ? 'One-sided' : trade.fairness.status === 'balanced' ? 'Balanced' : 'Review balance'}` : ''}</div>
-                        <div class="trade-time">${KatsuCases.formatRelativeTime(trade.created_at)}</div>
-                    </div>
-                    <span class="trade-status ${trade.status}">${KatsuCases.escapeHtml(trade.status)}</span>
                 </div>
             `).join('');
         }

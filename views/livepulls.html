@@ -65,19 +65,25 @@
             </div>
         </header>
 
-        <main class="main-content">
+        <main class="main-content discord-page discord-livepulls-page">
             <section class="cases-hero section-sm">
-                <div class="container">
-                    <div class="section-title">
+                <div class="container discord-content-shell">
+                    <div class="section-title discord-section-title">
+                        <div class="discord-page-kicker"><i class="ri-broadcast-line"></i> Activity Feed</div>
                         <h1><span class="live-dot" style="display:inline-block; margin-right:12px;"></span>Live Pulls</h1>
                         <p>See real openings, inspect the seed, and replay the roll before the winner landed.</p>
+                    </div>
+                    <div class="discord-hero-rail">
+                        <div class="discord-hero-chip"><i class="ri-radar-line"></i><span>Realtime pulls</span></div>
+                        <div class="discord-hero-chip"><i class="ri-shield-keyhole-line"></i><span>Seed inspect</span></div>
+                        <div class="discord-hero-chip"><i class="ri-play-circle-line"></i><span>Replay viewer</span></div>
                     </div>
                 </div>
             </section>
 
             <section class="section-sm">
-                <div class="container">
-                    <div class="marketplace-filters" style="margin-bottom:24px;">
+                <div class="container discord-content-shell">
+                    <div class="marketplace-filters discord-filterbar" style="margin-bottom:24px;">
                         <div class="pills" id="rarityPills">
                             <button class="pill active" data-filter="all">All</button>
                             <button class="pill" data-filter="rare">Rare+</button>
@@ -89,7 +95,7 @@
 
                     <div class="live-feed-layout">
                         <div class="live-pulls-grid" id="pullsGrid"></div>
-                        <aside class="replay-panel" id="replayPanel">
+                        <aside class="replay-panel discord-panel" id="replayPanel">
                             <h3 style="margin-bottom:8px;">Replay Viewer</h3>
                             <p style="color:var(--text-secondary); margin-bottom:18px;">Pick a live pull to inspect its seed and result track.</p>
                             <div class="empty-state" style="padding:32px 16px;">
@@ -162,13 +168,19 @@
             }
 
             container.innerHTML = filtered.map((pull) => `
-                <article class="live-pull-card rarity-glow-${pull.rarity} ${freshPullIds.has(Number(pull.id)) ? "live-pull-fresh" : ""}">
+                <article class="live-pull-card discord-live-card rarity-glow-${pull.rarity} ${freshPullIds.has(Number(pull.id)) ? "live-pull-fresh" : ""}">
                     <div class="live-pull-head">
-                        <div>
-                            <div class="live-pull-user"><a href="/profile?user=${encodeURIComponent(pull.username)}">${KatsuCases.escapeHtml(pull.username)}</a></div>
-                            <div class="live-pull-case">${KatsuCases.escapeHtml(pull.case_name)} · ${KatsuCases.formatRelativeTime(pull.opened_at)}</div>
+                        <div class="live-pull-headline">
+                            ${KatsuCases.buildAvatarMarkup ? KatsuCases.buildAvatarMarkup({ username: pull.username, display_name: pull.username }, 'live-pull-avatar') : `<span class="live-pull-avatar fallback">${KatsuCases.escapeHtml(String(pull.username || '?').charAt(0).toUpperCase())}</span>`}
+                            <div>
+                                <div class="live-pull-user"><a href="/profile?user=${encodeURIComponent(pull.username)}">${KatsuCases.escapeHtml(pull.username)}</a></div>
+                                <div class="live-pull-case">${KatsuCases.escapeHtml(pull.case_name)} · ${KatsuCases.formatRelativeTime(pull.opened_at)}</div>
+                            </div>
                         </div>
-                        <span class="badge badge-${pull.rarity}">${KatsuCases.escapeHtml(pull.rarity)}</span>
+                        <div class="live-pull-head-tags">
+                            ${freshPullIds.has(Number(pull.id)) ? '<span class="badge badge-epic">NEW</span>' : ''}
+                            <span class="badge badge-${pull.rarity}">${KatsuCases.escapeHtml(pull.rarity)}</span>
+                        </div>
                     </div>
                     <div class="live-pull-body">
                         <div class="live-pull-sprite">
@@ -184,10 +196,10 @@
                                 ${pull.odds ? `<span class="badge badge-uncommon">1 in ${Number(pull.odds).toLocaleString()}</span>` : ''}
                                 ${pull.replay_id ? '<span class="badge badge-uncommon">Replay Ready</span>' : ''}
                             </div>
-                            <div style="font-size:12px; color:var(--text-muted); margin-top:10px;">${KatsuCases.formatCurrency(pull.estimated_value || 0)}</div>
+                            <div class="live-pull-value">${KatsuCases.formatCurrency(pull.estimated_value || 0)}</div>
                             <div class="live-pull-actions">
                                 ${pull.replay_id ? `<button class="btn btn-primary" onclick="viewReplay(${pull.id})"><i class="ri-play-line"></i> View Replay</button>` : ''}
-                                <button class="btn btn-ghost" onclick="copySeed('${String(pull.seed || '').replace(/'/g, "\\'")}')"><i class="ri-file-copy-line"></i> Copy Seed</button>
+                                <button class="btn btn-ghost" onclick="copySeed('${String(pull.seed || '').replace(/'/g, "\'")}')"><i class="ri-file-copy-line"></i> Copy Seed</button>
                             </div>
                         </div>
                     </div>
@@ -206,14 +218,15 @@
                 const previewTrack = track.slice(previewStart, previewStart + 10);
                 const previewWinnerIndex = Math.max(0, Math.min(previewTrack.length - 1, winningIndex - previewStart));
                 document.getElementById('replayPanel').innerHTML = `
-                    <div class="live-pull-head">
+                    <div class="live-pull-head replay-panel-head">
                         <div>
+                            <div class="discord-panel-kicker"><i class="ri-play-circle-line"></i> Replay Viewer</div>
                             <h3 style="margin-bottom:6px;">${KatsuCases.escapeHtml(opening.pokemon_name)} Replay</h3>
                             <p style="color:var(--text-secondary);">${KatsuCases.escapeHtml(opening.username)} · ${KatsuCases.escapeHtml(opening.case_name)}</p>
                         </div>
                         <span class="badge badge-${opening.rarity}">${KatsuCases.escapeHtml(opening.rarity)}</span>
                     </div>
-                    <div style="margin-top:18px; display:flex; gap:16px; align-items:center;">
+                    <div class="replay-summary-row" style="margin-top:18px; display:flex; gap:16px; align-items:center;">
                         <div class="live-pull-sprite" style="width:96px; height:96px;">
                             ${KatsuCases.buildSpriteImg({ pokemonName: opening.pokemon_name, isShiny: opening.is_shiny, spriteUrl: opening.sprite_url, alt: opening.pokemon_name, style: 'width:72px; height:72px;' })}
                         </div>
