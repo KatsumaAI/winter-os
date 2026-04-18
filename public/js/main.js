@@ -205,50 +205,6 @@ function applyBranding() {
     });
 }
 
-function getNavIcon(href = '', label = '') {
-    const target = `${href} ${label}`.toLowerCase();
-    if (target.includes('/cases')) return 'ri-box-3-line';
-    if (target.includes('/marketplace') || target.includes('market')) return 'ri-store-2-line';
-    if (target.includes('/trading') || target.includes('trade')) return 'ri-shuffle-line';
-    if (target.includes('/inventory')) return 'ri-archive-line';
-    if (target.includes('/livepulls') || target.includes('live')) return 'ri-broadcast-line';
-    if (target.includes('/casevs') || target.includes('vs')) return 'ri-sword-line';
-    if (target.includes('/guide') || target.includes('/faq') || target.includes('info')) return 'ri-information-line';
-    if (target.includes('/profile')) return 'ri-user-line';
-    return 'ri-home-5-line';
-}
-
-function enhanceHeaderNavigation() {
-    document.querySelectorAll('.header').forEach((header) => {
-        const nav = header.querySelector('.nav');
-        if (nav) {
-            nav.querySelectorAll('.nav-link').forEach((link) => {
-                if (link.dataset.navEnhanced === '1') return;
-                link.dataset.navEnhanced = '1';
-                const href = link.getAttribute('href') || '';
-                const arrowIcon = link.querySelector('.ri-arrow-down-s-line');
-                const label = (link.textContent || '').replace(/\s+/g, ' ').trim();
-                const icon = getNavIcon(href, label);
-                link.innerHTML = `${icon ? `<i class="${icon} nav-link-icon" aria-hidden="true"></i>` : ''}<span class="nav-link-label">${escapeHtml(label)}</span>${arrowIcon ? arrowIcon.outerHTML : ''}`;
-            });
-        }
-
-        const actions = header.querySelector('.header-actions');
-        if (actions && !actions.querySelector('.header-utility-tag')) {
-            const activeLink = header.querySelector('.nav-link.active') || header.querySelector(`.nav-link[href="${window.location.pathname}"]`);
-            const label = (activeLink?.textContent || 'Hub').replace(/\s+/g, ' ').trim();
-            const utility = document.createElement('div');
-            utility.className = 'header-utility-tag';
-            utility.innerHTML = `<i class="ri-hashtag"></i><span>${escapeHtml(label || 'Hub')}</span>`;
-            const balance = actions.querySelector('.balance-display');
-            if (balance) {
-                actions.insertBefore(utility, balance);
-            } else {
-                actions.prepend(utility);
-            }
-        }
-    });
-}
 
 function ensureMobileNavigation() {
     const header = document.querySelector('.header');
@@ -1300,7 +1256,6 @@ function setLoading(isLoading, element) {
 
 document.addEventListener('DOMContentLoaded', async () => {
     applyBranding();
-    enhanceHeaderNavigation();
     ensureMobileNavigation();
     ensureSiteAnnouncementUI();
     ensureCommunityUI();
