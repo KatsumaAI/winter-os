@@ -67,7 +67,7 @@ function setOpeningShellBadge(text) {
 function clearOpeningImpactClasses() {
     const openingModal = document.getElementById('opening-modal');
     if (!openingModal) return;
-    openingModal.classList.remove('rolling', 'impact-epic', 'impact-legendary', 'impact-mythical');
+    openingModal.classList.remove('rolling', 'lock-tension', 'result-mode', 'impact-epic', 'impact-legendary', 'impact-mythical');
 }
 
 function triggerOpeningImpact(rarity) {
@@ -162,12 +162,34 @@ function clearActiveOverlay() {
     activeRevealOverlay = null;
 }
 
+
+function toggleResultMode(isActive) {
+    const openingModal = document.getElementById('opening-modal');
+    if (!openingModal) return;
+    openingModal.classList.toggle('result-mode', Boolean(isActive));
+}
+
+function setLockTension(isActive) {
+    const openingModal = document.getElementById('opening-modal');
+    if (!openingModal) return;
+    openingModal.classList.toggle('lock-tension', Boolean(isActive));
+}
+
+function markNearMissSlots(slots, winnerIndex) {
+    slots.forEach((slot) => slot.classList.remove('near-miss'));
+    [winnerIndex - 1, winnerIndex + 1].forEach((idx) => {
+        if (slots[idx]) slots[idx].classList.add('near-miss');
+    });
+}
+
+
 async function animateCaseOpen(results, rollerElement, revealElement) {
     rollerElement.innerHTML = '';
     rollerElement.style.opacity = '1';
     revealElement.classList.remove('active');
     revealElement.innerHTML = '';
     clearOpeningImpactClasses();
+    toggleResultMode(false);
     const openingModal = document.getElementById('opening-modal');
     if (openingModal) openingModal.classList.add('rolling');
     setOpeningShellBadge('Live Roll Chamber');
@@ -200,35 +222,79 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
 
     const timeline = createTimeline({ easing: 'easeOutQuart' });
     activeRollTimeline = timeline;
+    const preLockX = targetX - (step * 2.4);
+    const nearMissX = targetX - (step * 0.72);
+    const overshootX = targetX + Math.min(16, step * 0.12);
+    const settleX = targetX - 8;
+
+    const updateClosestSlot = () => {
+        const lineX = rollerElement.getBoundingClientRect().left + (rollerElement.clientWidth / 2);
+        let closest = null;
+        let closestDistance = Number.POSITIVE_INFINITY;
+        slots.forEach((slot) => {
+            slot.classList.remove('highlight');
+            const rect = slot.getBoundingClientRect();
+            const distance = Math.abs((rect.left + rect.width / 2) - lineX);
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closest = slot;
+            }
+        });
+        if (closest) closest.classList.add('highlight');
+    };
 
     timeline.add({
         targets: track,
         scale: [0.985, 1],
-        duration: 320,
+        duration: 280,
         easing: 'easeOutQuad'
     }).add({
         targets: track,
-        translateX: [0, targetX],
-        duration: 6200,
+        translateX: [0, preLockX],
+        duration: 5000,
         easing: 'cubicBezier(.08,.8,.14,1)',
-        update() {
-            const lineX = rollerElement.getBoundingClientRect().left + (rollerElement.clientWidth / 2);
-            let closest = null;
-            let closestDistance = Number.POSITIVE_INFINITY;
-            slots.forEach((slot) => {
-                slot.classList.remove('highlight');
-                const rect = slot.getBoundingClientRect();
-                const distance = Math.abs((rect.left + rect.width / 2) - lineX);
-                if (distance < closestDistance) {
-                    closestDistance = distance;
-                    closest = slot;
-                }
-            });
-            if (closest) closest.classList.add('highlight');
-        },
+        update: updateClosestSlot,
         begin() {
             setOpeningShellBadge('Roll In Progress');
             setOpeningHint('Rolling through the drop pool… watch the center marker.');
+        }
+    }).add({
+        targets: track,
+        translateX: [preLockX, nearMissX],
+        duration: 620,
+        easing: 'easeOutCubic',
+        update: updateClosestSlot,
+        begin() {
+            setLockTension(true);
+            setOpeningShellBadge('Lock Tension');
+            setOpeningHint('Tension building… the reel is slowing near the lock point.');
+        },
+        complete() {
+            markNearMissSlots(slots, winnerIndex);
+        }
+    }).add({
+        targets: track,
+        translateX: [nearMissX, overshootX],
+        duration: 320,
+        easing: 'easeInOutSine',
+        update: updateClosestSlot,
+        begin() {
+            setOpeningShellBadge('Near Miss');
+            setOpeningHint('Near miss at center. Final lock is snapping into place…');
+        }
+    }).add({
+        targets: track,
+        translateX: [overshootX, settleX, targetX],
+        duration: 440,
+        easing: 'easeOutExpo',
+        update: updateClosestSlot,
+        begin() {
+            setOpeningShellBadge('Target Lock');
+            setOpeningHint('Target lock engaged. Securing the final result…');
+        },
+        complete() {
+            setLockTension(false);
+            slots.forEach((slot) => slot.classList.remove('near-miss'));
         }
     });
 
@@ -239,6 +305,7 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
     }
 
     const winnerSlot = slots[winnerIndex];
+    setLockTension(false);
     setOpeningShellBadge('Target Locked');
     setOpeningHint('Locking the result and revealing the pull…');
     triggerOpeningImpact(winner?.rarity);
@@ -264,7 +331,9 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
     } else {
         await new Promise((resolve) => setTimeout(resolve, 240));
         revealElement.classList.add('active');
+        toggleResultMode(true);
         updateRevealContent(revealElement, results);
+        revealElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         setOpeningShellBadge('Result Confirmed');
         setOpeningHint('Result locked. Replay-ready and added to inventory.');
     }
@@ -380,7 +449,9 @@ async function showSpecialReveal(result, revealElement, rollerTrack) {
     await new Promise((resolve) => setTimeout(resolve, result?.rarity === 'mythical' ? 420 : 300));
 
     revealElement.classList.add('active');
+    toggleResultMode(true);
     updateRevealContent(revealElement, [result]);
+    revealElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
     const spriteElement = revealElement.querySelector('.reward-sprite');
     if (spriteElement && result.rarity === 'legendary') {
