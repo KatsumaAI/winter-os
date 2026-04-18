@@ -142,47 +142,90 @@
     
     <!-- Case Detail Modal -->
     <div class="modal-overlay" id="case-modal">
-        <div class="modal" style="max-width: 800px;">
-            <div class="modal-header">
-                <h3 class="modal-title" id="modalCaseName">Case Name</h3>
+        <div class="modal case-preview-modal">
+            <div class="modal-header case-preview-modal-header">
+                <div>
+                    <div class="case-preview-modal-kicker">Case Preview</div>
+                    <h3 class="modal-title" id="modalCaseName">Case Name</h3>
+                </div>
                 <button class="modal-close" onclick="KatsuCases.closeModal('case-modal')">
                     <i class="ri-close-line"></i>
                 </button>
             </div>
-            <div class="modal-body">
-                <div class="case-detail-grid">
-                    <div>
-                        <div class="case-preview" style="background: var(--bg-tertiary); border-radius: 16px; padding: 48px; text-align: center; margin-bottom: 24px;">
-                            <i class="ri-treasure-map-line" style="font-size: 80px; color: var(--accent-primary);"></i>
-                        </div>
-                        <div id="caseOddsSummary">
-                            <!-- Rarity odds populated by JS -->
-                        </div>
+            <div class="modal-body case-preview-modal-body">
+                <div class="case-detail-grid discord-case-detail-grid">
+                    <div class="case-preview-stack">
+                        <section class="case-preview-hero-card">
+                            <div class="case-preview-hero-icon-wrap">
+                                <div class="case-preview-hero-icon" id="casePreviewHeroIcon">
+                                    <i class="ri-treasure-map-line"></i>
+                                </div>
+                                <div class="case-preview-hero-copy">
+                                    <div class="case-preview-channel-row">
+                                        <span class="case-preview-channel" id="modalCaseCategory"># featured</span>
+                                        <span class="case-preview-status-pill" id="modalCaseLiveState">Live Case</span>
+                                    </div>
+                                    <p class="case-preview-description" id="modalCaseDescription">Premium case details.</p>
+                                </div>
+                            </div>
+                            <div class="case-preview-intel-grid" id="casePreviewIntelGrid"></div>
+                            <div class="case-preview-highlight-strip" id="casePreviewHighlightStrip"></div>
+                        </section>
+                        <section class="case-preview-panel">
+                            <div class="case-preview-panel-head">
+                                <div>
+                                    <div class="case-preview-section-kicker">Odds Intel</div>
+                                    <h4>Rarity Distribution</h4>
+                                </div>
+                            </div>
+                            <div id="caseOddsSummary" class="case-odds-grid">
+                                <!-- Rarity odds populated by JS -->
+                            </div>
+                        </section>
                         <div id="casePitySummary" class="case-pity-panel"></div>
                     </div>
-                    <div>
-                        <h4 style="margin-bottom: 16px;">Case Contents</h4>
-                        <div class="rarity-preview" style="max-height: 300px; overflow-y: auto;">
-                            <div id="caseContentsPreview">
-                                <!-- Contents populated by JS -->
+                    <div class="case-preview-stack">
+                        <section class="case-preview-panel case-preview-content-panel">
+                            <div class="case-preview-panel-head case-preview-panel-head-tight">
+                                <div>
+                                    <div class="case-preview-section-kicker">Drop Table</div>
+                                    <h4>Case Contents</h4>
+                                </div>
+                                <div class="case-preview-toolbar">
+                                    <button class="case-preview-sort-btn active" type="button" data-sort="value" onclick="setCaseContentsSort('value')">Best value</button>
+                                    <button class="case-preview-sort-btn" type="button" data-sort="odds" onclick="setCaseContentsSort('odds')">Rarest</button>
+                                    <button class="case-preview-sort-btn" type="button" data-sort="rarity" onclick="setCaseContentsSort('rarity')">By rarity</button>
+                                </div>
                             </div>
-                        </div>
+                            <div class="case-preview-list-shell">
+                                <div class="case-preview-list-head">
+                                    <span>Possible pull</span>
+                                    <span>Odds / Value</span>
+                                </div>
+                                <div class="case-preview-list" id="caseContentsPreview">
+                                    <!-- Contents populated by JS -->
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <div class="opening-balance">
-                    Balance: <span id="modalBalance">$0.00</span>
+            <div class="modal-footer case-preview-modal-footer">
+                <div class="opening-balance case-preview-balance-row">
+                    <span>Balance</span>
+                    <strong id="modalBalance">$0.00</strong>
                 </div>
-                <button class="btn btn-secondary" onclick="openCase(1)">
-                    <i class="ri-gamepad-line"></i> Open 1
-                </button>
-                <button class="btn btn-secondary" onclick="openCase(2)">
-                    <i class="ri-stack-line"></i> Open 2
-                </button>
-                <button class="btn btn-primary" onclick="openCase(3)">
-                    <i class="ri-stack-fill"></i> Open 3
-                </button>
+                <div class="case-preview-open-actions">
+                    <button class="btn btn-secondary" onclick="openCase(1)">
+                        <i class="ri-gamepad-line"></i> Open 1
+                    </button>
+                    <button class="btn btn-secondary" onclick="openCase(2)">
+                        <i class="ri-stack-line"></i> Open 2
+                    </button>
+                    <button class="btn btn-primary" onclick="openCase(3)">
+                        <i class="ri-stack-fill"></i> Open 3
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -254,6 +297,7 @@
         let currentOpeningAmount = 1;
         let openingBusy = false;
         let currentCasePity = null;
+        let currentCaseContentsSort = 'value';
         let progressionData = null;
         function rarityWeightLabel(item) {
             if (!item?.odds) return 'Unknown';
@@ -420,6 +464,57 @@
             }
         }
 
+
+        function getCaseContentsSorted(items = currentCaseContents, sort = currentCaseContentsSort) {
+            const rarityRank = { mythical: 6, legendary: 5, epic: 4, rare: 3, uncommon: 2, common: 1 };
+            return [...(Array.isArray(items) ? items : [])].sort((a, b) => {
+                if (sort === 'odds') {
+                    return Number(b.odds || 0) - Number(a.odds || 0) || Number(b.estimated_value || 0) - Number(a.estimated_value || 0);
+                }
+                if (sort === 'rarity') {
+                    return (rarityRank[b.rarity] || 0) - (rarityRank[a.rarity] || 0) || Number(b.odds || 0) - Number(a.odds || 0);
+                }
+                return Number(b.estimated_value || 0) - Number(a.estimated_value || 0) || Number(b.odds || 0) - Number(a.odds || 0);
+            });
+        }
+
+        function renderCaseContentsPreview(items = currentCaseContents) {
+            const contentsPreview = document.getElementById('caseContentsPreview');
+            if (!contentsPreview) return;
+            const rows = getCaseContentsSorted(items, currentCaseContentsSort);
+            contentsPreview.innerHTML = rows.map(item => `
+                <div class="case-preview-row case-preview-row-rich rarity-row-${item.rarity}">
+                    <div class="case-preview-main">
+                        <div class="case-preview-sprite ${item.is_shiny ? 'shiny' : ''}">
+                            ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width: 46px; height: 46px; image-rendering: pixelated;' })}
+                        </div>
+                        <div class="case-preview-copy">
+                            <div class="case-preview-name-row">
+                                <strong>${KatsuCases.escapeHtml(item.pokemon_name)}</strong>
+                                ${item.is_shiny ? '<span class="case-preview-mini-chip shiny">Shiny</span>' : ''}
+                                ${item.pokemon_form ? `<span class="case-preview-mini-chip form">${KatsuCases.escapeHtml(item.pokemon_form)}</span>` : ''}
+                            </div>
+                            <div class="case-preview-sub-row">
+                                <span class="badge badge-${item.rarity}">${KatsuCases.escapeHtml(item.rarity)}</span>
+                                <span class="case-preview-inline-meta">Pool slot · ${Number(item.dex_number || 0) > 0 ? `Dex #${KatsuCases.formatNumber(item.dex_number)}` : 'Special drop'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="case-preview-side">
+                        <span class="case-preview-value-chip">1 / ${KatsuCases.formatNumber(item.odds || 0)}</span>
+                        <span class="case-preview-cash">${KatsuCases.formatCurrency(item.estimated_value || 0)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setCaseContentsSort(sort = 'value') {
+            currentCaseContentsSort = sort;
+            document.querySelectorAll('.case-preview-sort-btn').forEach((button) => {
+                button.classList.toggle('active', button.dataset.sort === sort);
+            });
+            renderCaseContentsPreview();
+        }
 
         function renderPitySummary(pityData) {
             const container = document.getElementById('casePitySummary');
@@ -612,38 +707,82 @@
                 
                 document.getElementById('modalCaseName').textContent = currentCase.name;
                 document.getElementById('modalBalance').textContent = KatsuCases.formatCurrency(KatsuCases.state.user.balance);
+                document.getElementById('modalCaseCategory').textContent = `# ${currentCase.category || (currentCase.is_featured ? 'featured' : 'standard')}`;
+                document.getElementById('modalCaseLiveState').textContent = currentCase.is_live ? 'Live Case' : 'Preview Locked';
+                document.getElementById('modalCaseDescription').textContent = currentCase.description || `${currentCase.total_items || currentCaseContents.length} drops inside this case.`;
                 currentCasePity = data.pity || null;
-                renderPitySummary(currentCasePity);
-                
-                // Render odds summary
-                const oddsSummary = document.getElementById('caseOddsSummary');
-                oddsSummary.innerHTML = `
-                    <h4 style="margin-bottom: 16px;">Rarity Distribution</h4>
-                    ${Object.entries(data.byRarity).filter(([_, items]) => items.length > 0).map(([rarity, items]) => {
-                        const avgOdds = Math.round(items.reduce((sum, i) => sum + i.odds, 0) / items.length);
-                        return `
-                            <div class="case-odds-row">
-                                <span class="badge badge-${rarity}">${rarity.toUpperCase()}</span>
-                                <span class="case-odds-value">1 in ${KatsuCases.formatNumber(avgOdds)}</span>
-                            </div>
-                        `;
-                    }).join('')}
-                `;
-                
-                // Render sample contents
-                const contentsPreview = document.getElementById('caseContentsPreview');
+                currentCaseContentsSort = 'value';
                 const allItems = Array.isArray(data.contents) ? data.contents : [];
-                contentsPreview.innerHTML = allItems.map(item => `
-                    <div class="case-preview-row">
-                        ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width: 40px; height: 40px; image-rendering: pixelated;' })}
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600;">${item.pokemon_name}</div>
-                            <span class="badge badge-${item.rarity}" style="font-size: 10px;">${item.rarity}</span>
+
+                const highestValueItem = [...allItems].sort((a, b) => Number(b.estimated_value || 0) - Number(a.estimated_value || 0))[0] || null;
+                const rarestItem = [...allItems].sort((a, b) => Number(b.odds || 0) - Number(a.odds || 0))[0] || null;
+                const chaseCount = allItems.filter((item) => Number(item.odds || 0) >= 1000000).length;
+
+                document.getElementById('casePreviewIntelGrid').innerHTML = `
+                    <article class="case-preview-intel-card">
+                        <span class="case-preview-intel-label">Entry</span>
+                        <strong>${KatsuCases.formatCurrency(currentCase.price || 0)}</strong>
+                        <small>Per roll</small>
+                    </article>
+                    <article class="case-preview-intel-card">
+                        <span class="case-preview-intel-label">Drops</span>
+                        <strong>${KatsuCases.formatNumber(allItems.length)}</strong>
+                        <small>Total pool size</small>
+                    </article>
+                    <article class="case-preview-intel-card">
+                        <span class="case-preview-intel-label">Chase pulls</span>
+                        <strong>${KatsuCases.formatNumber(chaseCount)}</strong>
+                        <small>Odds 1 / 1M+</small>
+                    </article>
+                    <article class="case-preview-intel-card">
+                        <span class="case-preview-intel-label">Top value</span>
+                        <strong>${highestValueItem ? KatsuCases.formatCurrency(highestValueItem.estimated_value || 0) : KatsuCases.formatCurrency(0)}</strong>
+                        <small>${highestValueItem ? KatsuCases.escapeHtml(highestValueItem.pokemon_name) : 'No spotlight drop'}</small>
+                    </article>
+                `;
+
+                document.getElementById('casePreviewHighlightStrip').innerHTML = allItems
+                    .slice()
+                    .sort((a, b) => Number(b.estimated_value || 0) - Number(a.estimated_value || 0))
+                    .slice(0, 4)
+                    .map((item) => `
+                        <div class="case-preview-highlight-item">
+                            <div class="case-preview-highlight-sprite ${item.is_shiny ? 'shiny' : ''}">
+                                ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width: 42px; height: 42px; image-rendering: pixelated;' })}
+                            </div>
+                            <div class="case-preview-highlight-copy">
+                                <strong>${KatsuCases.escapeHtml(item.pokemon_name)}</strong>
+                                <span>${KatsuCases.formatCurrency(item.estimated_value || 0)} · 1 / ${KatsuCases.formatNumber(item.odds || 0)}</span>
+                            </div>
                         </div>
-                        <span class="case-preview-value">1/${item.odds}<br>${KatsuCases.formatCurrency(item.estimated_value || 0)}</span>
-                    </div>
-                `).join('');
-                
+                    `).join('');
+
+                const oddsSummary = document.getElementById('caseOddsSummary');
+                oddsSummary.innerHTML = Object.entries(data.byRarity).filter(([_, items]) => items.length > 0).map(([rarity, items]) => {
+                    const avgOdds = Math.round(items.reduce((sum, i) => sum + Number(i.odds || 0), 0) / Math.max(1, items.length));
+                    const bestValue = items.reduce((max, item) => Math.max(max, Number(item.estimated_value || 0)), 0);
+                    return `
+                        <div class="case-odds-card ${rarity}">
+                            <div class="case-odds-card-top">
+                                <span class="badge badge-${rarity}">${rarity.toUpperCase()}</span>
+                                <strong>${KatsuCases.formatNumber(items.length)}</strong>
+                            </div>
+                            <div class="case-odds-card-main">1 / ${KatsuCases.formatNumber(avgOdds)}</div>
+                            <div class="case-odds-card-sub">Average odds · Top value ${KatsuCases.formatCurrency(bestValue)}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                renderCaseContentsPreview(allItems);
+                setCaseContentsSort('value');
+                renderPitySummary(currentCasePity);
+
+                const modalHeroIcon = document.getElementById('casePreviewHeroIcon');
+                if (modalHeroIcon) {
+                    modalHeroIcon.className = `case-preview-hero-icon rarity-border-${rarestItem?.rarity || 'rare'}`;
+                    modalHeroIcon.innerHTML = '<i class="ri-treasure-map-line"></i>';
+                }
+
                 KatsuCases.openModal('case-modal');
             } catch (error) {
                 console.error('Failed to load case:', error);
