@@ -59,60 +59,6 @@ let activeRollTimeline = null;
 let activeRevealOverlay = null;
 let currentOpenAnotherHandler = null;
 
-function prefersReducedMotion() {
-    return typeof window !== 'undefined'
-        && typeof window.matchMedia === 'function'
-        && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-function shouldUsePerformanceMode() {
-    if (prefersReducedMotion()) return true;
-    if (typeof window === 'undefined') return false;
-    const width = Number(window.innerWidth || 0);
-    const nav = typeof navigator !== 'undefined' ? navigator : {};
-    const cores = Number(nav.hardwareConcurrency || 0);
-    const memory = Number(nav.deviceMemory || 0);
-    return ((width > 0 && width < 1200) || (cores > 0 && cores <= 4) || (memory > 0 && memory <= 4));
-}
-
-function getRollProfile() {
-    if (shouldUsePerformanceMode()) {
-        return { slots: 40, intro: 140, lead: 3000, tension: 560, near: 190, settle: 320, revealPause: 140, epicParticles: 8, legendaryParticles: 12, mythicalParticles: 16, streaks: 8 };
-    }
-    return { slots: 46, intro: 180, lead: 3580, tension: 720, near: 240, settle: 420, revealPause: 180, epicParticles: 12, legendaryParticles: 18, mythicalParticles: 24, streaks: 12 };
-}
-
-function readTranslateX(element) {
-    if (!element) return 0;
-    const transform = element.style.transform || window.getComputedStyle(element).transform || '';
-    if (!transform || transform === 'none') return 0;
-    if (typeof DOMMatrixReadOnly !== 'undefined') {
-        try {
-            return new DOMMatrixReadOnly(transform).m41 || 0;
-        } catch (error) {
-            // fall through to regex parser
-        }
-    }
-    const matrix3dMatch = transform.match(/matrix3d\(([^)]+)\)/);
-    if (matrix3dMatch) {
-        const parts = matrix3dMatch[1].split(',').map((value) => Number(value.trim()));
-        return Number(parts[12] || 0);
-    }
-    const matrixMatch = transform.match(/matrix\(([^)]+)\)/);
-    if (matrixMatch) {
-        const parts = matrixMatch[1].split(',').map((value) => Number(value.trim()));
-        return Number(parts[4] || 0);
-    }
-    const translateMatch = transform.match(/translate(?:3d|X)?\(([-0-9.px]+)(?:,\s*([-0-9.px]+))?/);
-    if (translateMatch) return parseFloat(translateMatch[1]) || 0;
-    return 0;
-}
-
-function revealIntoView(element) {
-    if (!element || typeof element.scrollIntoView !== 'function') return;
-    element.scrollIntoView({ behavior: shouldUsePerformanceMode() ? 'auto' : 'smooth', block: 'nearest' });
-}
-
 function setOpeningShellBadge(text) {
     const badge = document.getElementById('openingShellBadge');
     if (badge) badge.textContent = text;
@@ -149,7 +95,7 @@ function rarityScore(item) {
     return order[item?.rarity] || 0;
 }
 
-function buildReplayTrack(pool, winner, slots = getRollProfile().slots) {
+function buildReplayTrack(pool, winner, slots = 56) {
     const source = (Array.isArray(pool) ? pool : []).filter(Boolean);
     if (!source.length && winner) {
         return Array.from({ length: slots }, () => ({ ...winner }));
@@ -160,93 +106,45 @@ function buildReplayTrack(pool, winner, slots = getRollProfile().slots) {
         if (rarityDelta !== 0) return rarityDelta;
         return (a.estimated_value || 0) - (b.estimated_value || 0);
     });
-    const highTier = sorted.slice(-Math.min(sorted.length, 10));
-    const midTier = sorted.slice(Math.max(0, sorted.length - Math.min(sorted.length, 20)), Math.max(1, sorted.length - Math.min(sorted.length, 10)));
 
-    const winnerIndex = Math.max(12, slots - 8);
+    const winnerIndex = Math.max(16, slots - 10);
     const track = [];
     for (let index = 0; index < slots; index += 1) {
         if (index === winnerIndex) {
             track.push({ ...winner });
             continue;
         }
-
-        let sourcePool = sorted;
-        if (index >= winnerIndex - 5 && index < winnerIndex - 2 && midTier.length) {
-            sourcePool = midTier;
-        } else if (index >= winnerIndex - 2 && index < winnerIndex && highTier.length) {
-            sourcePool = highTier;
+        let poolIndex = (index * 7 + index * index) % sorted.length;
+        if (index > winnerIndex - 5 && index < winnerIndex) {
+            poolIndex = (sorted.length - 1) - ((winnerIndex - index) % Math.min(sorted.length, 6));
         }
-
-        const localIndex = Math.abs((index * 7) + (index * index * 3)) % sourcePool.length;
-        const pick = sourcePool[sourcePool.length - 1 - localIndex] || sourcePool[localIndex] || winner;
-        track.push({ ...pick });
+        track.push({ ...sorted[poolIndex] });
     }
     return track;
 }
 
 function createSlotElement(result, isPlaceholder = false, isWinner = false) {
     const slot = document.createElement('div');
-    const rarity = result?.rarity || 'common';
-    const oddsValue = Number(result?.odds || 0);
-    const isJackpot = ['legendary', 'mythical'].includes(rarity) || oddsValue >= 1000000;
-    const isChase = rarity === 'epic' || oddsValue >= 100000;
-    const accentMap = {
-        common: { accent: '#94a3b8', accentSoft: 'rgba(148,163,184,0.18)', accentGlow: 'rgba(148,163,184,0.24)' },
-        uncommon: { accent: '#34d399', accentSoft: 'rgba(16,185,129,0.18)', accentGlow: 'rgba(16,185,129,0.28)' },
-        rare: { accent: '#60a5fa', accentSoft: 'rgba(59,130,246,0.18)', accentGlow: 'rgba(59,130,246,0.28)' },
-        epic: { accent: '#a78bfa', accentSoft: 'rgba(139,92,246,0.18)', accentGlow: 'rgba(139,92,246,0.32)' },
-        legendary: { accent: '#fbbf24', accentSoft: 'rgba(251,191,36,0.18)', accentGlow: 'rgba(251,191,36,0.34)' },
-        mythical: { accent: '#f472b6', accentSoft: 'rgba(236,72,153,0.18)', accentGlow: 'rgba(236,72,153,0.38)' }
-    };
-    const palette = accentMap[rarity] || accentMap.common;
-    slot.className = `roller-slot rarity-glow-${rarity}${isPlaceholder ? ' roller-slot-placeholder' : ''}${isWinner ? ' winner' : ''}${result?.is_shiny ? ' is-shiny' : ''}${isJackpot ? ' is-jackpot' : ''}${isChase ? ' is-chase' : ''}`;
-    slot.style.setProperty('--slot-accent', palette.accent);
-    slot.style.setProperty('--slot-accent-soft', palette.accentSoft);
-    slot.style.setProperty('--slot-accent-glow', palette.accentGlow);
-    slot.dataset.rarity = rarity;
+    slot.className = `roller-slot rarity-glow-${result?.rarity || 'common'}${isPlaceholder ? ' roller-slot-placeholder' : ''}${isWinner ? ' winner' : ''}`;
 
     if (isPlaceholder) {
         slot.innerHTML = '<span class="roller-slot-placeholder">?</span>';
     } else if (result) {
-        const rarityLabel = String(rarity).toUpperCase();
-        const auraLabel = result.is_shiny
-            ? '<i class="ri-sparkling-2-fill"></i><span>Shiny Aura</span>'
-            : isJackpot
-                ? '<i class="ri-vip-diamond-fill"></i><span>Jackpot Aura</span>'
-                : isChase
-                    ? '<i class="ri-flashlight-fill"></i><span>Chase Aura</span>'
-                    : '<i class="ri-radio-button-line"></i><span>Standard Aura</span>';
-        const signalLabel = isJackpot
-            ? '<i class="ri-vip-crown-2-fill"></i><span>Destiny Lock</span>'
-            : isChase
-                ? '<i class="ri-meteor-fill"></i><span>Surge Hit</span>'
-                : '<i class="ri-focus-3-line"></i><span>Lane Stable</span>';
+        const rarityLabel = String(result.rarity || 'common').toUpperCase();
+        const auxLabel = result.is_shiny
+            ? 'SHINY'
+            : (result.pokemon_form ? KatsuCases.escapeHtml(String(result.pokemon_form).slice(0, 12)) : 'LIVE');
         slot.innerHTML = `
-            <span class="roller-slot-frame"></span>
-            <span class="roller-slot-corner corner-a"></span>
-            <span class="roller-slot-corner corner-b"></span>
-            <span class="roller-slot-corner corner-c"></span>
-            <span class="roller-slot-corner corner-d"></span>
-            <span class="roller-slot-orb"></span>
             <div class="roller-slot-topbar">
-                <span class="roller-slot-tier tier-${rarity}">${rarityLabel}</span>
-                <span class="roller-slot-tier-meta">${auraLabel}</span>
+                <span class="roller-slot-tier tier-${result.rarity || 'common'}">${rarityLabel}</span>
+                <span class="roller-slot-tier-meta">${auxLabel}</span>
             </div>
             <div class="roller-slot-sprite-wrap ${result.is_shiny ? 'shiny' : ''}">
-                <span class="roller-slot-sprite-ring ring-a"></span>
-                <span class="roller-slot-sprite-ring ring-b"></span>
-                ${result.is_shiny ? '<span class="roller-slot-shiny-flare"></span>' : ''}
                 ${KatsuCases.buildSpriteImg({ pokemonName: result.pokemon_name, isShiny: result.is_shiny, spriteUrl: result.sprite_url, alt: result.pokemon_name })}
             </div>
             <span class="roller-slot-name">${result.pokemon_name}</span>
-            <div class="roller-slot-footer">
-                <span class="roller-slot-value">${KatsuCases.formatCurrency(result.estimated_value || 0)}</span>
-                ${result.odds ? `<span class="roller-slot-odds">1 in ${KatsuCases.formatNumber(result.odds)}</span>` : ''}
-            </div>
-            <div class="roller-slot-signal-row">
-                <span class="roller-slot-signal">${signalLabel}</span>
-            </div>
+            <span class="roller-slot-value">${KatsuCases.formatCurrency(result.estimated_value || 0)}</span>
+            ${result.odds ? `<span class="roller-slot-odds">1 in ${KatsuCases.formatNumber(result.odds)}</span>` : ''}
             <span class="roller-slot-lane"></span>
         `;
     }
@@ -254,7 +152,7 @@ function createSlotElement(result, isPlaceholder = false, isWinner = false) {
 }
 
 function getWinnerIndex(trackLength) {
-    return Math.max(12, trackLength - 8);
+    return Math.max(16, trackLength - 10);
 }
 
 function clearActiveOverlay() {
@@ -286,7 +184,6 @@ function markNearMissSlots(slots, winnerIndex) {
 
 
 async function animateCaseOpen(results, rollerElement, revealElement) {
-    const rollProfile = getRollProfile();
     rollerElement.innerHTML = '';
     rollerElement.style.opacity = '1';
     revealElement.classList.remove('active');
@@ -294,18 +191,14 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
     clearOpeningImpactClasses();
     toggleResultMode(false);
     const openingModal = document.getElementById('opening-modal');
-    if (openingModal) {
-        openingModal.classList.add('rolling');
-        openingModal.classList.remove('rarity-epic', 'rarity-legendary', 'rarity-mythical', 'rarity-rare', 'rarity-uncommon', 'rarity-common');
-        openingModal.classList.toggle('perf-mode', shouldUsePerformanceMode());
-    }
-    setOpeningShellBadge('Aura Chamber');
-    setOpeningHint('Calibrating the aura lane and staging the final pull…');
+    if (openingModal) openingModal.classList.add('rolling');
+    setOpeningShellBadge('Live Roll Chamber');
+    setOpeningHint('Shuffling the reel and lining up the final result…');
 
     const winner = results[results.length - 1];
     const trackData = Array.isArray(winner?.track) && winner.track.length
         ? winner.track
-        : buildReplayTrack(caseAnimationPool.length ? caseAnimationPool : results, winner, rollProfile.slots);
+        : buildReplayTrack(caseAnimationPool.length ? caseAnimationPool : results, winner);
     const winnerIndex = typeof winner?.winning_index === 'number' ? winner.winning_index : getWinnerIndex(trackData.length);
 
     const track = document.createElement('div');
@@ -329,47 +222,52 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
 
     const timeline = createTimeline({ easing: 'easeOutQuart' });
     activeRollTimeline = timeline;
-    const preLockX = targetX - (step * 2.05);
-    const nearMissX = targetX - (step * 0.56);
-    const overshootX = targetX + Math.min(12, step * 0.08);
-    const settleX = targetX - 4;
-    let highlightedIndex = -1;
+    const preLockX = targetX - (step * 2.4);
+    const nearMissX = targetX - (step * 0.72);
+    const overshootX = targetX + Math.min(16, step * 0.12);
+    const settleX = targetX - 8;
 
     const updateClosestSlot = () => {
-        const currentX = readTranslateX(track);
-        const rawIndex = Math.round((centerOffset - trackPaddingLeft - currentX) / step);
-        const closestIndex = Math.max(0, Math.min(slots.length - 1, rawIndex));
-        if (closestIndex === highlightedIndex) return;
-        if (highlightedIndex >= 0 && slots[highlightedIndex]) slots[highlightedIndex].classList.remove('highlight');
-        if (slots[closestIndex]) slots[closestIndex].classList.add('highlight');
-        highlightedIndex = closestIndex;
+        const lineX = rollerElement.getBoundingClientRect().left + (rollerElement.clientWidth / 2);
+        let closest = null;
+        let closestDistance = Number.POSITIVE_INFINITY;
+        slots.forEach((slot) => {
+            slot.classList.remove('highlight');
+            const rect = slot.getBoundingClientRect();
+            const distance = Math.abs((rect.left + rect.width / 2) - lineX);
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closest = slot;
+            }
+        });
+        if (closest) closest.classList.add('highlight');
     };
 
     timeline.add({
         targets: track,
-        scale: [0.992, 1],
-        duration: rollProfile.intro,
+        scale: [0.985, 1],
+        duration: 280,
         easing: 'easeOutQuad'
     }).add({
         targets: track,
         translateX: [0, preLockX],
-        duration: rollProfile.lead,
-        easing: 'cubicBezier(.1,.76,.16,1)',
+        duration: 5000,
+        easing: 'cubicBezier(.08,.8,.14,1)',
         update: updateClosestSlot,
         begin() {
-            setOpeningShellBadge('Aura Feed Live');
-            setOpeningHint('Rolling through the aura lane… watch the center lock.');
+            setOpeningShellBadge('Roll In Progress');
+            setOpeningHint('Rolling through the drop pool… watch the center marker.');
         }
     }).add({
         targets: track,
         translateX: [preLockX, nearMissX],
-        duration: rollProfile.tension,
+        duration: 620,
         easing: 'easeOutCubic',
         update: updateClosestSlot,
         begin() {
             setLockTension(true);
-            setOpeningShellBadge('Destiny Tension');
-            setOpeningHint('The lane is tightening. Final result is approaching the lock point.');
+            setOpeningShellBadge('Lock Tension');
+            setOpeningHint('Tension building… the reel is slowing near the lock point.');
         },
         complete() {
             markNearMissSlots(slots, winnerIndex);
@@ -377,22 +275,22 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
     }).add({
         targets: track,
         translateX: [nearMissX, overshootX],
-        duration: rollProfile.near,
+        duration: 320,
         easing: 'easeInOutSine',
         update: updateClosestSlot,
         begin() {
             setOpeningShellBadge('Near Miss');
-            setOpeningHint('A near miss clipped the lock. Final snap is lining up now.');
+            setOpeningHint('Near miss at center. Final lock is snapping into place…');
         }
     }).add({
         targets: track,
         translateX: [overshootX, settleX, targetX],
-        duration: rollProfile.settle,
+        duration: 440,
         easing: 'easeOutExpo',
         update: updateClosestSlot,
         begin() {
-            setOpeningShellBadge('Destiny Lock');
-            setOpeningHint('Center lock engaged. Securing the final pull.');
+            setOpeningShellBadge('Target Lock');
+            setOpeningHint('Target lock engaged. Securing the final result…');
         },
         complete() {
             setLockTension(false);
@@ -408,10 +306,9 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
 
     const winnerSlot = slots[winnerIndex];
     setLockTension(false);
-    setOpeningShellBadge('Result Locked');
+    setOpeningShellBadge('Target Locked');
     setOpeningHint('Locking the result and revealing the pull…');
     triggerOpeningImpact(winner?.rarity);
-    if (openingModal && winner?.rarity) openingModal.classList.add(`rarity-${winner.rarity}`);
     if (winnerSlot) {
         winnerSlot.classList.add('winner');
         await playAnimation({
@@ -430,13 +327,13 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
     }
 
     if (winner && ['epic', 'legendary', 'mythical'].includes(winner.rarity)) {
-        await showSpecialReveal(winner, revealElement, track, results);
+        await showSpecialReveal(winner, revealElement, track);
     } else {
-        await new Promise((resolve) => setTimeout(resolve, getRollProfile().revealPause));
+        await new Promise((resolve) => setTimeout(resolve, 240));
         revealElement.classList.add('active');
         toggleResultMode(true);
         updateRevealContent(revealElement, results);
-        revealIntoView(revealElement);
+        revealElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         setOpeningShellBadge('Result Confirmed');
         setOpeningHint('Result locked. Replay-ready and added to inventory.');
     }
@@ -449,25 +346,25 @@ function getSpecialRevealConfig(result) {
     const rarity = result?.rarity || 'epic';
     const configs = {
         epic: {
-            title: 'Aura Surge',
-            kicker: 'High signal detected',
+            title: 'Rare Hit',
+            kicker: 'Signal spike detected',
             accent: '#8b5cf6',
             accentSecondary: '#60a5fa',
-            subtitle: 'The lane surged and forced a featured reveal.'
+            subtitle: 'A high-tier pull forced its way through the reel.'
         },
         legendary: {
-            title: 'Destiny Lock',
-            kicker: 'Golden lock achieved',
+            title: 'Jackpot Pull',
+            kicker: 'Target locked',
             accent: '#fbbf24',
             accentSecondary: '#fb7185',
-            subtitle: 'The chamber hit jackpot and forced a full-screen lock.'
+            subtitle: 'The chamber hit jackpot and forced a full reveal.'
         },
         mythical: {
-            title: 'Sovereign Roll',
+            title: 'Ultra Jackpot',
             kicker: 'Singularity breach',
             accent: '#ec4899',
             accentSecondary: '#8b5cf6',
-            subtitle: 'A mythical-tier pull ripped through the lane and overruled the chamber.'
+            subtitle: 'A mythical-tier pull just ripped through the roll lane.'
         }
     };
     return configs[rarity] || configs.epic;
@@ -477,14 +374,12 @@ function createStreakParticles(container, colors = ['#f8fafc'], count = 14) {
     const rect = container.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    const perfMode = shouldUsePerformanceMode();
-    const streakCount = Math.max(0, perfMode ? Math.ceil(count * 0.65) : count);
 
-    for (let i = 0; i < streakCount; i += 1) {
+    for (let i = 0; i < count; i += 1) {
         const streak = document.createElement('div');
         const color = colors[i % colors.length];
         const angle = -70 + Math.random() * 140;
-        const length = (perfMode ? 60 : 80) + Math.random() * (perfMode ? 80 : 120);
+        const length = 80 + Math.random() * 120;
         streak.className = 'special-reveal-streak';
         streak.style.left = `${centerX}px`;
         streak.style.top = `${centerY}px`;
@@ -498,14 +393,14 @@ function createStreakParticles(container, colors = ['#f8fafc'], count = 14) {
             translateY: [0, Math.sin(angle * Math.PI / 180) * length],
             opacity: [0, 1, 0],
             scaleX: [0.15, 1, 0.9],
-            duration: (perfMode ? 520 : 700) + Math.random() * (perfMode ? 180 : 240),
+            duration: 700 + Math.random() * 240,
             easing: 'easeOutExpo',
             complete: () => streak.remove()
         });
     }
 }
 
-async function showSpecialReveal(result, revealElement, rollerTrack, allResults = [result]) {
+async function showSpecialReveal(result, revealElement, rollerTrack) {
     clearActiveOverlay();
     const config = getSpecialRevealConfig(result);
     const safeName = KatsuCases.escapeHtml(result?.pokemon_name || 'Unknown Pull');
@@ -548,34 +443,31 @@ async function showSpecialReveal(result, revealElement, rollerTrack, allResults 
 
     rollerTrack.style.opacity = '0.04';
     rollerTrack.style.filter = 'blur(5px) saturate(1.3)';
-    const revealProfile = getRollProfile();
-    const overlayStreaks = result?.rarity === 'mythical' ? revealProfile.streaks + 4 : revealProfile.streaks;
-    const overlayParticles = result?.rarity === 'mythical' ? revealProfile.mythicalParticles : result?.rarity === 'legendary' ? revealProfile.legendaryParticles : revealProfile.epicParticles;
-    createStreakParticles(overlay, [config.accent, config.accentSecondary, '#ffffff'], overlayStreaks);
-    createParticles(overlay, config.accent, overlayParticles);
+    createStreakParticles(overlay, [config.accent, config.accentSecondary, '#ffffff'], result?.rarity === 'mythical' ? 24 : 16);
+    createParticles(overlay, config.accent, result?.rarity === 'mythical' ? 32 : result?.rarity === 'legendary' ? 24 : 18);
 
     await new Promise((resolve) => setTimeout(resolve, result?.rarity === 'mythical' ? 420 : 300));
 
     revealElement.classList.add('active');
     toggleResultMode(true);
-    updateRevealContent(revealElement, Array.isArray(allResults) && allResults.length ? allResults : [result]);
-    revealIntoView(revealElement);
+    updateRevealContent(revealElement, [result]);
+    revealElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
     const spriteElement = revealElement.querySelector('.reward-sprite');
     if (spriteElement && result.rarity === 'legendary') {
         spriteElement.classList.add('legendary');
         await playAnimation({ targets: spriteElement, scale: [0.66, 1.08, 1], rotate: [10, -2, 0], duration: 980, easing: 'easeOutElastic(1, .48)' }).finished;
-        createParticles(spriteElement, '#fbbf24', getRollProfile().legendaryParticles + 4);
+        createParticles(spriteElement, '#fbbf24', 28);
     } else if (spriteElement && result.rarity === 'mythical') {
         spriteElement.classList.add('mythical');
         await playAnimation({ targets: spriteElement, scale: [0.5, 1.16, 1], rotate: [16, -6, 0], duration: 1120, easing: 'easeOutElastic(1, .4)' }).finished;
-        createParticles(spriteElement, '#ec4899', getRollProfile().mythicalParticles + 6);
-        createParticles(spriteElement, '#8b5cf6', getRollProfile().legendaryParticles);
-        createStreakParticles(spriteElement, ['#ec4899', '#8b5cf6', '#ffffff'], getRollProfile().streaks + 2);
+        createParticles(spriteElement, '#ec4899', 34);
+        createParticles(spriteElement, '#8b5cf6', 24);
+        createStreakParticles(spriteElement, ['#ec4899', '#8b5cf6', '#ffffff'], 18);
     } else if (spriteElement) {
         spriteElement.classList.add('epic');
         await playAnimation({ targets: spriteElement, scale: [0.68, 1.04, 1], duration: 760, easing: 'easeOutBack' }).finished;
-        createParticles(spriteElement, '#8b5cf6', getRollProfile().epicParticles + 2);
+        createParticles(spriteElement, '#8b5cf6', 18);
     }
 
     await new Promise((resolve) => setTimeout(resolve, 520));
@@ -592,24 +484,21 @@ function createParticles(container, color, count) {
     const rect = container.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    const perfMode = shouldUsePerformanceMode();
-    const particleCount = Math.max(0, perfMode ? Math.ceil(count * 0.7) : count);
 
-    for (let i = 0; i < particleCount; i += 1) {
+    for (let i = 0; i < count; i += 1) {
         const particle = document.createElement('div');
-        const size = perfMode ? 6 : 8;
-        particle.style.cssText = `position:fixed; left:${centerX}px; top:${centerY}px; width:${size}px; height:${size}px; background:${color}; border-radius:50%; pointer-events:none; z-index:2000;`;
+        particle.style.cssText = `position:fixed; left:${centerX}px; top:${centerY}px; width:8px; height:8px; background:${color}; border-radius:50%; pointer-events:none; z-index:2000;`;
         document.body.appendChild(particle);
 
-        const angle = (Math.PI * 2 / Math.max(1, particleCount)) * i;
-        const distance = (perfMode ? 80 : 100) + Math.random() * (perfMode ? 70 : 100);
+        const angle = (Math.PI * 2 / count) * i;
+        const distance = 100 + Math.random() * 100;
         playAnimation({
             targets: particle,
             translateX: Math.cos(angle) * distance,
             translateY: Math.sin(angle) * distance,
             opacity: [1, 0],
             scale: [1, 0],
-            duration: (perfMode ? 760 : 1000) + Math.random() * (perfMode ? 240 : 500),
+            duration: 1000 + Math.random() * 500,
             easing: 'easeOutQuad',
             complete: () => particle.remove()
         });
@@ -621,56 +510,52 @@ function updateRevealContent(revealElement, results) {
     const rarityClass = `badge-${finalResult.rarity}`;
     const totalValue = Number(results.reduce((sum, item) => sum + Number(item.estimated_value || 0), 0).toFixed(2));
     const isMulti = results.length > 1;
-    const headingMap = { common: 'Drop Secured', uncommon: 'Clean Pull', rare: 'Rare Pull', epic: 'Aura Surge', legendary: 'Destiny Lock', mythical: 'Sovereign Roll' };
+    const headingMap = { common: 'Drop Secured', uncommon: 'Clean Pull', rare: 'Rare Pull', epic: 'Featured Hit', legendary: 'Jackpot Pull', mythical: 'Mythical Hit' };
     const amount = Math.max(1, Number(window.currentOpeningAmount || results.length || 1));
-    revealElement.dataset.rarity = finalResult.rarity || 'common';
 
     revealElement.innerHTML = `
-        <div class="reward-panel reward-panel-${finalResult.rarity}">
-            <div class="reward-heading-wrap">
-                <div class="reward-heading-kicker">${headingMap[finalResult.rarity] || 'Drop Secured'}</div>
-                <div class="reward-rarity-banner">${finalResult.rarity.toUpperCase()}${finalResult.is_shiny ? ' · SHINY' : ''}</div>
-                <div class="reward-heading-sub">Provably fair result locked to inventory-ready output.</div>
+        <div class="reward-heading-wrap">
+            <div class="reward-heading-kicker">${headingMap[finalResult.rarity] || 'Drop Secured'}</div>
+            <div class="reward-heading-sub">Provably fair result locked to inventory-ready output.</div>
+        </div>
+        <div class="reward-sprite ${finalResult.rarity === 'legendary' || finalResult.rarity === 'mythical' ? finalResult.rarity : ''}">
+            ${KatsuCases.buildSpriteImg({ pokemonName: finalResult.pokemon_name, isShiny: finalResult.is_shiny, spriteUrl: finalResult.sprite_url, alt: finalResult.pokemon_name })}
+        </div>
+        <div>
+            <div class="reward-name">${finalResult.pokemon_name}${finalResult.pokemon_form ? ` (${finalResult.pokemon_form})` : ''}</div>
+            <div class="reward-meta-row">
+                <span class="badge ${rarityClass}">${finalResult.rarity.toUpperCase()}${finalResult.is_shiny ? ' SHINY' : ''}</span>
+                ${finalResult.odds ? `<span class="badge badge-uncommon">1 IN ${KatsuCases.formatNumber(finalResult.odds)}</span>` : ''}
+                ${finalResult.estimated_value ? `<span class="badge badge-epic">${KatsuCases.formatCurrency(finalResult.estimated_value)}</span>` : ''}
+                ${finalResult.seed ? `<span class="badge badge-common">SEED ${finalResult.seed}</span>` : ''}
+                ${finalResult.pity?.triggered ? `<span class="badge badge-legendary">${KatsuCases.escapeHtml(finalResult.pity.trigger_label)} PITY</span>` : ''}
+                ${isMulti ? `<span class="badge badge-legendary">${results.length} ROLLS · ${KatsuCases.formatCurrency(totalValue)}</span>` : ''}
             </div>
-            <div class="reward-sprite ${finalResult.rarity === 'legendary' || finalResult.rarity === 'mythical' || finalResult.rarity === 'epic' ? finalResult.rarity : ''}">
-                ${KatsuCases.buildSpriteImg({ pokemonName: finalResult.pokemon_name, isShiny: finalResult.is_shiny, spriteUrl: finalResult.sprite_url, alt: finalResult.pokemon_name })}
-            </div>
-            <div>
-                <div class="reward-name">${finalResult.pokemon_name}${finalResult.pokemon_form ? ` (${finalResult.pokemon_form})` : ''}</div>
-                <div class="reward-meta-row">
-                    <span class="badge ${rarityClass}">${finalResult.rarity.toUpperCase()}${finalResult.is_shiny ? ' SHINY' : ''}</span>
-                    ${finalResult.odds ? `<span class="badge badge-uncommon">1 IN ${KatsuCases.formatNumber(finalResult.odds)}</span>` : ''}
-                    ${finalResult.estimated_value ? `<span class="badge badge-epic">${KatsuCases.formatCurrency(finalResult.estimated_value)}</span>` : ''}
-                    ${finalResult.seed ? `<span class="badge badge-common">SEED ${finalResult.seed}</span>` : ''}
-                    ${finalResult.pity?.triggered ? `<span class="badge badge-legendary">${KatsuCases.escapeHtml(finalResult.pity.trigger_label)} PITY</span>` : ''}
-                    ${isMulti ? `<span class="badge badge-legendary">${results.length} ROLLS · ${KatsuCases.formatCurrency(totalValue)}</span>` : ''}
-                </div>
-                ${finalResult.seed ? `<div class="opening-seed">Replay seed: ${finalResult.seed}</div>` : ''}
-                ${finalResult.pity?.soft_active && !finalResult.pity?.triggered ? `<div class="opening-seed">Soft pity active: ${KatsuCases.escapeHtml(finalResult.pity.soft_label)} boosted ${Number(finalResult.pity.soft_multiplier || 1).toFixed(2)}×</div>` : ''}
-                ${isMulti ? `
-                    <div class="multi-roll-summary">
-                        ${results.map((item, index) => `
-                            <div class="multi-roll-chip rarity-glow-${item.rarity}">
-                                <div class="multi-roll-chip-order">#${index + 1}</div>
-                                ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:56px; height:56px;' })}
-                                <div class="multi-roll-chip-meta">
-                                    <div class="multi-roll-chip-name">${item.pokemon_name}</div>
-                                    <div class="multi-roll-chip-value">${KatsuCases.formatCurrency(item.estimated_value || 0)} · 1 in ${KatsuCases.formatNumber(item.odds || 0)}${item.pity?.triggered ? ` · ${KatsuCases.escapeHtml(item.pity.trigger_label)} pity` : ''}</div>
-                                    ${item.seed ? `<div class="opening-seed">${item.seed}</div>` : ''}
-                                </div>
+            ${finalResult.seed ? `<div class="opening-seed">Replay seed: ${finalResult.seed}</div>` : ''}
+            ${finalResult.pity?.soft_active && !finalResult.pity?.triggered ? `<div class="opening-seed">Soft pity active: ${KatsuCases.escapeHtml(finalResult.pity.soft_label)} boosted ${Number(finalResult.pity.soft_multiplier || 1).toFixed(2)}×</div>` : ''}
+            ${isMulti ? `
+                <div class="multi-roll-summary">
+                    ${results.map((item, index) => `
+                        <div class="multi-roll-chip rarity-glow-${item.rarity}">
+                            <div class="multi-roll-chip-order">#${index + 1}</div>
+                            ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:56px; height:56px;' })}
+                            <div class="multi-roll-chip-meta">
+                                <div class="multi-roll-chip-name">${item.pokemon_name}</div>
+                                <div class="multi-roll-chip-value">${KatsuCases.formatCurrency(item.estimated_value || 0)} · 1 in ${KatsuCases.formatNumber(item.odds || 0)}${item.pity?.triggered ? ` · ${KatsuCases.escapeHtml(item.pity.trigger_label)} pity` : ''}</div>
+                                ${item.seed ? `<div class="opening-seed">${item.seed}</div>` : ''}
                             </div>
-                        `).join('')}
-                    </div>
-                ` : ''}
-            </div>
-            <div class="reward-actions">
-                <button class="btn btn-ghost" onclick="KatsuCases.closeModal('opening-modal'); KatsuCases.showToast('Added to inventory', 'success');">
-                    <i class="ri-check-line"></i> Done
-                </button>
-                <button class="btn btn-primary" onclick="window.KatsuAnimations.openAnotherCase()">
-                    <i class="ri-add-line"></i> Open Another x${amount}
-                </button>
-            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+        </div>
+        <div class="reward-actions">
+            <button class="btn btn-ghost" onclick="KatsuCases.closeModal('opening-modal'); KatsuCases.showToast('Added to inventory', 'success');">
+                <i class="ri-check-line"></i> Done
+            </button>
+            <button class="btn btn-primary" onclick="window.KatsuAnimations.openAnotherCase()">
+                <i class="ri-add-line"></i> Open Another x${amount}
+            </button>
         </div>
     `;
 }
