@@ -296,9 +296,11 @@ function updateRevealContent(revealElement, results) {
                 ${finalResult.odds ? `<span class="badge badge-uncommon">1 IN ${KatsuCases.formatNumber(finalResult.odds)}</span>` : ''}
                 ${finalResult.estimated_value ? `<span class="badge badge-epic">${KatsuCases.formatCurrency(finalResult.estimated_value)}</span>` : ''}
                 ${finalResult.seed ? `<span class="badge badge-common">SEED ${finalResult.seed}</span>` : ''}
+                ${finalResult.pity?.triggered ? `<span class="badge badge-legendary">${KatsuCases.escapeHtml(finalResult.pity.trigger_label)} PITY</span>` : ''}
                 ${isMulti ? `<span class="badge badge-legendary">${results.length} ROLLS · ${KatsuCases.formatCurrency(totalValue)}</span>` : ''}
             </div>
             ${finalResult.seed ? `<div class="opening-seed">Replay seed: ${finalResult.seed}</div>` : ''}
+            ${finalResult.pity?.soft_active && !finalResult.pity?.triggered ? `<div class="opening-seed">Soft pity active: ${KatsuCases.escapeHtml(finalResult.pity.soft_label)} boosted ${Number(finalResult.pity.soft_multiplier || 1).toFixed(2)}×</div>` : ''}
             ${isMulti ? `
                 <div class="multi-roll-summary">
                     ${results.map((item, index) => `
@@ -307,7 +309,7 @@ function updateRevealContent(revealElement, results) {
                             ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:56px; height:56px;' })}
                             <div class="multi-roll-chip-meta">
                                 <div class="multi-roll-chip-name">${item.pokemon_name}</div>
-                                <div class="multi-roll-chip-value">${KatsuCases.formatCurrency(item.estimated_value || 0)} · 1 in ${KatsuCases.formatNumber(item.odds || 0)}</div>
+                                <div class="multi-roll-chip-value">${KatsuCases.formatCurrency(item.estimated_value || 0)} · 1 in ${KatsuCases.formatNumber(item.odds || 0)}${item.pity?.triggered ? ` · ${KatsuCases.escapeHtml(item.pity.trigger_label)} pity` : ''}</div>
                                 ${item.seed ? `<div class="opening-seed">${item.seed}</div>` : ''}
                             </div>
                         </div>

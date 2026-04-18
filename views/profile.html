@@ -129,6 +129,10 @@
                                     </div>
                                 </section>
                                 <section class="profile-section" style="margin-top:24px;">
+                                    <h4 class="profile-section-title">Progression</h4>
+                                    <div id="profileProgressionPanel"></div>
+                                </section>
+                                <section class="profile-section" style="margin-top:24px;">
                                     <h4 class="profile-section-title" id="accountSectionTitle">Account</h4>
                                     <div id="accountSectionContent">
                                         <div id="profileAccountNote" class="profile-account-note">Manage your identity, visibility, and public-facing details here.</div>
@@ -191,6 +195,45 @@
             } else {
                 target.textContent = initial;
             }
+        }
+
+
+        function progressionMarkup(progression, daily = null, isSelf = false, favoriteCaseCount = 0) {
+            const safe = progression || {};
+            const dailyBlock = isSelf && daily ? `
+                <article class="profile-summary-card">
+                    <span>Daily Streak</span>
+                    <strong>${Number(daily.streak || 0)}</strong>
+                    <p>${daily.claimed_today ? "Today\'s reward has already been claimed." : `Next claim pays ${KatsuCases.formatCurrency(daily.reward_preview?.credits || 0)}${daily.reward_preview?.free_rolls ? ` and ${daily.reward_preview.free_rolls} free roll` : ''}.`}</p>
+                </article>
+                <article class="profile-summary-card">
+                    <span>Favorited Cases</span>
+                    <strong>${Number(favoriteCaseCount || 0)}</strong>
+                    <p>Your pinned quick-open cases are synced from the cases page.</p>
+                </article>
+            ` : `
+                <article class="profile-summary-card">
+                    <span>Favorited Cases</span>
+                    <strong>${Number(favoriteCaseCount || 0)}</strong>
+                    <p>Favorite crates help define this player's quick-open rotation.</p>
+                </article>
+            `;
+            return `
+                <div class="profile-summary-stack">
+                    <article class="profile-summary-card">
+                        <span>Hunter Level</span>
+                        <strong>Level ${Number(safe.level || 1)}</strong>
+                        <p>${Number(safe.total_xp || 0)} total XP earned from openings, missions, and site activity.</p>
+                    </article>
+                    <article class="profile-summary-card profile-progress-card">
+                        <span>Level Progress</span>
+                        <strong>${Number(safe.xp_into_level || 0)} / ${Number(safe.xp_for_next_level || 0)} XP</strong>
+                        <div class="profile-progress-bar"><span style="width:${Math.max(5, Number(safe.progress_percent || 0))}%"></span></div>
+                        <p>${100 - Math.min(100, Number(safe.progress_percent || 0))}% left until the next level.</p>
+                    </article>
+                    ${dailyBlock}
+                </div>
+            `;
         }
 
         function transactionMarkup(user, profileData, isSelf) {
@@ -289,6 +332,7 @@
                 document.getElementById('statTotalSpent').textContent = KatsuCases.formatCurrency(user.total_spent || 0);
                 document.getElementById('statTotalEarned').textContent = KatsuCases.formatCurrency(user.total_earned || 0);
                 document.getElementById('transactionsList').innerHTML = transactionMarkup(user, profileData, isSelf);
+                document.getElementById('profileProgressionPanel').innerHTML = progressionMarkup(user.progression || {}, null, isSelf, user.favorite_case_count || 0);
 
                 const inventoryHint = document.getElementById('profileInventoryHint');
                 const showcase = document.getElementById('profileInventoryShowcase');
@@ -329,6 +373,12 @@
                     document.getElementById('settingsPronouns').value = user.pronouns || '';
                     document.getElementById('settingsRegion').value = user.region || '';
                     document.getElementById('settingsHideInventory').checked = Boolean(user.hide_inventory);
+                    try {
+                        const progressionData = await KatsuCases.api.get('/api/progression');
+                        document.getElementById('profileProgressionPanel').innerHTML = progressionMarkup(progressionData.progression || user.progression || {}, progressionData.daily || null, true, (progressionData.favorite_case_ids || []).length);
+                    } catch (progressError) {
+                        console.error('Failed to load private progression details:', progressError);
+                    }
                 }
             } catch (error) {
                 shell.style.display = 'none';

@@ -4377,3 +4377,481 @@ body.has-community-sidebar {
         grid-template-columns: 1fr;
     }
 }
+
+/* Pity system UI */
+.case-pity-panel {
+    display: none;
+    margin-top: 18px;
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(134, 142, 255, 0.16);
+    background: linear-gradient(180deg, rgba(17, 20, 35, 0.96), rgba(11, 13, 24, 0.98));
+    box-shadow: 0 18px 50px rgba(5, 8, 18, 0.38);
+}
+.case-pity-panel.active { display: block; }
+.case-pity-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+.case-pity-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+.case-pity-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-primary);
+}
+.case-pity-chip.primed,
+.opening-pity-badge.primed {
+    background: rgba(136, 102, 255, 0.18);
+    border-color: rgba(136, 102, 255, 0.42);
+    color: #ddd7ff;
+}
+.case-pity-chip.soft,
+.opening-pity-badge.soft {
+    background: rgba(102, 179, 255, 0.12);
+    border-color: rgba(102, 179, 255, 0.26);
+    color: #d8eeff;
+}
+.case-pity-meter-list {
+    display: grid;
+    gap: 12px;
+}
+.case-pity-meter {
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.case-pity-meter-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+.case-pity-meter-bar,
+.admin-user-pity-chip-bar {
+    position: relative;
+    overflow: hidden;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+}
+.case-pity-meter-bar span,
+.admin-user-pity-chip-bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(120, 135, 255, 0.75), rgba(188, 130, 255, 0.92));
+    box-shadow: 0 0 18px rgba(145, 126, 255, 0.4);
+}
+.case-pity-meter-sub {
+    margin-top: 9px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.opening-pity-spotlight {
+    display: none;
+    margin-top: 10px;
+}
+.opening-pity-spotlight.active { display: block; }
+.opening-pity-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* Discord-like admin refinements */
+.admin-discord-layout {
+    display: grid;
+    grid-template-columns: 248px minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+}
+.admin-discord-sidebar {
+    position: sticky;
+    top: 110px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.admin-discord-server,
+.admin-discord-sidebar-card {
+    padding: 16px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(19, 22, 38, 0.98), rgba(11, 13, 25, 0.98));
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 18px 50px rgba(5, 8, 18, 0.38);
+}
+.admin-discord-server {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.admin-discord-server strong,
+.admin-discord-sidebar-card strong {
+    display: block;
+    font-size: 14px;
+}
+.admin-discord-server span,
+.admin-discord-sidebar-card p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+.admin-discord-server-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background: radial-gradient(circle at 30% 30%, rgba(141, 109, 255, 0.45), rgba(90, 108, 255, 0.16));
+    border: 1px solid rgba(145, 126, 255, 0.35);
+    color: #ede8ff;
+}
+.admin-discord-nav-group {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border-radius: 20px;
+    background: rgba(13, 15, 28, 0.92);
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 18px 42px rgba(5, 8, 18, 0.3);
+}
+.admin-discord-nav-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+}
+.admin-discord-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    padding: 0 12px;
+    border-radius: 12px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+.admin-discord-link:hover,
+.admin-discord-link.active {
+    background: rgba(125, 133, 255, 0.12);
+    color: var(--text-primary);
+    transform: translateX(2px);
+}
+.admin-discord-main {
+    min-width: 0;
+}
+.admin-panel {
+    border-radius: 22px;
+    background: linear-gradient(180deg, rgba(18, 21, 37, 0.98), rgba(10, 12, 24, 0.98));
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 22px 60px rgba(4, 8, 18, 0.4);
+}
+.admin-panel .panel-head {
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.admin-feed-item {
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 12px 14px;
+}
+.admin-user-pity-actions {
+    margin-top: 12px;
+}
+.admin-user-card {
+    display: grid;
+    gap: 14px;
+}
+.admin-user-card-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: flex-start;
+}
+.admin-user-pity-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+.admin-user-pity-chip {
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.admin-user-pity-chip.primed {
+    background: rgba(136, 102, 255, 0.16);
+    border-color: rgba(136, 102, 255, 0.34);
+}
+.admin-user-pity-chip-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+@media (max-width: 1180px) {
+    .admin-discord-layout {
+        grid-template-columns: 1fr;
+    }
+    .admin-discord-sidebar {
+        position: static;
+    }
+}
+@media (max-width: 720px) {
+    .admin-user-pity-grid {
+        grid-template-columns: 1fr;
+    }
+    .case-pity-head {
+        flex-direction: column;
+    }
+}
+
+/* Progression + daily ops */
+.cases-ops-grid {
+    display: grid;
+    grid-template-columns: 1.1fr .9fr;
+    gap: 18px;
+    margin-top: 28px;
+}
+
+.cases-ops-card {
+    background: rgba(17, 24, 39, 0.92);
+    border: 1px solid rgba(139, 92, 246, 0.18);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.22);
+}
+
+.cases-ops-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.cases-ops-head h3 {
+    margin: 4px 0 0;
+    font-size: 18px;
+}
+
+.cases-ops-eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--text-muted);
+}
+
+.cases-ops-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(139, 92, 246, 0.14);
+    color: var(--text-primary);
+    border: 1px solid rgba(139, 92, 246, 0.22);
+    font-size: 12px;
+}
+
+.cases-ops-empty {
+    min-height: 98px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    color: var(--text-secondary);
+    border: 1px dashed rgba(139, 92, 246, 0.2);
+    border-radius: 14px;
+    padding: 18px;
+}
+
+.cases-xp-bar,
+.profile-progress-bar {
+    position: relative;
+    width: 100%;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+    margin: 12px 0 10px;
+}
+
+.cases-xp-bar.compact { height: 8px; margin: 8px 0; }
+
+.cases-xp-bar span,
+.profile-progress-bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: rgba(139, 92, 246, 0.88);
+}
+
+.cases-xp-copy {
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin-bottom: 14px;
+}
+
+.cases-daily-claim-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-top: 1px solid rgba(255,255,255,.06);
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    padding: 14px 0;
+    margin: 14px 0;
+}
+
+.cases-daily-claim-sub,
+.cases-mission-sub {
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.cases-mission-list {
+    display: grid;
+    gap: 10px;
+}
+
+.cases-mission-card {
+    display: grid;
+    grid-template-columns: 42px minmax(0,1fr) auto;
+    gap: 12px;
+    align-items: center;
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.05);
+    border-radius: 14px;
+    padding: 12px;
+}
+
+.cases-mission-card.ready { border-color: rgba(139, 92, 246, 0.28); box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.14) inset; }
+.cases-mission-card.claimed { opacity: .74; }
+
+.cases-mission-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: rgba(139, 92, 246, 0.14);
+    color: #d8b4fe;
+    font-size: 18px;
+}
+
+.cases-mission-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 2px;
+}
+
+.favorite-cases-rail {
+    display: grid;
+    gap: 10px;
+}
+
+.favorite-case-pill {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.05);
+    border-radius: 14px;
+    padding: 12px;
+    color: inherit;
+    text-align: left;
+}
+
+.favorite-case-pill:hover { transform: translateY(-1px); border-color: rgba(139, 92, 246, 0.2); }
+.favorite-case-pill-icon { width: 38px; height: 38px; border-radius: 12px; display:grid; place-items:center; background: rgba(139,92,246,.12); color:#d8b4fe; }
+.favorite-case-pill-copy { display:flex; flex-direction:column; gap:2px; }
+.favorite-case-pill-copy span { color: var(--text-secondary); font-size: 12px; }
+
+.case-card-headline-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.case-favorite-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.08);
+    background: rgba(10, 14, 26, 0.84);
+    color: var(--text-secondary);
+}
+
+.case-favorite-btn.active,
+.case-favorite-btn:hover {
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.28);
+}
+
+.case-favorite-tag {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: #fbbf24;
+    padding-top: 3px;
+}
+
+.profile-progress-card p { margin-top: 10px; }
+
+@media (max-width: 980px) {
+    .cases-ops-grid {
+        grid-template-columns: 1fr;
+    }
+    .cases-daily-claim-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .cases-mission-card {
+        grid-template-columns: 42px minmax(0,1fr);
+    }
+    .cases-mission-card .btn {
+        grid-column: 1 / -1;
+    }
+}

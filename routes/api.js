@@ -54,6 +54,161 @@ const SYSTEM_IDENTITY = {
 const POKEMON_CACHE = { fetchedAt: 0, names: [] };
 const POKEMON_CACHE_TTL = 1000 * 60 * 60 * 12;
 
+
+const PITY_RULES = [
+    { key: 'rare', label: 'Rare+', score: 3, threshold: 5, softStart: 3, icon: 'ri-vip-diamond-line' },
+    { key: 'epic', label: 'Epic+', score: 4, threshold: 12, softStart: 8, icon: 'ri-flashlight-line' },
+    { key: 'legendary', label: 'Legendary+', score: 5, threshold: 35, softStart: 24, icon: 'ri-fire-line' },
+    { key: 'mythical', label: 'Mythical', score: 6, threshold: 90, softStart: 60, icon: 'ri-sparkling-2-line' }
+];
+
+const PITY_RULE_MAP = Object.fromEntries(PITY_RULES.map((rule) => [rule.key, rule]));
+
+
+const DAILY_MISSIONS = [
+    { key: 'open_three', label: 'Open 3 Cases', icon: 'ri-box-3-line', metric: 'daily_case_opens', goal: 3, credits: 18, free_rolls: 1, xp: 35, description: 'Keep your streak hot by opening three cases today.' },
+    { key: 'chat_five', label: 'Send 5 Chat Messages', icon: 'ri-chat-3-line', metric: 'daily_chat_messages', goal: 5, credits: 10, free_rolls: 0, xp: 20, description: 'Stay active in the community channel.' },
+    { key: 'trade_one', label: 'Send 1 Trade Request', icon: 'ri-exchange-dollar-line', metric: 'daily_trades_sent', goal: 1, credits: 14, free_rolls: 0, xp: 25, description: 'Make at least one trade offer today.' }
+];
+
+function getDayKey(value = Date.now()) {
+    return new Date(value).toISOString().slice(0, 10);
+}
+
+function getYesterdayDayKey() {
+    return getDayKey(Date.now() - 24 * 60 * 60 * 1000);
+}
+
+function xpRequiredForLevel(level) {
+    return 100 + Math.max(0, Number(level || 1) - 1) * 75;
+}
+
+function getProgressionSummary(user) {
+    const totalXp = Math.max(0, Number(user?.total_xp || 0));
+    let level = 1;
+    let spent = 0;
+    while (spent + xpRequiredForLevel(level) <= totalXp) {
+        spent += xpRequiredForLevel(level);
+        level += 1;
+        if (level > 500) break;
+    }
+    const xpIntoLevel = totalXp - spent;
+    const xpForNextLevel = xpRequiredForLevel(level);
+    return {
+        total_xp: totalXp,
+        level,
+        xp_into_level: xpIntoLevel,
+        xp_for_next_level: xpForNextLevel,
+        progress_percent: Math.max(0, Math.min(100, Math.round((xpIntoLevel / Math.max(1, xpForNextLevel)) * 100)))
+    };
+}
+
+function ensureUserFeatureDefaults(user) {
+    if (!user) return user;
+    if (user.total_xp === undefined) user.total_xp = 0;
+    if (user.daily_claim_streak === undefined) user.daily_claim_streak = 0;
+    if (user.daily_last_claim_at === undefined) user.daily_last_claim_at = null;
+    if (user.daily_cycle_day === undefined) user.daily_cycle_day = null;
+    if (user.daily_case_opens === undefined) user.daily_case_opens = 0;
+    if (user.daily_chat_messages === undefined) user.daily_chat_messages = 0;
+    if (user.daily_trades_sent === undefined) user.daily_trades_sent = 0;
+    if (!user.daily_mission_claims || typeof user.daily_mission_claims !== 'object' || Array.isArray(user.daily_mission_claims)) user.daily_mission_claims = {};
+    if (!Array.isArray(user.favorite_case_ids)) user.favorite_case_ids = [];
+    if (user.daily_claim_total === undefined) user.daily_claim_total = 0;
+    return user;
+}
+
+function syncUserDailyState(user, targetDay = getDayKey()) {
+    if (!user) return false;
+    ensureUserFeatureDefaults(user);
+    const currentDay = String(user.daily_cycle_day || '');
+    if (currentDay === targetDay) return false;
+    user.daily_cycle_day = targetDay;
+    user.daily_case_opens = 0;
+    user.daily_chat_messages = 0;
+    user.daily_trades_sent = 0;
+    user.daily_mission_claims = {};
+    return true;
+}
+
+function awardUserBonuses(user, { credits = 0, freeRolls = 0, xp = 0 } = {}) {
+    if (!user) return;
+    ensureUserFeatureDefaults(user);
+    const creditAmount = Number(credits || 0);
+    const freeRollAmount = Math.max(0, parseInt(freeRolls, 10) || 0);
+    const xpAmount = Math.max(0, parseInt(xp, 10) || 0);
+    if (creditAmount) {
+        user.balance = Number(user.balance || 0) + creditAmount;
+        user.total_earned = Number(user.total_earned || 0) + creditAmount;
+    }
+    if (freeRollAmount) {
+        user.free_rolls = Number(user.free_rolls || 0) + freeRollAmount;
+    }
+    if (xpAmount) {
+        user.total_xp = Number(user.total_xp || 0) + xpAmount;
+    }
+}
+
+function getMissionProgress(user, mission) {
+    const progress = Math.max(0, Number(user?.[mission.metric] || 0));
+    const claimed = Boolean(user?.daily_mission_claims?.[mission.key]);
+    return {
+        key: mission.key,
+        label: mission.label,
+        icon: mission.icon,
+        description: mission.description,
+        metric: mission.metric,
+        goal: mission.goal,
+        progress,
+        remaining: Math.max(0, mission.goal - progress),
+        claimed,
+        status: claimed ? 'claimed' : (progress >= mission.goal ? 'ready' : 'tracking'),
+        progress_percent: Math.max(0, Math.min(100, Math.round((Math.min(progress, mission.goal) / Math.max(1, mission.goal)) * 100))),
+        rewards: {
+            credits: Number(mission.credits || 0),
+            free_rolls: Number(mission.free_rolls || 0),
+            xp: Number(mission.xp || 0)
+        }
+    };
+}
+
+function getDailyRewardSummary(user) {
+    ensureUserFeatureDefaults(user);
+    const today = getDayKey();
+    const yesterday = getYesterdayDayKey();
+    const lastClaimDay = user?.daily_last_claim_at ? getDayKey(user.daily_last_claim_at) : null;
+    const claimedToday = lastClaimDay === today;
+    const currentStreak = claimedToday
+        ? Math.max(1, Number(user.daily_claim_streak || 0))
+        : (lastClaimDay === yesterday ? Math.max(0, Number(user.daily_claim_streak || 0)) : 0);
+    const previewStreak = claimedToday ? currentStreak : Math.max(1, currentStreak + 1);
+    const rewardCredits = 12 + Math.min(previewStreak - 1, 6) * 3;
+    const rewardFreeRolls = previewStreak % 3 === 0 ? 1 : 0;
+    return {
+        claimed_today: claimedToday,
+        streak: currentStreak,
+        next_claim_streak: previewStreak,
+        reward_preview: {
+            credits: rewardCredits,
+            free_rolls: rewardFreeRolls,
+            xp: 20
+        },
+        total_claims: Number(user?.daily_claim_total || 0),
+        last_claim_at: user?.daily_last_claim_at || null
+    };
+}
+
+function buildFeatureBundleForUser(user) {
+    ensureUserFeatureDefaults(user);
+    syncUserDailyState(user);
+    return {
+        progression: getProgressionSummary(user),
+        daily: getDailyRewardSummary(user),
+        missions: DAILY_MISSIONS.map((mission) => getMissionProgress(user, mission)),
+        favorite_case_ids: safeArray(user.favorite_case_ids).map((value) => Number(value)).filter(Boolean)
+    };
+}
+
 function safeArray(value) {
     return Array.isArray(value) ? value : [];
 }
@@ -68,6 +223,162 @@ function normalizeBadgeKey(value) {
 
 function slugifyPokemonName(value) {
     return String(value || 'pokemon').toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+
+function getPityFieldName(key) {
+    return `pity_${String(key || '').toLowerCase()}_streak`;
+}
+
+function normalizePityState(source = {}) {
+    const state = {};
+    PITY_RULES.forEach((rule) => {
+        const field = getPityFieldName(rule.key);
+        state[rule.key] = Math.max(0, parseInt(source[rule.key] ?? source[field] ?? 0, 10) || 0);
+    });
+    return state;
+}
+
+function getUserPityState(user) {
+    return normalizePityState(user || {});
+}
+
+function saveUserPityState(userRow, pityState) {
+    if (!userRow) return;
+    const nextState = normalizePityState(pityState);
+    PITY_RULES.forEach((rule) => {
+        userRow[getPityFieldName(rule.key)] = nextState[rule.key];
+    });
+}
+
+function persistUserPityState(userId, pityState) {
+    const state = readAppState();
+    const userRow = safeArray(state.tables?.users).find((row) => Number(row.id) === Number(userId));
+    if (!userRow) return null;
+    saveUserPityState(userRow, pityState);
+    writeJson(appDataPath, state);
+    return userRow;
+}
+
+function getAvailablePityRules(contents) {
+    const maxScore = safeArray(contents).reduce((best, item) => Math.max(best, Number(RARITY_SCORE[item?.rarity] || 0)), 0);
+    return PITY_RULES.filter((rule) => maxScore >= rule.score);
+}
+
+function getPityCandidates(contents, targetKey) {
+    const enriched = safeArray(contents).map((item) => enrichCaseContent(item));
+    if (!enriched.length) return { candidates: [], resolvedRule: null };
+    const requestedRule = PITY_RULE_MAP[targetKey] || null;
+    if (!requestedRule) return { candidates: enriched, resolvedRule: null };
+    const exact = enriched.filter((item) => Number(RARITY_SCORE[item.rarity] || 0) >= requestedRule.score);
+    if (exact.length) {
+        return { candidates: exact, resolvedRule: requestedRule };
+    }
+    const bestScore = enriched.reduce((best, item) => Math.max(best, Number(RARITY_SCORE[item.rarity] || 0)), 0);
+    const fallbackRule = PITY_RULES.filter((rule) => bestScore >= rule.score).slice(-1)[0] || null;
+    return {
+        candidates: enriched.filter((item) => Number(RARITY_SCORE[item.rarity] || 0) >= bestScore),
+        resolvedRule: fallbackRule
+    };
+}
+
+function getPityRollPlan(pityState, contents) {
+    const normalized = normalizePityState(pityState);
+    const availableRules = getAvailablePityRules(contents);
+    let hardRule = null;
+    let softRule = null;
+    let softMultiplier = 1;
+
+    for (const rule of availableRules) {
+        const progress = normalized[rule.key] || 0;
+        if (progress >= rule.threshold - 1) {
+            hardRule = rule;
+        } else if (progress >= rule.softStart) {
+            softRule = rule;
+        }
+    }
+
+    if (softRule && !hardRule) {
+        const span = Math.max(1, softRule.threshold - softRule.softStart);
+        const phase = Math.min(1, Math.max(0, ((normalized[softRule.key] || 0) - softRule.softStart + 1) / span));
+        softMultiplier = Number((1 + phase * (softRule.key === 'mythical' ? 10 : softRule.key === 'legendary' ? 6 : softRule.key === 'epic' ? 4 : 2.4)).toFixed(3));
+    }
+
+    const hardPool = hardRule ? getPityCandidates(contents, hardRule.key) : { candidates: [], resolvedRule: null };
+    const resolvedHardRule = hardRule ? (hardPool.resolvedRule || hardRule) : null;
+
+    return {
+        hardRule: resolvedHardRule,
+        hardCandidates: hardPool.candidates,
+        softRule,
+        softMultiplier,
+        availableRules,
+        state: normalized
+    };
+}
+
+function buildPitySnapshot(pityState, contents) {
+    const state = normalizePityState(pityState);
+    const availableRules = getAvailablePityRules(contents);
+    const meters = availableRules.map((rule) => {
+        const progress = state[rule.key] || 0;
+        const remaining = Math.max(0, rule.threshold - progress);
+        const isPrimed = progress >= rule.threshold - 1;
+        const isSoft = progress >= rule.softStart && !isPrimed;
+        return {
+            key: rule.key,
+            label: rule.label,
+            icon: rule.icon,
+            threshold: rule.threshold,
+            soft_start: rule.softStart,
+            progress,
+            remaining,
+            progress_percent: Math.max(0, Math.min(100, Math.round((Math.min(progress, rule.threshold - 1) / Math.max(1, rule.threshold - 1)) * 100))),
+            status: isPrimed ? 'primed' : (isSoft ? 'soft' : 'tracking')
+        };
+    });
+    const nextPrimed = meters.filter((meter) => meter.status === 'primed').slice(-1)[0] || null;
+    const nextClosest = meters.slice().sort((a, b) => a.remaining - b.remaining || b.progress - a.progress)[0] || null;
+    return {
+        enabled: meters.length > 0,
+        meters,
+        spotlight: nextPrimed || nextClosest || null
+    };
+}
+
+function applyPityStateResult(pityState, rarity) {
+    const nextState = normalizePityState(pityState);
+    const rarityScore = Number(RARITY_SCORE[rarity] || 0);
+    PITY_RULES.forEach((rule) => {
+        if (rarityScore >= rule.score) {
+            nextState[rule.key] = 0;
+        } else {
+            nextState[rule.key] = Math.max(0, Number(nextState[rule.key] || 0)) + 1;
+        }
+    });
+    return nextState;
+}
+
+function getPitySummaryForUser(user, contents = null) {
+    const state = getUserPityState(user);
+    if (contents) {
+        return buildPitySnapshot(state, contents);
+    }
+    return {
+        enabled: true,
+        meters: PITY_RULES.map((rule) => ({
+            key: rule.key,
+            label: rule.label,
+            icon: rule.icon,
+            threshold: rule.threshold,
+            soft_start: rule.softStart,
+            progress: state[rule.key] || 0,
+            remaining: Math.max(0, rule.threshold - (state[rule.key] || 0)),
+            progress_percent: Math.max(0, Math.min(100, Math.round((Math.min(state[rule.key] || 0, rule.threshold - 1) / Math.max(1, rule.threshold - 1)) * 100))),
+            status: (state[rule.key] || 0) >= rule.threshold - 1 ? 'primed' : ((state[rule.key] || 0) >= rule.softStart ? 'soft' : 'tracking')
+        })),
+        spotlight: null
+    };
 }
 
 function buildSpriteUrl(pokemonName, spriteUrl = '') {
@@ -529,13 +840,29 @@ function scoreResult(item) {
     return (RARITY_SCORE[item.rarity] || 0) * 100 + (item.is_shiny ? 10 : 0);
 }
 
-function pickCaseResult(contents) {
+function pickCaseResult(contents, options = {}) {
     const enriched = safeArray(contents).map((item) => enrichCaseContent(item));
-    const totalWeight = enriched.reduce((sum, row) => sum + Number(row.weight || getItemWeight(row)), 0);
+    if (!enriched.length) return null;
+
+    const hardRule = options.hardRule || null;
+    const softRule = options.softRule || null;
+    const softMultiplier = Math.max(1, Number(options.softMultiplier || 1));
+    const pool = hardRule ? (safeArray(options.hardCandidates).length ? safeArray(options.hardCandidates) : getPityCandidates(enriched, hardRule.key).candidates) : enriched;
+
+    const totalWeight = pool.reduce((sum, row) => {
+        const baseWeight = Number(row.weight || getItemWeight(row));
+        const rarityScore = Number(RARITY_SCORE[row.rarity] || 0);
+        const multiplier = softRule && rarityScore >= softRule.score ? softMultiplier : 1;
+        return sum + (baseWeight * multiplier);
+    }, 0);
+
     let random = Math.random() * totalWeight;
-    let selected = enriched[enriched.length - 1] || null;
-    for (const item of enriched) {
-        random -= Number(item.weight || getItemWeight(item));
+    let selected = pool[pool.length - 1] || null;
+    for (const item of pool) {
+        const baseWeight = Number(item.weight || getItemWeight(item));
+        const rarityScore = Number(RARITY_SCORE[item.rarity] || 0);
+        const multiplier = softRule && rarityScore >= softRule.score ? softMultiplier : 1;
+        random -= (baseWeight * multiplier);
         if (random <= 0) {
             selected = item;
             break;
@@ -635,7 +962,8 @@ function searchUsersList(query, excludeUserId = null, limit = 8) {
             avatar_url: user.avatar_url || null,
             region: user.region || '',
             badges: getUserBadges(user).map(serializeBadge),
-            custom_role: user.custom_role || ''
+            custom_role: user.custom_role || '',
+            pity: getPitySummaryForUser(user)
         }));
 }
 
@@ -731,19 +1059,20 @@ function maybeCreateRareRollAnnouncement({ user, result, caseInfo, seed }) {
     writeCommunityStore(store);
 }
 
-function openCaseForUser({ userId, username, caseInfo, contents, seed, source = 'case_open', roomId = null }) {
-    const selectedItem = enrichCaseContent(pickCaseResult(contents), caseInfo);
+function openCaseForUser({ userId, username, caseInfo, contents, seed, source = 'case_open', roomId = null, selectedItem = null, pityMeta = null }) {
+    const selectedSource = selectedItem ? enrichCaseContent(selectedItem, caseInfo) : enrichCaseContent(pickCaseResult(contents), caseInfo);
+    const selectedItemFinal = selectedSource;
     const inventoryResult = db.prepare(`
         INSERT INTO inventory (user_id, pokemon_id, pokemon_name, pokemon_form, rarity, sprite_url, is_shiny)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(
         userId,
-        selectedItem.pokemon_id,
-        selectedItem.pokemon_name,
-        selectedItem.pokemon_form,
-        selectedItem.rarity,
-        buildSpriteUrl(selectedItem.pokemon_name, selectedItem.sprite_url),
-        selectedItem.is_shiny
+        selectedItemFinal.pokemon_id,
+        selectedItemFinal.pokemon_name,
+        selectedItemFinal.pokemon_form,
+        selectedItemFinal.rarity,
+        buildSpriteUrl(selectedItemFinal.pokemon_name, selectedItemFinal.sprite_url),
+        selectedItemFinal.is_shiny
     );
 
     const openingResult = db.prepare(`
@@ -755,11 +1084,11 @@ function openCaseForUser({ userId, username, caseInfo, contents, seed, source = 
         caseInfo.id,
         caseInfo.name,
         inventoryResult.lastInsertRowid,
-        selectedItem.pokemon_name,
-        selectedItem.pokemon_form,
-        selectedItem.rarity,
-        buildSpriteUrl(selectedItem.pokemon_name, selectedItem.sprite_url),
-        selectedItem.is_shiny,
+        selectedItemFinal.pokemon_name,
+        selectedItemFinal.pokemon_form,
+        selectedItemFinal.rarity,
+        buildSpriteUrl(selectedItemFinal.pokemon_name, selectedItemFinal.sprite_url),
+        selectedItemFinal.is_shiny,
         caseInfo.price
     );
 
@@ -773,14 +1102,14 @@ function openCaseForUser({ userId, username, caseInfo, contents, seed, source = 
         username,
         original_owner_id: userId,
         original_owner_username: username,
-        pokemon_id: selectedItem.pokemon_id,
-        pokemon_name: selectedItem.pokemon_name,
-        pokemon_form: selectedItem.pokemon_form || null,
-        rarity: selectedItem.rarity,
-        sprite_url: buildSpriteUrl(selectedItem.pokemon_name, selectedItem.sprite_url),
-        is_shiny: selectedItem.is_shiny,
-        odds: Math.max(Number(selectedItem.odds || 1), 1),
-        estimated_value: Number(selectedItem.estimated_value || computeEstimatedValue({ odds: selectedItem.odds, rarity: selectedItem.rarity, is_shiny: selectedItem.is_shiny, casePrice: caseInfo.price }))
+        pokemon_id: selectedItemFinal.pokemon_id,
+        pokemon_name: selectedItemFinal.pokemon_name,
+        pokemon_form: selectedItemFinal.pokemon_form || null,
+        rarity: selectedItemFinal.rarity,
+        sprite_url: buildSpriteUrl(selectedItemFinal.pokemon_name, selectedItemFinal.sprite_url),
+        is_shiny: selectedItemFinal.is_shiny,
+        odds: Math.max(Number(selectedItemFinal.odds || 1), 1),
+        estimated_value: Number(selectedItemFinal.estimated_value || computeEstimatedValue({ odds: selectedItemFinal.odds, rarity: selectedItemFinal.rarity, is_shiny: selectedItemFinal.is_shiny, casePrice: caseInfo.price }))
     };
 
     saveValueToOwnedRows(inventoryResult.lastInsertRowid, openingResult.lastInsertRowid, enrichedResult);
@@ -803,7 +1132,7 @@ function openCaseForUser({ userId, username, caseInfo, contents, seed, source = 
         result: enrichedResult
     });
 
-    const finalResult = { ...enrichedResult, replayId: replay.id, track: replayTrack, winning_index: winningIndex };
+    const finalResult = { ...enrichedResult, replayId: replay.id, track: replayTrack, winning_index: winningIndex, pity: pityMeta || null };
     const user = getUserById(userId) || { id: userId, username };
     maybeCreateRareRollAnnouncement({ user, result: finalResult, caseInfo, seed });
     return finalResult;
@@ -850,6 +1179,107 @@ router.post('/notifications/:id/read', isAuthenticated, (req, res) => {
     }
 });
 
+
+router.get('/progression', isAuthenticated, (req, res) => {
+    try {
+        const state = readAppState();
+        const user = safeArray(state.tables?.users).find((row) => Number(row.id) === Number(req.user.id));
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        ensureUserFeatureDefaults(user);
+        syncUserDailyState(user);
+        writeJson(appDataPath, state);
+        res.json(buildFeatureBundleForUser(user));
+    } catch (error) {
+        console.error('Progression load error:', error);
+        res.status(500).json({ error: 'Failed to load progression' });
+    }
+});
+
+router.post('/daily/claim', isAuthenticated, (req, res) => {
+    try {
+        const state = readAppState();
+        const user = safeArray(state.tables?.users).find((row) => Number(row.id) === Number(req.user.id));
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        ensureUserFeatureDefaults(user);
+        syncUserDailyState(user);
+        const summary = getDailyRewardSummary(user);
+        if (summary.claimed_today) {
+            return res.status(400).json({ error: 'Daily reward already claimed today' });
+        }
+        user.daily_claim_streak = summary.next_claim_streak;
+        user.daily_last_claim_at = new Date().toISOString();
+        user.daily_claim_total = Number(user.daily_claim_total || 0) + 1;
+        awardUserBonuses(user, summary.reward_preview);
+        db.prepare('INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)').run(
+            user.id,
+            'daily_claim',
+            Number(summary.reward_preview.credits || 0),
+            `Daily reward claimed · streak ${user.daily_claim_streak}`
+        );
+        writeJson(appDataPath, state);
+        notifyUser(user.id, 'daily_claim', 'Daily reward claimed', `You claimed $${Number(summary.reward_preview.credits || 0).toFixed(2)}${summary.reward_preview.free_rolls ? ` and ${summary.reward_preview.free_rolls} free roll${summary.reward_preview.free_rolls === 1 ? '' : 's'}` : ''}.`, '/profile', { streak: user.daily_claim_streak, rewards: summary.reward_preview });
+        res.json({ success: true, rewards: summary.reward_preview, ...buildFeatureBundleForUser(user), balance: Number(user.balance || 0), free_rolls: Number(user.free_rolls || 0) });
+    } catch (error) {
+        console.error('Daily claim error:', error);
+        res.status(500).json({ error: 'Failed to claim daily reward' });
+    }
+});
+
+router.post('/missions/:key/claim', isAuthenticated, (req, res) => {
+    try {
+        const state = readAppState();
+        const user = safeArray(state.tables?.users).find((row) => Number(row.id) === Number(req.user.id));
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        ensureUserFeatureDefaults(user);
+        syncUserDailyState(user);
+        const mission = DAILY_MISSIONS.find((entry) => entry.key === String(req.params.key || ''));
+        if (!mission) return res.status(404).json({ error: 'Mission not found' });
+        const progress = getMissionProgress(user, mission);
+        if (progress.claimed) return res.status(400).json({ error: 'Mission already claimed' });
+        if (progress.progress < mission.goal) return res.status(400).json({ error: 'Mission is not complete yet' });
+        user.daily_mission_claims[mission.key] = true;
+        awardUserBonuses(user, { credits: mission.credits, freeRolls: mission.free_rolls, xp: mission.xp });
+        db.prepare('INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)').run(
+            user.id,
+            'daily_mission',
+            Number(mission.credits || 0),
+            `Mission completed · ${mission.label}`
+        );
+        writeJson(appDataPath, state);
+        notifyUser(user.id, 'mission_claim', 'Mission reward claimed', `${mission.label} paid out $${Number(mission.credits || 0).toFixed(2)}${mission.free_rolls ? ` and ${mission.free_rolls} free roll${mission.free_rolls === 1 ? '' : 's'}` : ''}.`, '/cases', { mission: mission.key });
+        res.json({ success: true, mission: mission.key, rewards: { credits: mission.credits, free_rolls: mission.free_rolls, xp: mission.xp }, ...buildFeatureBundleForUser(user), balance: Number(user.balance || 0), free_rolls: Number(user.free_rolls || 0) });
+    } catch (error) {
+        console.error('Mission claim error:', error);
+        res.status(500).json({ error: 'Failed to claim mission reward' });
+    }
+});
+
+router.post('/cases/:id/favorite', isAuthenticated, (req, res) => {
+    try {
+        const caseId = Number(req.params.id);
+        const caseInfo = db.prepare('SELECT * FROM cases WHERE id = ?').get(caseId);
+        if (!caseInfo) return res.status(404).json({ error: 'Case not found' });
+        const state = readAppState();
+        const user = safeArray(state.tables?.users).find((row) => Number(row.id) === Number(req.user.id));
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        ensureUserFeatureDefaults(user);
+        const favorites = new Set(safeArray(user.favorite_case_ids).map((value) => Number(value)).filter(Boolean));
+        let favorited = false;
+        if (favorites.has(caseId)) {
+            favorites.delete(caseId);
+        } else {
+            favorites.add(caseId);
+            favorited = true;
+        }
+        user.favorite_case_ids = Array.from(favorites).slice(0, 24);
+        writeJson(appDataPath, state);
+        res.json({ success: true, caseId, favorited, favorite_case_ids: user.favorite_case_ids });
+    } catch (error) {
+        console.error('Favorite case toggle error:', error);
+        res.status(500).json({ error: 'Failed to update favorites' });
+    }
+});
+
 // Get all cases
 router.get('/cases', (req, res) => {
     try {
@@ -880,6 +1310,7 @@ router.get('/cases', (req, res) => {
         const cases = db.prepare(query).all(...params)
             .filter((caseRow) => canSeeHidden || isCaseLive(caseRow));
 
+        const favoriteIds = new Set(safeArray(viewer?.favorite_case_ids).map((value) => Number(value)));
         const casesWithCounts = cases.map((c) => {
             const contents = db.prepare('SELECT COUNT(*) as count FROM case_contents WHERE case_id = ?').get(c.id);
             const contentRows = db.prepare('SELECT * FROM case_contents WHERE case_id = ? ORDER BY odds ASC').all(c.id).map((row) => enrichCaseContent(row, c));
@@ -895,7 +1326,8 @@ router.get('/cases', (req, res) => {
                 rarity_breakdown: rarities,
                 is_live: isCaseLive(c),
                 next_launch_at: c.launch_at || null,
-                top_items: contentRows.slice(0, 5)
+                top_items: contentRows.slice(0, 5),
+                is_favorite: favoriteIds.has(Number(c.id))
             };
         });
 
@@ -933,7 +1365,8 @@ router.get('/cases/:id', (req, res) => {
             case: { ...caseInfo, is_live: isCaseLive(caseInfo) },
             contents,
             byRarity,
-            totalItems: contents.length
+            totalItems: contents.length,
+            pity: viewer ? buildPitySnapshot(getUserPityState(viewer), contents) : null
         });
     } catch (error) {
         console.error('Get case error:', error);
@@ -965,18 +1398,41 @@ router.post('/cases/:id/open', isAuthenticated, (req, res) => {
         const contents = db.prepare('SELECT * FROM case_contents WHERE case_id = ?').all(id).map((row) => enrichCaseContent(row, caseInfo));
         const baseSeed = createSeed();
         const results = [];
+        ensureUserFeatureDefaults(liveUser);
+        syncUserDailyState(liveUser);
+        let pityState = getUserPityState(liveUser);
+        const pityBefore = buildPitySnapshot(pityState, contents);
 
         for (let i = 0; i < amount; i += 1) {
             const seed = `${baseSeed}-${i + 1}`;
+            const plan = getPityRollPlan(pityState, contents);
+            const progressBefore = { ...plan.state };
+            const selectedItem = pickCaseResult(contents, plan);
+            const nextPityState = applyPityStateResult(pityState, selectedItem?.rarity);
+            const triggeredRule = plan.hardRule && Number(RARITY_SCORE[selectedItem?.rarity] || 0) >= Number(plan.hardRule.score || 0)
+                ? plan.hardRule
+                : null;
             const result = openCaseForUser({
                 userId,
                 username: req.user.username,
                 caseInfo,
                 contents,
                 seed,
-                source: 'case_open'
+                source: 'case_open',
+                selectedItem,
+                pityMeta: {
+                    triggered: Boolean(triggeredRule),
+                    trigger_label: triggeredRule ? triggeredRule.label : '',
+                    trigger_key: triggeredRule ? triggeredRule.key : '',
+                    progress_before: triggeredRule ? Number(progressBefore[triggeredRule.key] || 0) : 0,
+                    soft_active: Boolean(plan.softRule),
+                    soft_label: plan.softRule ? plan.softRule.label : '',
+                    soft_multiplier: Number(plan.softMultiplier || 1),
+                    after: buildPitySnapshot(nextPityState, contents)
+                }
             });
             db.prepare('UPDATE cases SET times_opened = times_opened + 1 WHERE id = ?').run(id);
+            pityState = nextPityState;
             results.push(result);
         }
 
@@ -989,12 +1445,12 @@ router.post('/cases/:id/open', isAuthenticated, (req, res) => {
                 `Opened ${amount}x ${caseInfo.name}${freeRollsUsed ? ` using ${freeRollsUsed} free roll(s)` : ''}`
             );
         } else {
-            const state = readAppState();
-            const userRow = safeArray(state.tables?.users).find((row) => Number(row.id) === Number(userId));
-            if (userRow) {
-                userRow.cases_opened = Number(userRow.cases_opened || 0) + amount;
+            const freeState = readAppState();
+            const freeUser = safeArray(freeState.tables?.users).find((row) => Number(row.id) === Number(userId));
+            if (freeUser) {
+                freeUser.cases_opened = Number(freeUser.cases_opened || 0) + amount;
             }
-            writeJson(appDataPath, state);
+            writeJson(appDataPath, freeState);
             db.prepare('INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)').run(
                 userId,
                 'free_roll',
@@ -1003,15 +1459,23 @@ router.post('/cases/:id/open', isAuthenticated, (req, res) => {
             );
         }
 
-        if (freeRollsUsed > 0) {
-            const state = readAppState();
-            const userRow = safeArray(state.tables?.users).find((row) => Number(row.id) === Number(userId));
-            if (userRow) userRow.free_rolls = Math.max(0, Number(userRow.free_rolls || 0) - freeRollsUsed);
-            writeJson(appDataPath, state);
+        const state = readAppState();
+        const userRow = safeArray(state.tables?.users).find((row) => Number(row.id) === Number(userId));
+        let earnedXp = 0;
+        if (userRow) {
+            ensureUserFeatureDefaults(userRow);
+            syncUserDailyState(userRow);
+            if (freeRollsUsed > 0) {
+                userRow.free_rolls = Math.max(0, Number(userRow.free_rolls || 0) - freeRollsUsed);
+            }
+            userRow.daily_case_opens = Number(userRow.daily_case_opens || 0) + results.length;
+            earnedXp = results.reduce((sum, result) => sum + 12 + (Number(RARITY_SCORE[result?.rarity] || 0) * 6), 0);
+            awardUserBonuses(userRow, { xp: earnedXp });
+            saveUserPityState(userRow, pityState);
         }
+        writeJson(appDataPath, state);
 
-        const updatedUser = getUserById(userId);
-
+        const updatedUser = userRow || getUserById(userId) || req.user;
         const responseResults = results.map((result, index) => {
             if (index === results.length - 1) return result;
             const { track, ...rest } = result;
@@ -1025,7 +1489,12 @@ router.post('/cases/:id/open', isAuthenticated, (req, res) => {
             freeRolls: Number(updatedUser?.free_rolls || 0),
             freeRollsUsed,
             paidRolls,
-            seed: baseSeed
+            seed: baseSeed,
+            pityBefore,
+            pity: buildPitySnapshot(pityState, contents),
+            userPity: getPitySummaryForUser(updatedUser),
+            progression: getProgressionSummary(updatedUser),
+            earnedXp
         });
     } catch (error) {
         console.error('Open case error:', error);
@@ -1426,6 +1895,16 @@ router.post('/trades', isAuthenticated, (req, res) => {
             receiver_accepts_free: 0
         });
 
+        const progressState = readAppState();
+        const senderRow = safeArray(progressState.tables?.users).find((row) => Number(row.id) === Number(senderId));
+        if (senderRow) {
+            ensureUserFeatureDefaults(senderRow);
+            syncUserDailyState(senderRow);
+            senderRow.daily_trades_sent = Number(senderRow.daily_trades_sent || 0) + 1;
+            awardUserBonuses(senderRow, { xp: 15 });
+            writeJson(appDataPath, progressState);
+        }
+
         notifyUser(receiver.id, 'trade_request', 'New trade request', `${req.user.username} sent you a trade request with ${validItems.length} offered item(s)${requestedItems.length ? ` and requested ${requestedItems.length} item(s) from you` : ''}${fairness.isFreeTrade ? '. This is a one-sided trade and requires your confirmation.' : ''}.`, '/trading', { tradeId: result.lastInsertRowid, senderId, fairness });
         notifyUser(senderId, 'trade_sent', 'Trade request sent', `Your trade request to ${receiver.username} is pending.${fairness.warningLevel !== 'balanced' ? ` Trade balance: ${fairness.offerValue > fairness.requestValue ? 'you are overpaying' : fairness.requestValue > fairness.offerValue ? 'you are asking for more value' : 'review the balance before it is accepted'}.` : ''}`, '/trading', { tradeId: result.lastInsertRowid, receiverId: receiver.id, fairness });
 
@@ -1649,7 +2128,12 @@ router.get('/profiles/:identifier', optionalAuth, (req, res) => {
             inventory_count: inventory.length,
             inventory_value: Number(inventory.reduce((sum, item) => sum + Number(item.estimated_value || 0), 0).toFixed(2)),
             profile_link: getProfileLink(user),
-            username_history: safeArray(user.username_history).slice(-12).reverse()
+            username_history: safeArray(user.username_history).slice(-12).reverse(),
+            pity: getPitySummaryForUser(user),
+            progression: getProgressionSummary(user),
+            daily_claim_streak: Number(user.daily_claim_streak || 0),
+            total_xp: Number(user.total_xp || 0),
+            favorite_case_count: safeArray(user.favorite_case_ids).length
         };
         res.json({
             user: publicUser,
@@ -2038,6 +2522,15 @@ router.post('/community/chat', isAuthenticated, (req, res) => {
 
         const { store } = finalizeExpiredRain(false);
         const liveUser = getUserById(req.user.id) || req.user;
+        const state = readAppState();
+        const userRow = safeArray(state.tables?.users).find((row) => Number(row.id) === Number(req.user.id));
+        if (userRow) {
+            ensureUserFeatureDefaults(userRow);
+            syncUserDailyState(userRow);
+            userRow.daily_chat_messages = Number(userRow.daily_chat_messages || 0) + 1;
+            awardUserBonuses(userRow, { xp: 2 });
+            writeJson(appDataPath, state);
+        }
         touchPresence(store, liveUser, { typing: false });
         clearTyping(store, req.user.id);
         const message = addCommunityMessage(store, {
@@ -2358,6 +2851,38 @@ router.get('/admin/summary', isAuthenticated, requireAdmin, (req, res) => {
                 updated_at: room.updated_at || room.created_at
             }));
 
+        const todayKey = getDayKey();
+        const casesTable = getTable('cases');
+        const favoriteCounts = new Map();
+        users.forEach((user) => {
+            ensureUserFeatureDefaults(user);
+            safeArray(user.favorite_case_ids).forEach((caseId) => {
+                const id = Number(caseId);
+                if (!id) return;
+                favoriteCounts.set(id, Number(favoriteCounts.get(id) || 0) + 1);
+            });
+        });
+        const topFavoritedCases = Array.from(favoriteCounts.entries())
+            .map(([caseId, count]) => {
+                const caseRow = casesTable.find((entry) => Number(entry.id) === Number(caseId));
+                return caseRow ? { id: caseRow.id, name: caseRow.name, category: caseRow.category, count } : null;
+            })
+            .filter(Boolean)
+            .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+            .slice(0, 6);
+
+        const progression = {
+            dailyClaimsToday: users.filter((user) => user.daily_last_claim_at && getDayKey(user.daily_last_claim_at) === todayKey).length,
+            avgLevel: Number((users.reduce((sum, user) => sum + Number(getProgressionSummary(user).level || 1), 0) / Math.max(1, users.length)).toFixed(1)),
+            topDailyStreak: users.reduce((best, user) => Math.max(best, Number(user.daily_claim_streak || 0)), 0),
+            topXpUser: users.slice().sort((a, b) => Number(b.total_xp || 0) - Number(a.total_xp || 0))[0] ? {
+                username: users.slice().sort((a, b) => Number(b.total_xp || 0) - Number(a.total_xp || 0))[0].username,
+                total_xp: Number(users.slice().sort((a, b) => Number(b.total_xp || 0) - Number(a.total_xp || 0))[0].total_xp || 0),
+                level: getProgressionSummary(users.slice().sort((a, b) => Number(b.total_xp || 0) - Number(a.total_xp || 0))[0]).level
+            } : null,
+            topFavoritedCases
+        };
+
         res.json({
             stats,
             activeRain: getRainPublic(store.activeRain, req.user.id),
@@ -2370,7 +2895,8 @@ router.get('/admin/summary', isAuthenticated, requireAdmin, (req, res) => {
             activeRooms,
             announcements: getPublicAnnouncements(store),
             claimDrops: safeArray(store.claimDrops).slice(0, 12).map((entry) => ({ ...entry, claimed_count: safeArray(entry.claimed_by).length })),
-            cases: getTable('cases').slice().sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''))).slice(0, 12)
+            cases: getTable('cases').slice().sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''))).slice(0, 12),
+            progression
         });
     } catch (error) {
         console.error('Admin summary error:', error);
@@ -2443,6 +2969,7 @@ router.post('/admin/users/:id/roles', isAuthenticated, requireAdmin, (req, res) 
         const freeRolls = req.body.free_rolls === undefined ? null : Math.max(0, parseInt(req.body.free_rolls, 10) || 0);
         const mode = normalizeText(req.body.mode || 'add').toLowerCase();
         userRow.badges = safeArray(userRow.badges);
+        saveUserPityState(userRow, getUserPityState(userRow));
         if (badge) {
             if (mode === 'remove') {
                 userRow.badges = userRow.badges.filter((entry) => normalizeBadgeKey(entry) !== badge);
@@ -2457,10 +2984,26 @@ router.post('/admin/users/:id/roles', isAuthenticated, requireAdmin, (req, res) 
         if (freeRolls !== null) userRow.free_rolls = freeRolls;
         writeJson(appDataPath, state);
         notifyUser(targetId, 'admin_role', 'Profile role updated', 'Your account badges, role, or bonus rolls were updated by the site owner.', '/profile', { badge, customRole, region, freeRolls });
-        res.json({ success: true, user: userRow });
+        res.json({ success: true, user: { ...userRow, pity: getPitySummaryForUser(userRow) } });
     } catch (error) {
         console.error('Admin role update error:', error);
         res.status(500).json({ error: 'Failed to update user badges or role' });
+    }
+});
+
+router.post('/admin/users/:id/pity/reset', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const targetId = Number(req.params.id);
+        const state = readAppState();
+        const userRow = safeArray(state.tables?.users).find((row) => Number(row.id) === Number(targetId));
+        if (!userRow) return res.status(404).json({ error: 'User not found' });
+        saveUserPityState(userRow, {});
+        writeJson(appDataPath, state);
+        notifyUser(targetId, 'admin_pity', 'Pity reset', 'Your pity meters were reset by the site owner.', '/cases');
+        res.json({ success: true, user: { id: userRow.id, username: userRow.username, pity: getPitySummaryForUser(userRow) } });
+    } catch (error) {
+        console.error('Admin pity reset error:', error);
+        res.status(500).json({ error: 'Failed to reset pity counters' });
     }
 });
 

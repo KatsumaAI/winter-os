@@ -91,6 +91,34 @@
 
             <section class="section-sm">
                 <div class="container">
+                    <div class="admin-discord-layout">
+                        <aside class="admin-discord-sidebar">
+                            <div class="admin-discord-server">
+                                <div class="admin-discord-server-icon"><i class="ri-shield-star-line"></i></div>
+                                <div>
+                                    <strong>Owner Ops</strong>
+                                    <span>Discord-style control hub</span>
+                                </div>
+                            </div>
+                            <div class="admin-discord-nav-group">
+                                <div class="admin-discord-nav-label">Quick Jump</div>
+                                <a class="admin-discord-link active" href="#adminSectionRain"><i class="ri-drop-line"></i><span>Rain</span></a>
+                                <a class="admin-discord-link" href="#adminSectionAnnouncements"><i class="ri-megaphone-line"></i><span>Announcements</span></a>
+                                <a class="admin-discord-link" href="#adminSectionUsers"><i class="ri-user-search-line"></i><span>Users</span></a>
+                                <a class="admin-discord-link" href="#adminSectionRoles"><i class="ri-vip-crown-line"></i><span>Roles</span></a>
+                                <a class="admin-discord-link" href="#adminSectionCases"><i class="ri-box-3-line"></i><span>Cases</span></a>
+                                <a class="admin-discord-link" href="#adminSectionRewards"><i class="ri-links-line"></i><span>Rewards</span></a>
+                                <a class="admin-discord-link" href="#adminSectionBackups"><i class="ri-save-3-line"></i><span>Backups</span></a>
+                                <a class="admin-discord-link" href="#adminSectionProgression"><i class="ri-bar-chart-box-line"></i><span>Progression</span></a>
+                                <a class="admin-discord-link" href="#adminSectionMonitoring"><i class="ri-radar-line"></i><span>Live Feeds</span></a>
+                            </div>
+                            <div class="admin-discord-sidebar-card">
+                                <div class="admin-discord-nav-label">Owner Notes</div>
+                                <p>Manage site events, player perks, case launches, and recovery tools from one place.</p>
+                                <span class="badge badge-legendary" id="ownerSidebarBadge">Owner Online</span>
+                            </div>
+                        </aside>
+                        <div class="admin-discord-main">
                     <div class="stats-grid admin-stats-grid" id="adminStatsGrid">
                         <div class="stat-card"><div class="stat-label">Users</div><div class="stat-value">--</div></div>
                         <div class="stat-card"><div class="stat-label">Cases Opened</div><div class="stat-value">--</div></div>
@@ -103,7 +131,7 @@
                     </div>
 
                     <div class="admin-grid">
-                        <section class="panel admin-panel">
+                        <section class="panel admin-panel" id="adminSectionRain">
                             <div class="panel-head">
                                 <div>
                                     <h3>Rain Control</h3>
@@ -130,7 +158,7 @@
                             </form>
                         </section>
 
-                        <section class="panel admin-panel">
+                        <section class="panel admin-panel" id="adminSectionAnnouncements">
                             <div class="panel-head">
                                 <div>
                                     <h3>Announcement</h3>
@@ -155,7 +183,7 @@
                                 <button class="btn btn-secondary" type="submit"><i class="ri-megaphone-line"></i> Publish Website Banner</button>
                             </form>
                         </section>
-                        <section class="panel admin-panel">
+                        <section class="panel admin-panel" id="adminSectionUsers">
                             <div class="panel-head">
                                 <div>
                                     <h3>User Balance Tools</h3>
@@ -186,10 +214,13 @@
                                     <input id="balanceReason" class="input" type="text" maxlength="120" placeholder="Launch bonus">
                                 </div>
                                 <div id="selectedAdminUser" class="admin-rain-card empty">No user selected.</div>
+                                <div class="admin-user-pity-actions">
+                                    <button class="btn btn-ghost" id="resetUserPityBtn" type="button"><i class="ri-restart-line"></i> Reset Selected User Pity</button>
+                                </div>
                                 <button class="btn btn-primary" type="submit"><i class="ri-wallet-3-line"></i> Apply Balance Change</button>
                             </form>
                         </section>
-                                            <section class="panel admin-panel">
+                                            <section class="panel admin-panel" id="adminSectionRoles">
                             <div class="panel-head">
                                 <div>
                                     <h3>Role & Badge Tools</h3>
@@ -228,7 +259,7 @@
                             </form>
                         </section>
 
-                        <section class="panel admin-panel">
+                        <section class="panel admin-panel" id="adminSectionCases">
                             <div class="panel-head">
                                 <div>
                                     <h3>Create / Schedule Case</h3>
@@ -310,7 +341,7 @@ Mewtwo|legendary|1000000"></textarea>
                             </form>
                         </section>
 
-                        <section class="panel admin-panel">
+                        <section class="panel admin-panel" id="adminSectionRewards">
                             <div class="panel-head">
                                 <div>
                                     <h3>Reward Link Generator</h3>
@@ -392,7 +423,7 @@ Mewtwo|legendary|1000000"></textarea>
                         </section>
 
                         
-<section class="panel admin-panel">
+<section class="panel admin-panel" id="adminSectionBackups">
     <div class="panel-head">
         <div>
             <h3>Gist Backup & Restore</h3>
@@ -438,7 +469,29 @@ Mewtwo|legendary|1000000"></textarea>
 
                     </div>
 
-                    <div class="admin-grid lower admin-grid-quad">
+
+                    <section class="panel admin-panel" id="adminSectionProgression">
+                        <div class="panel-head">
+                            <div>
+                                <h3>Progression & Daily Ops</h3>
+                                <p>See how players are engaging with streaks, XP, and favorite-case usage.</p>
+                            </div>
+                        </div>
+                        <div id="adminProgressionOverview" class="profile-summary-stack" style="margin-bottom:18px;"></div>
+                        <div class="admin-grid lower" style="grid-template-columns:1.1fr .9fr; gap:18px;">
+                            <section class="panel admin-panel" style="min-height:0;">
+                                <div class="panel-head"><div><h3>Top Favorited Cases</h3><p>Cases players pin for quick-open access.</p></div></div>
+                                <div id="adminTopFavoritedCases" class="admin-feed-list"></div>
+                            </section>
+                            <section class="panel admin-panel" style="min-height:0;">
+                                <div class="panel-head"><div><h3>XP Leader</h3><p>Highest progression account on the site right now.</p></div></div>
+                                <div id="adminTopXpUser" class="admin-feed-list"></div>
+                            </section>
+                        </div>
+                    </section>
+
+
+                    <div class="admin-grid lower admin-grid-quad" id="adminSectionMonitoring">
                         <section class="panel admin-panel">
                             <div class="panel-head"><div><h3>Recent Chat</h3><p>Latest community messages and owner notices.</p></div></div>
                             <div id="adminRecentMessages" class="admin-feed-list"></div>
@@ -475,6 +528,8 @@ Mewtwo|legendary|1000000"></textarea>
                             <div class="panel-head"><div><h3>Latest Cases</h3><p>Recently created cases and upcoming launches.</p></div></div>
                             <div id="adminCases" class="admin-feed-list"></div>
                         </section>
+                    </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -522,6 +577,11 @@ Mewtwo|legendary|1000000"></textarea>
             const badge = document.getElementById('ownerBadge');
             badge.textContent = 'Owner Access Active';
             badge.className = 'badge badge-legendary';
+            const sidebarBadge = document.getElementById('ownerSidebarBadge');
+            if (sidebarBadge) {
+                sidebarBadge.textContent = 'Owner Access Active';
+                sidebarBadge.className = 'badge badge-legendary';
+            }
 
             const activeRain = adminSummary?.activeRain;
             const activeCard = document.getElementById('activeRainCard');
@@ -652,6 +712,35 @@ Mewtwo|legendary|1000000"></textarea>
                     <div class="admin-feed-body">${siteCase.launch_at ? `Launches ${new Date(siteCase.launch_at).toLocaleString()}` : 'Live now'} · ${siteCase.category ? KatsuCases.escapeHtml(siteCase.category) : 'uncategorized'} · opened ${KatsuCases.formatNumber(siteCase.times_opened || 0)}x</div>
                 </div>
             `).join('') : '<div class="admin-feed-empty">No cases created yet.</div>';
+
+            const progression = adminSummary?.progression || {};
+            document.getElementById('adminProgressionOverview').innerHTML = `
+                <article class="profile-summary-card"><span>Claims Today</span><strong>${KatsuCases.formatNumber(progression.dailyClaimsToday || 0)}</strong><p>Daily reward claims recorded since reset.</p></article>
+                <article class="profile-summary-card"><span>Average Level</span><strong>${KatsuCases.escapeHtml(String(progression.avgLevel || 1))}</strong><p>Average hunter level across all registered users.</p></article>
+                <article class="profile-summary-card"><span>Top Streak</span><strong>${KatsuCases.formatNumber(progression.topDailyStreak || 0)}</strong><p>Highest active daily-claim streak currently stored.</p></article>
+            `;
+
+            const topFavoritedCases = Array.isArray(progression.topFavoritedCases) ? progression.topFavoritedCases : [];
+            document.getElementById('adminTopFavoritedCases').innerHTML = topFavoritedCases.length ? topFavoritedCases.map((siteCase) => `
+                <div class="admin-feed-item">
+                    <div class="admin-feed-head">
+                        <strong>${KatsuCases.escapeHtml(siteCase.name)}</strong>
+                        <span>${KatsuCases.formatNumber(siteCase.count || 0)} pins</span>
+                    </div>
+                    <div class="admin-feed-body">${KatsuCases.escapeHtml(siteCase.category || 'uncategorized')} case</div>
+                </div>
+            `).join('') : '<div class="admin-feed-empty">No favorites yet.</div>';
+
+            const topXpUser = progression.topXpUser;
+            document.getElementById('adminTopXpUser').innerHTML = topXpUser ? `
+                <div class="admin-feed-item">
+                    <div class="admin-feed-head">
+                        <strong>${KatsuCases.escapeHtml(topXpUser.username)}</strong>
+                        <span>Level ${KatsuCases.formatNumber(topXpUser.level || 1)}</span>
+                    </div>
+                    <div class="admin-feed-body">${KatsuCases.formatNumber(topXpUser.total_xp || 0)} XP total</div>
+                </div>
+            ` : '<div class="admin-feed-empty">No XP data yet.</div>';
         }
 
 
@@ -797,7 +886,7 @@ async function loadGistBackupStatus() {
                 return;
             }
             container.innerHTML = users.map((user) => `
-                <button class="trade-select-item ${selectedAdminUser?.id === user.id ? 'selected' : ''}" type="button" onclick='selectAdminUser(${user.id}, ${JSON.stringify(String(user.username))}, ${JSON.stringify(String(user.email || ""))}, ${Number(user.balance || 0)}, ${JSON.stringify(String(user.display_name || user.username))}, ${JSON.stringify(String(user.custom_role || ""))}, ${JSON.stringify(String(user.region || ""))})'>
+                <button class="trade-select-item ${selectedAdminUser?.id === user.id ? 'selected' : ''}" type="button" onclick='selectAdminUser(${user.id}, ${JSON.stringify(String(user.username))}, ${JSON.stringify(String(user.email || ""))}, ${Number(user.balance || 0)}, ${JSON.stringify(String(user.display_name || user.username))}, ${JSON.stringify(String(user.custom_role || ""))}, ${JSON.stringify(String(user.region || ""))}, ${JSON.stringify(user.pity || {})} )'>
                     <i class="ri-user-line"></i>
                     <div style="text-align:left;">
                         <div style="font-weight:600; font-size:13px;">${KatsuCases.escapeHtml(user.display_name || user.username)}</div>
@@ -807,10 +896,27 @@ async function loadGistBackupStatus() {
             `).join('');
         }
 
-        function selectAdminUser(id, username, email, balance, displayName = '', customRole = '', region = '') {
-            selectedAdminUser = { id, username, email, balance, display_name: displayName || username, custom_role: customRole || '', region: region || '' };
-            document.getElementById('selectedAdminUser').className = 'admin-rain-card';
-            document.getElementById('selectedAdminUser').innerHTML = `<div><strong>${KatsuCases.escapeHtml(displayName || username)}</strong><div class="rain-meta">@${KatsuCases.escapeHtml(username)} · ${KatsuCases.escapeHtml(email || '')}${region ? ' · ' + KatsuCases.escapeHtml(region) : ''} · Current balance ${KatsuCases.formatCurrency(balance || 0)}</div></div>`;
+        function selectAdminUser(id, username, email, balance, displayName = '', customRole = '', region = '', pity = {}) {
+            selectedAdminUser = { id, username, email, balance, display_name: displayName || username, custom_role: customRole || '', region: region || '', pity: pity || {} };
+            const pityMeters = Array.isArray(pity?.meters) ? pity.meters : [];
+            document.getElementById('selectedAdminUser').className = 'admin-rain-card admin-user-card';
+            document.getElementById('selectedAdminUser').innerHTML = `
+                <div class="admin-user-card-head">
+                    <div>
+                        <strong>${KatsuCases.escapeHtml(displayName || username)}</strong>
+                        <div class="rain-meta">@${KatsuCases.escapeHtml(username)} · ${KatsuCases.escapeHtml(email || '')}${region ? ' · ' + KatsuCases.escapeHtml(region) : ''} · Current balance ${KatsuCases.formatCurrency(balance || 0)}</div>
+                    </div>
+                    <span class="badge badge-rare">Player</span>
+                </div>
+                <div class="admin-user-pity-grid">
+                    ${pityMeters.length ? pityMeters.map((meter) => `
+                        <div class="admin-user-pity-chip ${meter.status}">
+                            <div class="admin-user-pity-chip-top"><span>${KatsuCases.escapeHtml(meter.label)}</span><strong>${meter.status === 'primed' ? 'READY' : meter.remaining}</strong></div>
+                            <div class="admin-user-pity-chip-bar"><span style="width:${Math.max(8, meter.progress_percent || 0)}%"></span></div>
+                        </div>
+                    `).join('') : '<div class="admin-feed-empty">No pity data yet.</div>'}
+                </div>
+            `;
             document.getElementById('adminCustomRole').value = customRole || '';
             document.getElementById('adminRegion').value = region || '';
             searchAdminUsers(document.getElementById('adminUserSearch').value || '');
@@ -948,7 +1054,7 @@ document.getElementById('adminUserSearch').addEventListener('input', KatsuCases.
                         reason: document.getElementById('balanceReason').value
                     });
                     selectedAdminUser.balance = result.user.balance;
-                    selectAdminUser(selectedAdminUser.id, selectedAdminUser.username, selectedAdminUser.email, selectedAdminUser.balance);
+                    selectAdminUser(selectedAdminUser.id, selectedAdminUser.username, selectedAdminUser.email, selectedAdminUser.balance, selectedAdminUser.display_name, selectedAdminUser.custom_role, selectedAdminUser.region, selectedAdminUser.pity);
                     document.getElementById('balanceAmount').value = '';
                     document.getElementById('balanceReason').value = '';
                     KatsuCases.showToast('Balance updated', 'success');
@@ -966,12 +1072,16 @@ document.getElementById('adminUserSearch').addEventListener('input', KatsuCases.
                     return;
                 }
                 try {
-                    await KatsuCases.api.post(`/api/admin/users/${selectedAdminUser.id}/roles`, {
+                    const result = await KatsuCases.api.post(`/api/admin/users/${selectedAdminUser.id}/roles`, {
                         badge: document.getElementById('adminBadgeKey').value,
                         custom_role: document.getElementById('adminCustomRole').value,
                         region: document.getElementById('adminRegion').value,
                         free_rolls: Number(document.getElementById('adminFreeRolls').value || 0)
                     });
+                    selectedAdminUser.custom_role = result.user?.custom_role || document.getElementById('adminCustomRole').value || '';
+                    selectedAdminUser.region = result.user?.region || document.getElementById('adminRegion').value || '';
+                    if (result.user?.pity) selectedAdminUser.pity = result.user.pity;
+                    selectAdminUser(selectedAdminUser.id, selectedAdminUser.username, selectedAdminUser.email, selectedAdminUser.balance, selectedAdminUser.display_name, selectedAdminUser.custom_role, selectedAdminUser.region, selectedAdminUser.pity);
                     KatsuCases.showToast('User role data updated', 'success');
                     document.getElementById('adminBadgeKey').value = '';
                     document.getElementById('adminFreeRolls').value = 0;
@@ -1032,6 +1142,21 @@ document.getElementById('adminUserSearch').addEventListener('input', KatsuCases.
                     await KatsuCases.loadCommunityChat(true);
                 } catch (error) {
                     KatsuCases.showToast(error.message || 'Failed to create claim link', 'error');
+                }
+            });
+
+            document.getElementById('resetUserPityBtn').addEventListener('click', async () => {
+                if (!selectedAdminUser) {
+                    KatsuCases.showToast('Select a user first', 'error');
+                    return;
+                }
+                try {
+                    const result = await KatsuCases.api.post(`/api/admin/users/${selectedAdminUser.id}/pity/reset`, {});
+                    selectedAdminUser.pity = result.user?.pity || {};
+                    selectAdminUser(selectedAdminUser.id, selectedAdminUser.username, selectedAdminUser.email, selectedAdminUser.balance, selectedAdminUser.display_name, selectedAdminUser.custom_role, selectedAdminUser.region, selectedAdminUser.pity);
+                    KatsuCases.showToast('Selected user pity reset', 'success');
+                } catch (error) {
+                    KatsuCases.showToast(error.message || 'Failed to reset pity', 'error');
                 }
             });
 

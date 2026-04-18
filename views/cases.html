@@ -76,7 +76,24 @@
                 <div class="container">
                     <div class="section-title">
                         <h1>Case Collection</h1>
-                        <p>Browse our selection of premium cases and test your luck for rare Pokémon</p>
+                        <p>Browse our selection of premium cases, claim daily rewards, track missions, and favorite the crates you want to quick-open.</p>
+                    </div>
+                    <div class="cases-ops-grid">
+                        <section class="cases-ops-card" id="dailyOpsPanel">
+                            <div class="cases-ops-empty">Loading daily ops…</div>
+                        </section>
+                        <section class="cases-ops-card">
+                            <div class="cases-ops-head">
+                                <div>
+                                    <div class="cases-ops-eyebrow">Quick Access</div>
+                                    <h3>Favorite Cases</h3>
+                                </div>
+                                <span class="cases-ops-chip"><i class="ri-star-smile-line"></i> Quick-open rail</span>
+                            </div>
+                            <div id="favoriteCasesRail" class="favorite-cases-rail">
+                                <div class="cases-ops-empty">Favorite cases to pin them here.</div>
+                            </div>
+                        </section>
                     </div>
                 </div>
             </section>
@@ -135,6 +152,7 @@
                         <div id="caseOddsSummary">
                             <!-- Rarity odds populated by JS -->
                         </div>
+                        <div id="casePitySummary" class="case-pity-panel"></div>
                     </div>
                     <div>
                         <h4 style="margin-bottom: 16px;">Case Contents</h4>
@@ -176,6 +194,7 @@
                         <div class="opening-title-eyebrow">Case Opening</div>
                         <h3 class="opening-title">Opening <span id="openingCaseName">Case</span></h3>
                         <div class="opening-subtitle" id="openingCaseMeta">Provably fair replay-ready roll</div>
+                        <div class="opening-pity-spotlight" id="openingPitySpotlight"></div>
                     </div>
                     <div class="opening-topbar-actions">
                         <div class="opening-top-pill">
@@ -228,6 +247,8 @@
         let casesData = [];
         let currentOpeningAmount = 1;
         let openingBusy = false;
+        let currentCasePity = null;
+        let progressionData = null;
         function rarityWeightLabel(item) {
             if (!item?.odds) return 'Unknown';
             if (item.odds >= 1000000000) return 'Ultra chase';
@@ -235,6 +256,214 @@
             if (item.odds >= 100000) return 'Chase';
             if (item.odds >= 1000) return 'Rare';
             return 'Popular';
+        }
+
+
+        function syncLocalProgressionUser(payload) {
+            if (!payload || !KatsuCases.state.user) return;
+            if (payload.balance !== undefined) KatsuCases.state.user.balance = Number(payload.balance || 0);
+            if (payload.free_rolls !== undefined) KatsuCases.state.user.free_rolls = Number(payload.free_rolls || 0);
+            if (payload.progression) KatsuCases.state.user.progression = payload.progression;
+            if (Array.isArray(payload.favorite_case_ids)) KatsuCases.state.user.favorite_case_ids = payload.favorite_case_ids;
+            document.querySelectorAll('.balance-value').forEach((el) => {
+                el.textContent = KatsuCases.formatCurrency(KatsuCases.state.user.balance || 0);
+            });
+        }
+
+        function renderFavoriteRail(sourceCases = casesData) {
+            const rail = document.getElementById('favoriteCasesRail');
+            if (!rail) return;
+            if (!KatsuCases.state.user) {
+                rail.innerHTML = '<div class="cases-ops-empty">Sign in to pin your favorite cases here.</div>';
+                return;
+            }
+            const favoriteIds = new Set((KatsuCases.state.user.favorite_case_ids || []).map((value) => Number(value)));
+            const favorites = (Array.isArray(sourceCases) ? sourceCases : []).filter((entry) => favoriteIds.has(Number(entry.id))).slice(0, 8);
+            if (!favorites.length) {
+                rail.innerHTML = '<div class="cases-ops-empty">Star a case card to build your quick-open rail.</div>';
+                return;
+            }
+            rail.innerHTML = favorites.map((item) => `
+                <button class="favorite-case-pill" type="button" onclick="openCaseModal(${item.id})">
+                    <span class="favorite-case-pill-icon"><i class="ri-treasure-map-line"></i></span>
+                    <span class="favorite-case-pill-copy">
+                        <strong>${KatsuCases.escapeHtml(item.name)}</strong>
+                        <span>${KatsuCases.formatCurrency(item.price)}</span>
+                    </span>
+                </button>
+            `).join('');
+        }
+
+        function renderDailyOpsPanel() {
+            const panel = document.getElementById('dailyOpsPanel');
+            if (!panel) return;
+            if (!KatsuCases.state.user) {
+                panel.innerHTML = `
+                    <div class="cases-ops-head">
+                        <div>
+                            <div class="cases-ops-eyebrow">Daily Ops</div>
+                            <h3>Rewards & Missions</h3>
+                        </div>
+                        <a class="cases-ops-chip" href="/signin"><i class="ri-login-box-line"></i> Sign in</a>
+                    </div>
+                    <div class="cases-ops-empty">Sign in to claim daily streak rewards, earn free rolls, and track your mission board.</div>
+                `;
+                return;
+            }
+            if (!progressionData) {
+                panel.innerHTML = '<div class="cases-ops-empty">Loading daily ops…</div>';
+                return;
+            }
+            const prog = progressionData.progression || {};
+            const daily = progressionData.daily || {};
+            const missions = Array.isArray(progressionData.missions) ? progressionData.missions : [];
+            panel.innerHTML = `
+                <div class="cases-ops-head">
+                    <div>
+                        <div class="cases-ops-eyebrow">Daily Ops</div>
+                        <h3>Level ${Number(prog.level || 1)} Hunter Track</h3>
+                    </div>
+                    <span class="cases-ops-chip"><i class="ri-sword-line"></i> ${Number(prog.total_xp || 0)} XP</span>
+                </div>
+                <div class="cases-xp-bar"><span style="width:${Math.max(5, Number(prog.progress_percent || 0))}%"></span></div>
+                <div class="cases-xp-copy">${Number(prog.xp_into_level || 0)} / ${Number(prog.xp_for_next_level || 0)} XP to the next level</div>
+                <div class="cases-daily-claim-row">
+                    <div>
+                        <strong>Daily streak ${Number(daily.streak || 0)}</strong>
+                        <div class="cases-daily-claim-sub">Next claim: ${KatsuCases.formatCurrency(daily.reward_preview?.credits || 0)}${daily.reward_preview?.free_rolls ? ` + ${daily.reward_preview.free_rolls} free roll` : ''}</div>
+                    </div>
+                    <button class="btn ${daily.claimed_today ? 'btn-secondary' : 'btn-primary'}" type="button" ${daily.claimed_today ? 'disabled' : ''} onclick="claimDailyReward()">${daily.claimed_today ? 'Claimed Today' : 'Claim Daily'}</button>
+                </div>
+                <div class="cases-mission-list">
+                    ${missions.map((mission) => `
+                        <article class="cases-mission-card ${mission.status}">
+                            <div class="cases-mission-icon"><i class="${KatsuCases.escapeHtml(mission.icon || 'ri-checkbox-circle-line')}"></i></div>
+                            <div class="cases-mission-main">
+                                <div class="cases-mission-title-row">
+                                    <strong>${KatsuCases.escapeHtml(mission.label)}</strong>
+                                    <span>${mission.progress}/${mission.goal}</span>
+                                </div>
+                                <div class="cases-xp-bar compact"><span style="width:${Math.max(5, Number(mission.progress_percent || 0))}%"></span></div>
+                                <div class="cases-mission-sub">${KatsuCases.escapeHtml(mission.description || '')} · Reward ${KatsuCases.formatCurrency(mission.rewards?.credits || 0)}${mission.rewards?.free_rolls ? ` + ${mission.rewards.free_rolls} free roll` : ''}</div>
+                            </div>
+                            <button class="btn ${mission.status === 'ready' ? 'btn-primary' : 'btn-ghost'}" type="button" ${mission.status === 'ready' ? '' : 'disabled'} onclick="claimMissionReward('${KatsuCases.escapeHtml(mission.key)}')">${mission.status === 'claimed' ? 'Claimed' : mission.status === 'ready' ? 'Claim' : 'Track'}</button>
+                        </article>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async function loadProgression() {
+            if (!KatsuCases.state.user) {
+                progressionData = null;
+                renderDailyOpsPanel();
+                renderFavoriteRail(casesData);
+                return;
+            }
+            try {
+                const data = await KatsuCases.api.get('/api/progression');
+                progressionData = data;
+                syncLocalProgressionUser(data);
+                renderDailyOpsPanel();
+                renderFavoriteRail(casesData);
+            } catch (error) {
+                console.error('Failed to load progression:', error);
+                renderDailyOpsPanel();
+            }
+        }
+
+        async function claimDailyReward() {
+            try {
+                const data = await KatsuCases.api.post('/api/daily/claim', {});
+                progressionData = data;
+                syncLocalProgressionUser(data);
+                renderDailyOpsPanel();
+                KatsuCases.showToast('Daily reward claimed', 'success');
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to claim daily reward', 'error');
+            }
+        }
+
+        async function claimMissionReward(key) {
+            try {
+                const data = await KatsuCases.api.post(`/api/missions/${encodeURIComponent(key)}/claim`, {});
+                progressionData = data;
+                syncLocalProgressionUser(data);
+                renderDailyOpsPanel();
+                KatsuCases.showToast('Mission reward claimed', 'success');
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to claim mission reward', 'error');
+            }
+        }
+
+        async function toggleFavoriteCase(caseId, event) {
+            event?.preventDefault?.();
+            event?.stopPropagation?.();
+            if (!KatsuCases.state.user) {
+                KatsuCases.showToast('Sign in to favorite cases', 'error');
+                return;
+            }
+            try {
+                const data = await KatsuCases.api.post(`/api/cases/${caseId}/favorite`, {});
+                KatsuCases.state.user.favorite_case_ids = Array.isArray(data.favorite_case_ids) ? data.favorite_case_ids : [];
+                casesData = casesData.map((entry) => Number(entry.id) === Number(caseId) ? { ...entry, is_favorite: Boolean(data.favorited) } : entry);
+                renderCases(casesData);
+                renderFavoriteRail(casesData);
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to update favorites', 'error');
+            }
+        }
+
+
+        function renderPitySummary(pityData) {
+            const container = document.getElementById('casePitySummary');
+            if (!container) return;
+            if (!pityData || !pityData.enabled || !Array.isArray(pityData.meters) || !pityData.meters.length) {
+                container.innerHTML = '';
+                container.classList.remove('active');
+                return;
+            }
+            container.classList.add('active');
+            const spotlight = pityData.spotlight;
+            container.innerHTML = `
+                <div class="case-pity-head">
+                    <div>
+                        <div class="case-pity-eyebrow">Pity System</div>
+                        <strong>Bad luck protection is active for this case.</strong>
+                    </div>
+                    ${spotlight ? `<span class="case-pity-chip ${spotlight.status}">${KatsuCases.escapeHtml(spotlight.label)} · ${spotlight.status === 'primed' ? 'ready now' : `${spotlight.remaining} to go`}</span>` : ''}
+                </div>
+                <div class="case-pity-meter-list">
+                    ${pityData.meters.map((meter) => `
+                        <div class="case-pity-meter ${meter.status}">
+                            <div class="case-pity-meter-row">
+                                <span>${KatsuCases.escapeHtml(meter.label)}</span>
+                                <strong>${meter.status === 'primed' ? 'READY' : `${meter.progress}/${meter.threshold - 1}`}</strong>
+                            </div>
+                            <div class="case-pity-meter-bar"><span style="width:${Math.max(6, meter.progress_percent || 0)}%"></span></div>
+                            <div class="case-pity-meter-sub">${meter.status === 'primed' ? `${KatsuCases.escapeHtml(meter.label)} guaranteed on the next miss-protected roll.` : `${meter.remaining} more roll${meter.remaining === 1 ? '' : 's'} until guaranteed ${KatsuCases.escapeHtml(meter.label)}.`}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function updateOpeningPitySpotlight(pityData) {
+            const el = document.getElementById('openingPitySpotlight');
+            if (!el) return;
+            const spotlight = pityData?.spotlight;
+            if (!spotlight) {
+                el.innerHTML = '';
+                el.classList.remove('active');
+                return;
+            }
+            el.classList.add('active');
+            el.innerHTML = `
+                <span class="opening-pity-badge ${spotlight.status}">
+                    <i class="ri-vip-diamond-line"></i>
+                    <span>${KatsuCases.escapeHtml(spotlight.label)} ${spotlight.status === 'primed' ? 'ready' : `in ${spotlight.remaining}`}</span>
+                </span>
+            `;
         }
 
         function renderOpeningPresentation() {
@@ -248,7 +477,8 @@
 
             if (metaEl && currentCase) {
                 const chaseCount = currentCaseContents.filter((item) => Number(item.odds || 0) >= 1000000).length;
-                metaEl.textContent = `${KatsuCases.formatCurrency(currentCase.price)} · ${currentCaseContents.length} drops · ${chaseCount} chase pulls`;
+                const spotlight = currentCasePity?.spotlight;
+                metaEl.textContent = `${KatsuCases.formatCurrency(currentCase.price)} · ${currentCaseContents.length} drops · ${chaseCount} chase pulls${spotlight ? ` · ${spotlight.label} ${spotlight.status === 'primed' ? 'ready' : `in ${spotlight.remaining}`}` : ''}`;
             }
 
             if (countEl) {
@@ -256,8 +486,11 @@
             }
 
             if (hintEl) {
-                hintEl.textContent = 'Preparing the reel and loading the drop pool…';
+                hintEl.textContent = currentCasePity?.spotlight?.status === 'primed'
+                    ? `${currentCasePity.spotlight.label} pity is primed for this opening.`
+                    : 'Preparing the reel and loading the drop pool…';
             }
+            updateOpeningPitySpotlight(currentCasePity);
 
             if (dropRail) {
                 dropRail.innerHTML = bestDrops.map((item) => `
@@ -281,6 +514,7 @@
                 const data = await KatsuCases.api.get(url);
                 casesData = data.cases || [];
                 renderCases(casesData);
+                renderFavoriteRail(casesData);
             } catch (error) {
                 console.error('Failed to load cases:', error);
                 KatsuCases.showToast('Failed to load cases', 'error');
@@ -302,15 +536,19 @@
             }
             
             grid.innerHTML = cases.map(c => `
-                <div class="card case-card case-card-previewable" style="--case-color: ${c.image_color}">
+                <div class="card case-card case-card-previewable ${c.is_favorite ? 'is-favorite' : ''}" style="--case-color: ${c.image_color}">
                     <div class="case-card-image">
+                        <button class="case-favorite-btn ${c.is_favorite ? 'active' : ''}" type="button" onclick="toggleFavoriteCase(${c.id}, event)"><i class="${c.is_favorite ? 'ri-star-fill' : 'ri-star-line'}"></i></button>
                         <div class="case-card-glow"></div>
                         <div class="case-card-icon">
                             <i class="ri-treasure-map-line"></i>
                         </div>
                     </div>
                     <div class="card-body">
-                        <h3 class="card-title">${c.name}</h3>
+                        <div class="case-card-headline-row">
+                            <h3 class="card-title">${c.name}</h3>
+                            ${c.is_favorite ? '<span class="case-favorite-tag">Pinned</span>' : ''}
+                        </div>
                         <p class="card-description">${c.description || `${c.total_items} items inside`}</p>
                         ${c.rarity_breakdown ? `
                             <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
@@ -363,6 +601,8 @@
                 
                 document.getElementById('modalCaseName').textContent = currentCase.name;
                 document.getElementById('modalBalance').textContent = KatsuCases.formatCurrency(KatsuCases.state.user.balance);
+                currentCasePity = data.pity || null;
+                renderPitySummary(currentCasePity);
                 
                 // Render odds summary
                 const oddsSummary = document.getElementById('caseOddsSummary');
@@ -404,7 +644,9 @@
             if (!currentCase || openingBusy) return;
 
             currentOpeningAmount = Math.max(1, Math.min(3, Number(amount) || 1));
-            const totalCost = currentCase.price * currentOpeningAmount;
+            const availableFreeRolls = Math.max(0, Number(KatsuCases.state.user?.free_rolls || 0));
+            const effectivePaidRolls = Math.max(0, currentOpeningAmount - availableFreeRolls);
+            const totalCost = currentCase.price * effectivePaidRolls;
             const openingMeta = document.getElementById('openingCaseMeta');
             if (openingMeta && currentCase) {
                 openingMeta.textContent = `${KatsuCases.formatCurrency(totalCost)} total · ${currentOpeningAmount} roll${currentOpeningAmount > 1 ? 's' : ''} · ${currentCaseContents.length} drops`;
@@ -432,9 +674,16 @@
                 const data = await KatsuCases.api.post(`/api/cases/${currentCase.id}/open`, { amount: currentOpeningAmount });
 
                 KatsuCases.state.user.balance = data.newBalance;
+                KatsuCases.state.user.free_rolls = Number(data.freeRolls || 0);
+                if (data.userPity) KatsuCases.state.user.pity = data.userPity;
+                if (data.progression) KatsuCases.state.user.progression = data.progression;
+                currentCasePity = data.pity || currentCasePity;
+                renderPitySummary(currentCasePity);
+                renderOpeningPresentation();
                 document.querySelectorAll('.balance-value').forEach((el) => {
                     el.textContent = KatsuCases.formatCurrency(data.newBalance);
                 });
+                await loadProgression();
 
                 await window.KatsuAnimations.animateCaseOpen(
                     data.results,
@@ -456,6 +705,7 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
             await KatsuCases.checkAuth();
+            await loadProgression();
             
             // Check URL params for category
             const urlParams = new URLSearchParams(window.location.search);

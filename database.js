@@ -98,6 +98,20 @@ function loadState() {
         if (user.free_rolls === undefined) { user.free_rolls = 0; mutated = true; }
         if (user.hide_inventory === undefined) { user.hide_inventory = 0; mutated = true; }
         if (!Array.isArray(user.username_history)) { user.username_history = []; mutated = true; }
+        if (user.pity_rare_streak === undefined) { user.pity_rare_streak = 0; mutated = true; }
+        if (user.pity_epic_streak === undefined) { user.pity_epic_streak = 0; mutated = true; }
+        if (user.pity_legendary_streak === undefined) { user.pity_legendary_streak = 0; mutated = true; }
+        if (user.pity_mythical_streak === undefined) { user.pity_mythical_streak = 0; mutated = true; }
+        if (user.total_xp === undefined) { user.total_xp = 0; mutated = true; }
+        if (user.daily_claim_streak === undefined) { user.daily_claim_streak = 0; mutated = true; }
+        if (user.daily_last_claim_at === undefined) { user.daily_last_claim_at = null; mutated = true; }
+        if (user.daily_cycle_day === undefined) { user.daily_cycle_day = null; mutated = true; }
+        if (user.daily_case_opens === undefined) { user.daily_case_opens = 0; mutated = true; }
+        if (user.daily_chat_messages === undefined) { user.daily_chat_messages = 0; mutated = true; }
+        if (user.daily_trades_sent === undefined) { user.daily_trades_sent = 0; mutated = true; }
+        if (!user.daily_mission_claims || typeof user.daily_mission_claims !== 'object' || Array.isArray(user.daily_mission_claims)) { user.daily_mission_claims = {}; mutated = true; }
+        if (!Array.isArray(user.favorite_case_ids)) { user.favorite_case_ids = []; mutated = true; }
+        if (user.daily_claim_total === undefined) { user.daily_claim_total = 0; mutated = true; }
     }
     for (const caseRow of table('cases')) {
         if (caseRow.launch_at === undefined) { caseRow.launch_at = null; mutated = true; }
@@ -332,6 +346,8 @@ function selectOne(normalized, params) {
         }
         case 'SELECT * FROM users WHERE email = ?':
             return clone(table('users').find((row) => row.email === params[0]));
+        case 'SELECT * FROM users WHERE id = ?':
+            return clone(table('users').find((row) => Number(row.id) === Number(params[0])));
         case 'SELECT id, username FROM users WHERE id = ?': {
             const user = table('users').find((row) => Number(row.id) === Number(params[0]));
             return user ? { id: user.id, username: user.username } : undefined;
@@ -340,6 +356,17 @@ function selectOne(normalized, params) {
             return mapUserPublic(table('users').find((row) => Number(row.id) === Number(params[0])));
         case 'SELECT id, username, email, balance, total_spent, total_earned, cases_opened, created_at FROM users WHERE id = ?':
             return mapUserPublicWithCreatedAt(table('users').find((row) => Number(row.id) === Number(params[0])));
+        case 'SELECT id, username, email, balance, total_spent, total_earned, cases_opened, created_at, pity_rare_streak, pity_epic_streak, pity_legendary_streak, pity_mythical_streak FROM users WHERE id = ?': {
+            const user = table('users').find((row) => Number(row.id) === Number(params[0]));
+            if (!user) return undefined;
+            return {
+                ...mapUserPublicWithCreatedAt(user),
+                pity_rare_streak: Number(user.pity_rare_streak || 0),
+                pity_epic_streak: Number(user.pity_epic_streak || 0),
+                pity_legendary_streak: Number(user.pity_legendary_streak || 0),
+                pity_mythical_streak: Number(user.pity_mythical_streak || 0)
+            };
+        }
         case 'SELECT * FROM inventory WHERE id = ? AND user_id = ?':
             return clone(table('inventory').find((row) => Number(row.id) === Number(params[0]) && Number(row.user_id) === Number(params[1])));
         case 'SELECT * FROM marketplace WHERE id = ? AND status = ?':
@@ -430,6 +457,20 @@ function runStatement(normalized, params) {
                 free_rolls: 0,
                 hide_inventory: 0,
                 username_history: [],
+                pity_rare_streak: 0,
+                pity_epic_streak: 0,
+                pity_legendary_streak: 0,
+                pity_mythical_streak: 0,
+                total_xp: 0,
+                daily_claim_streak: 0,
+                daily_last_claim_at: null,
+                daily_cycle_day: null,
+                daily_case_opens: 0,
+                daily_chat_messages: 0,
+                daily_trades_sent: 0,
+                daily_mission_claims: {},
+                favorite_case_ids: [],
+                daily_claim_total: 0,
                 created_at: nowIso()
             });
             return { lastInsertRowid: row.id, changes: 1 };
