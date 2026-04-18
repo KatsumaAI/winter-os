@@ -59,6 +59,28 @@ let activeRollTimeline = null;
 let activeRevealOverlay = null;
 let currentOpenAnotherHandler = null;
 
+function setOpeningShellBadge(text) {
+    const badge = document.getElementById('openingShellBadge');
+    if (badge) badge.textContent = text;
+}
+
+function clearOpeningImpactClasses() {
+    const openingModal = document.getElementById('opening-modal');
+    if (!openingModal) return;
+    openingModal.classList.remove('rolling', 'impact-epic', 'impact-legendary', 'impact-mythical');
+}
+
+function triggerOpeningImpact(rarity) {
+    const openingModal = document.getElementById('opening-modal');
+    if (!openingModal) return;
+    clearOpeningImpactClasses();
+    if (!rarity || !['epic', 'legendary', 'mythical'].includes(rarity)) return;
+    openingModal.classList.add(`impact-${rarity}`);
+    window.setTimeout(() => {
+        openingModal.classList.remove(`impact-${rarity}`);
+    }, 1400);
+}
+
 function setAnimationPool(items) {
     caseAnimationPool = Array.isArray(items) ? items.slice() : [];
 }
@@ -134,6 +156,10 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
     rollerElement.style.opacity = '1';
     revealElement.classList.remove('active');
     revealElement.innerHTML = '';
+    clearOpeningImpactClasses();
+    const openingModal = document.getElementById('opening-modal');
+    if (openingModal) openingModal.classList.add('rolling');
+    setOpeningShellBadge('Live Roll Chamber');
     setOpeningHint('Shuffling the reel and lining up the final result…');
 
     const winner = results[results.length - 1];
@@ -166,6 +192,11 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
 
     timeline.add({
         targets: track,
+        scale: [0.985, 1],
+        duration: 320,
+        easing: 'easeOutQuad'
+    }).add({
+        targets: track,
         translateX: [0, targetX],
         duration: 6200,
         easing: 'cubicBezier(.08,.8,.14,1)',
@@ -185,6 +216,7 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
             if (closest) closest.classList.add('highlight');
         },
         begin() {
+            setOpeningShellBadge('Roll In Progress');
             setOpeningHint('Rolling through the drop pool… watch the center marker.');
         }
     });
@@ -196,7 +228,9 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
     }
 
     const winnerSlot = slots[winnerIndex];
+    setOpeningShellBadge('Target Locked');
     setOpeningHint('Locking the result and revealing the pull…');
+    triggerOpeningImpact(winner?.rarity);
     if (winnerSlot) {
         winnerSlot.classList.add('winner');
         await playAnimation({
@@ -206,6 +240,12 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
             duration: 540,
             easing: 'easeOutElastic(1, .55)'
         }).finished;
+        await playAnimation({
+            targets: track,
+            translateX: [targetX - 10, targetX],
+            duration: 260,
+            easing: 'easeOutExpo'
+        }).finished;
     }
 
     if (winner && ['epic', 'legendary', 'mythical'].includes(winner.rarity)) {
@@ -214,19 +254,25 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
         await new Promise((resolve) => setTimeout(resolve, 240));
         revealElement.classList.add('active');
         updateRevealContent(revealElement, results);
+        setOpeningShellBadge('Result Confirmed');
         setOpeningHint('Result locked. Replay-ready and added to inventory.');
     }
 
+    if (openingModal) openingModal.classList.remove('rolling');
     return winner;
 }
 
 async function showSpecialReveal(result, revealElement, rollerTrack) {
     clearActiveOverlay();
+    const rarityTitles = { epic: 'Rare Hit', legendary: 'Jackpot Pull', mythical: 'Ultra Jackpot' };
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed; inset:0; background:radial-gradient(circle at center, rgba(30,41,59,0.55), rgba(0,0,0,0.9)); z-index:1999; opacity:0;';
+    overlay.style.cssText = 'position:fixed; inset:0; display:grid; place-items:center; background:radial-gradient(circle at center, rgba(21,32,62,0.55), rgba(0,0,0,0.92)); z-index:1999; opacity:0; overflow:hidden;';
+    overlay.innerHTML = `<div style="padding:18px 26px;border-radius:999px;border:1px solid rgba(255,255,255,0.14);background:rgba(8,12,22,0.72);color:#f8fafc;font-weight:800;letter-spacing:.16em;text-transform:uppercase;box-shadow:0 20px 50px rgba(0,0,0,.35);">${rarityTitles[result.rarity] || 'Special Pull'}</div>`;
     activeRevealOverlay = overlay;
     document.body.appendChild(overlay);
 
+    setOpeningShellBadge(rarityTitles[result.rarity] || 'Special Pull');
+    setOpeningHint('Charging the reveal chamber…');
     await playAnimation({ targets: overlay, opacity: [0, 1], duration: 400, easing: 'easeOutQuad' }).finished;
     rollerTrack.style.opacity = '0';
 
@@ -249,6 +295,7 @@ async function showSpecialReveal(result, revealElement, rollerTrack) {
     }
 
     await new Promise((resolve) => setTimeout(resolve, 760));
+    setOpeningShellBadge('Result Confirmed');
     setOpeningHint('Result locked. Replay-ready and added to inventory.');
     await playAnimation({ targets: overlay, opacity: 0, duration: 420 }).finished;
     clearActiveOverlay();
@@ -284,8 +331,14 @@ function updateRevealContent(revealElement, results) {
     const rarityClass = `badge-${finalResult.rarity}`;
     const totalValue = Number(results.reduce((sum, item) => sum + Number(item.estimated_value || 0), 0).toFixed(2));
     const isMulti = results.length > 1;
+    const headingMap = { common: 'Drop Secured', uncommon: 'Clean Pull', rare: 'Rare Pull', epic: 'Featured Hit', legendary: 'Jackpot Pull', mythical: 'Mythical Hit' };
+    const amount = Math.max(1, Number(window.currentOpeningAmount || results.length || 1));
 
     revealElement.innerHTML = `
+        <div class="reward-heading-wrap">
+            <div class="reward-heading-kicker">${headingMap[finalResult.rarity] || 'Drop Secured'}</div>
+            <div class="reward-heading-sub">Provably fair result locked to inventory-ready output.</div>
+        </div>
         <div class="reward-sprite ${finalResult.rarity === 'legendary' || finalResult.rarity === 'mythical' ? finalResult.rarity : ''}">
             ${KatsuCases.buildSpriteImg({ pokemonName: finalResult.pokemon_name, isShiny: finalResult.is_shiny, spriteUrl: finalResult.sprite_url, alt: finalResult.pokemon_name })}
         </div>
@@ -322,7 +375,7 @@ function updateRevealContent(revealElement, results) {
                 <i class="ri-check-line"></i> Done
             </button>
             <button class="btn btn-primary" onclick="window.KatsuAnimations.openAnotherCase()">
-                <i class="ri-add-line"></i> Open Another
+                <i class="ri-add-line"></i> Open Another x${amount}
             </button>
         </div>
     `;
@@ -330,6 +383,7 @@ function updateRevealContent(revealElement, results) {
 
 function skipCurrentRoll() {
     if (activeRollTimeline && typeof activeRollTimeline.seek === 'function') {
+        setOpeningShellBadge('Fast Forward');
         setOpeningHint('Skipping to the final result…');
         activeRollTimeline.seek(activeRollTimeline.duration || 0);
     }

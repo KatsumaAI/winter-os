@@ -212,19 +212,28 @@
             </div>
             <div class="modal-footer case-preview-modal-footer">
                 <div class="opening-balance case-preview-balance-row">
-                    <span>Balance</span>
-                    <strong id="modalBalance">$0.00</strong>
+                    <div>
+                        <span>Balance</span>
+                        <strong id="modalBalance">$0.00</strong>
+                    </div>
+                    <div class="case-preview-balance-sub" id="casePreviewBalanceSub">Free rolls auto-apply before balance is used.</div>
                 </div>
                 <div class="case-preview-open-actions">
-                    <button class="btn btn-secondary" onclick="openCase(1)">
-                        <i class="ri-gamepad-line"></i> Open 1
-                    </button>
-                    <button class="btn btn-secondary" onclick="openCase(2)">
-                        <i class="ri-stack-line"></i> Open 2
-                    </button>
-                    <button class="btn btn-primary" onclick="openCase(3)">
-                        <i class="ri-stack-fill"></i> Open 3
-                    </button>
+                    <div class="case-preview-open-bar">
+                        <div class="case-preview-open-bar-copy">
+                            <div class="case-preview-open-kicker">Spin Loadout</div>
+                            <div class="case-preview-open-sub" id="casePreviewOpenSub">Choose how many spins to fire.</div>
+                        </div>
+                        <div class="case-preview-roll-select" id="casePreviewRollSelect" role="tablist" aria-label="Spin amount">
+                            <button class="case-preview-roll-btn active" type="button" data-open-select="1" onclick="selectOpeningAmount(1)">1</button>
+                            <button class="case-preview-roll-btn" type="button" data-open-select="2" onclick="selectOpeningAmount(2)">2</button>
+                            <button class="case-preview-roll-btn" type="button" data-open-select="3" onclick="selectOpeningAmount(3)">3</button>
+                        </div>
+                        <button class="btn btn-primary case-preview-launch-btn" id="casePreviewLaunchBtn" type="button" onclick="openSelectedCase()">
+                            <i class="ri-play-circle-line"></i>
+                            <span>Open 1 Spin</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -262,10 +271,22 @@
                     <div class="opening-stage-copy">
                         <div class="opening-stage-kicker">Live Roll</div>
                         <div class="opening-stage-hint" id="openingStageHint">Preparing the reel and loading the drop pool…</div>
+                        <div class="opening-mode-rail">
+                            <div class="opening-mode-segment" id="openingModeSegment" role="tablist" aria-label="Opening amount">
+                                <button class="opening-mode-btn active" type="button" data-opening-mode="1" onclick="selectOpeningAmount(1)">1 Spin</button>
+                                <button class="opening-mode-btn" type="button" data-opening-mode="2" onclick="selectOpeningAmount(2)">2 Spins</button>
+                                <button class="opening-mode-btn" type="button" data-opening-mode="3" onclick="selectOpeningAmount(3)">3 Spins</button>
+                            </div>
+                            <div class="opening-live-stats" id="openingLiveStats"></div>
+                        </div>
                     </div>
-                    <div class="opening-roller-shell">
+                    <div class="opening-roller-shell" id="openingRollShell">
                         <div class="opening-shell-glow glow-left"></div>
                         <div class="opening-shell-glow glow-right"></div>
+                        <div class="opening-shell-beam beam-left"></div>
+                        <div class="opening-shell-beam beam-right"></div>
+                        <div class="opening-shell-scanline"></div>
+                        <div class="opening-shell-badge" id="openingShellBadge">Live Roll Chamber</div>
                         <div class="roller-fade left"></div>
                         <div class="roller-fade right"></div>
                         <div class="roller-center-line"></div>
@@ -579,8 +600,12 @@
             if (metaEl && currentCase) {
                 const chaseCount = currentCaseContents.filter((item) => Number(item.odds || 0) >= 1000000).length;
                 const spotlight = currentCasePity?.spotlight;
-                metaEl.textContent = `${KatsuCases.formatCurrency(currentCase.price)} · ${currentCaseContents.length} drops · ${chaseCount} chase pulls${spotlight ? ` · ${spotlight.label} ${spotlight.status === 'primed' ? 'ready' : `in ${spotlight.remaining}`}` : ''}`;
+                const freeRolls = Math.max(0, Number(KatsuCases.state.user?.free_rolls || 0));
+                const paidRolls = Math.max(0, currentOpeningAmount - freeRolls);
+                const totalCost = Number((Number(currentCase.price || 0) * paidRolls).toFixed(2));
+                metaEl.textContent = `${currentOpeningAmount} spin${currentOpeningAmount > 1 ? 's' : ''} · ${totalCost > 0 ? KatsuCases.formatCurrency(totalCost) : 'Free'} · ${currentCaseContents.length} drops · ${chaseCount} chase pulls${spotlight ? ` · ${spotlight.label} ${spotlight.status === 'primed' ? 'ready' : `in ${spotlight.remaining}`}` : ''}`;
             }
+            updateOpeningControls();
 
             if (countEl) {
                 countEl.textContent = `${currentCaseContents.length} possible drops`;
@@ -693,6 +718,65 @@
             window.KatsuAnimations.animateGridStagger('.cases-grid .case-card');
         }
         
+        function updateOpeningControls() {
+            const selectedAmount = Math.max(1, Math.min(3, Number(currentOpeningAmount) || 1));
+            currentOpeningAmount = selectedAmount;
+            window.currentOpeningAmount = selectedAmount;
+            const freeRolls = Math.max(0, Number(KatsuCases.state.user?.free_rolls || 0));
+            const paidRolls = Math.max(0, selectedAmount - freeRolls);
+            const totalCost = Number((Number(currentCase?.price || 0) * paidRolls).toFixed(2));
+            const costLabel = KatsuCases.formatCurrency(totalCost);
+            const usesFreeRolls = Math.min(freeRolls, selectedAmount);
+
+            document.querySelectorAll('[data-open-select]').forEach((button) => {
+                button.classList.toggle('active', Number(button.dataset.openSelect) === selectedAmount);
+            });
+            document.querySelectorAll('[data-opening-mode]').forEach((button) => {
+                button.classList.toggle('active', Number(button.dataset.openingMode) === selectedAmount);
+            });
+
+            const launchBtn = document.getElementById('casePreviewLaunchBtn');
+            if (launchBtn) {
+                const label = totalCost > 0 ? `Open ${selectedAmount} Spin${selectedAmount > 1 ? 's' : ''} · ${costLabel}` : `Open ${selectedAmount} Spin${selectedAmount > 1 ? 's' : ''} · Free`;
+                const span = launchBtn.querySelector('span');
+                if (span) span.textContent = label;
+                launchBtn.disabled = !!currentCase && !!KatsuCases.state.user && Number(KatsuCases.state.user.balance || 0) < totalCost;
+            }
+
+            const openSub = document.getElementById('casePreviewOpenSub');
+            if (openSub) {
+                openSub.textContent = usesFreeRolls > 0
+                    ? `${usesFreeRolls} free roll${usesFreeRolls > 1 ? 's' : ''} will apply first. ${paidRolls > 0 ? `${costLabel} from balance.` : 'No balance charge.'}`
+                    : `${costLabel} from balance for ${selectedAmount} spin${selectedAmount > 1 ? 's' : ''}.`;
+            }
+
+            const balanceSub = document.getElementById('casePreviewBalanceSub');
+            if (balanceSub) {
+                balanceSub.textContent = freeRolls > 0
+                    ? `${freeRolls} free roll${freeRolls > 1 ? 's' : ''} available right now.`
+                    : 'No free rolls queued. Balance will be used for every spin.';
+            }
+
+            const liveStats = document.getElementById('openingLiveStats');
+            if (liveStats && currentCase) {
+                const chaseCount = currentCaseContents.filter((item) => Number(item.odds || 0) >= 1000000).length;
+                liveStats.innerHTML = `
+                    <span class="opening-live-chip"><i class="ri-stack-line"></i>${selectedAmount} spin${selectedAmount > 1 ? 's' : ''}</span>
+                    <span class="opening-live-chip"><i class="ri-coins-line"></i>${totalCost > 0 ? costLabel : 'Free'}</span>
+                    <span class="opening-live-chip"><i class="ri-vip-diamond-line"></i>${chaseCount} chase</span>
+                `;
+            }
+        }
+
+        function selectOpeningAmount(amount = 1) {
+            currentOpeningAmount = Math.max(1, Math.min(3, Number(amount) || 1));
+            updateOpeningControls();
+        }
+
+        function openSelectedCase() {
+            return openCase(currentOpeningAmount || 1);
+        }
+
         async function openCaseModal(caseId) {
             if (!KatsuCases.state.user) {
                 KatsuCases.showToast('Please sign in to open cases', 'error');
@@ -776,6 +860,7 @@
                 renderCaseContentsPreview(allItems);
                 setCaseContentsSort('value');
                 renderPitySummary(currentCasePity);
+                updateOpeningControls();
 
                 const modalHeroIcon = document.getElementById('casePreviewHeroIcon');
                 if (modalHeroIcon) {
@@ -794,6 +879,7 @@
             if (!currentCase || openingBusy) return;
 
             currentOpeningAmount = Math.max(1, Math.min(3, Number(amount) || 1));
+            updateOpeningControls();
             const availableFreeRolls = Math.max(0, Number(KatsuCases.state.user?.free_rolls || 0));
             const effectivePaidRolls = Math.max(0, currentOpeningAmount - availableFreeRolls);
             const totalCost = currentCase.price * effectivePaidRolls;
@@ -849,6 +935,7 @@
                 KatsuCases.closeModal('opening-modal');
             } finally {
                 openingBusy = false;
+                updateOpeningControls();
             }
         }
         
@@ -856,6 +943,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await KatsuCases.checkAuth();
             await loadProgression();
+            updateOpeningControls();
             
             // Check URL params for category
             const urlParams = new URLSearchParams(window.location.search);
