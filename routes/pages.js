@@ -2,6 +2,14 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const { isAuthenticated, isGuest, optionalAuth } = require('../middleware/auth');
+const { hasAdminAccess } = require('../utils/roles');
+
+function requireAdminPage(req, res, next) {
+    if (!req.user || !hasAdminAccess(req.user)) {
+        return res.redirect('/?admin=1');
+    }
+    next();
+}
 
 // Serve static HTML pages
 router.get('/', optionalAuth, (req, res) => {
@@ -28,6 +36,10 @@ router.get('/casevs', optionalAuth, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'views', 'casevs.html'));
 });
 
+router.get('/claims/:code', optionalAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'views', 'claim.html'));
+});
+
 router.get('/inventory', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'views', 'inventory.html'));
 });
@@ -37,9 +49,27 @@ router.get('/profile', isAuthenticated, (req, res) => {
 });
 
 
-router.get('/admin', isAuthenticated, (req, res) => {
+router.get('/admin', isAuthenticated, requireAdminPage, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'views', 'admin.html'));
 });
+
+
+router.get('/settings', isAuthenticated, (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'views', 'settings.html'));
+});
+
+router.get('/support', isAuthenticated, (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'views', 'support.html'));
+});
+
+router.get('/admin/support', isAuthenticated, requireAdminPage, (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'views', 'admin-support.html'));
+});
+
+router.get('/admin/rollbacks', isAuthenticated, requireAdminPage, (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'views', 'admin-rollbacks.html'));
+});
+
 
 router.get('/guide', optionalAuth, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'views', 'guide.html'));
@@ -56,5 +86,19 @@ router.get('/signin', isGuest, (req, res) => {
 router.get('/signup', isGuest, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'views', 'signup.html'));
 });
+
+
+router.get('/forgot-password', isGuest, (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'views', 'forgot-password.html'));
+});
+
+router.get('/reset-password', isGuest, (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'views', 'reset-password.html'));
+});
+
+router.get('/admin/security', isAuthenticated, requireAdminPage, (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'views', 'admin-security.html'));
+});
+
 
 module.exports = router;

@@ -135,8 +135,12 @@
                                 <section class="profile-section" style="margin-top:24px;">
                                     <h4 class="profile-section-title" id="accountSectionTitle">Account</h4>
                                     <div id="accountSectionContent">
-                                        <div id="profileAccountNote" class="profile-account-note">Manage your identity, visibility, and public-facing details here.</div>
-                                        <form id="profileSettingsForm" class="profile-settings-form" style="display:none;">
+                                        <div id="profileAccountNote" class="profile-account-note">Account settings moved to a dedicated page so your profile stays focused on collection value, progression, and visible history.</div>
+                                        <div id="selfSettingsInfo" class="profile-account-note" style="display:none;">
+                                            Open the settings page to change your username, display name, avatar, privacy controls, and offline roll toggle.
+                                            <div style="margin-top:14px;"><a href="/settings" class="btn btn-primary"><i class="ri-settings-3-line"></i> Open Settings</a></div>
+                                        </div>
+                                        <form id="profileSettingsForm" class="profile-settings-form" style="display:none; visibility:hidden; height:0; overflow:hidden; margin:0; padding:0;">
                                             <input id="settingsUsername" class="input" placeholder="Username">
                                             <input id="settingsDisplayName" class="input" placeholder="Display name">
                                             <input id="settingsAvatarUrl" class="input" placeholder="Profile picture URL">
@@ -358,7 +362,8 @@
                     document.getElementById('tradeWithProfileBtn').href = `/trading?user=${encodeURIComponent(user.username)}`;
                 }
 
-                document.getElementById('profileSettingsForm').style.display = isSelf ? 'grid' : 'none';
+                document.getElementById('profileSettingsForm').style.display = 'none';
+                document.getElementById('selfSettingsInfo').style.display = isSelf ? 'block' : 'none';
                 document.getElementById('publicProfileInfo').style.display = isSelf ? 'none' : 'block';
                 document.getElementById('accountSectionTitle').textContent = isSelf ? 'Account Settings' : 'Public Profile';
                 document.getElementById('transactionsTitle').textContent = isSelf ? 'Collection Overview' : 'Player Snapshot';

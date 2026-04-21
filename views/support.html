@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support - KatsuCases</title>
+    <meta name="description" content="Open and track support tickets for your KatsuCases account.">
+    <meta name="theme-color" content="#0a0e1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+    <style>
+        .ticket-shell{display:grid;grid-template-columns:340px minmax(0,1fr);gap:22px;align-items:start}
+        .ticket-pane,.ticket-thread{background:rgba(11,15,24,.92);border:1px solid rgba(255,255,255,.08);border-radius:24px;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+        .ticket-pane{padding:18px;position:sticky;top:106px}
+        .ticket-thread{padding:22px;min-height:720px;display:grid;grid-template-rows:auto auto 1fr auto;gap:16px}
+        .ticket-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+        .ticket-summary-card{padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
+        .ticket-summary-card strong{display:block;font-size:22px;font-family:Outfit,Inter,sans-serif}
+        .ticket-list{display:grid;gap:12px;margin-top:14px;max-height:540px;overflow:auto;padding-right:4px}
+        .ticket-row{width:100%;text-align:left;padding:14px 15px;border-radius:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);transition:.2s ease;cursor:pointer}
+        .ticket-row:hover,.ticket-row.active{border-color:rgba(99,102,241,.48);background:rgba(99,102,241,.08);transform:translateY(-1px)}
+        .ticket-row-top,.ticket-thread-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+        .ticket-sub{font-size:12px;color:var(--text-secondary);margin-top:6px;display:flex;flex-wrap:wrap;gap:8px}
+        .ticket-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);font-size:12px;color:var(--text-secondary)}
+        .ticket-pill.status-open,.ticket-pill.status-customer-replied{color:#93c5fd;border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.12)}
+        .ticket-pill.status-awaiting-user,.ticket-pill.status-pending{color:#fcd34d;border-color:rgba(251,191,36,.34);background:rgba(251,191,36,.12)}
+        .ticket-pill.status-resolved,.ticket-pill.status-closed{color:#86efac;border-color:rgba(34,197,94,.34);background:rgba(34,197,94,.12)}
+        .ticket-thread-meta{display:flex;flex-wrap:wrap;gap:10px}
+        .ticket-thread-log{display:grid;gap:12px;overflow:auto;padding-right:4px}
+        .ticket-bubble{padding:14px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03)}
+        .ticket-bubble.support{background:rgba(81,118,255,.12);border-color:rgba(81,118,255,.28)}
+        .ticket-bubble-note{background:rgba(251,191,36,.09);border-color:rgba(251,191,36,.24)}
+        .ticket-bubble-head{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--text-secondary);margin-bottom:8px}
+        .ticket-bubble-body{white-space:pre-wrap;line-height:1.65}
+        .ticket-compose{display:grid;gap:10px}
+        .ticket-empty-state{display:grid;place-items:center;text-align:center;min-height:320px;border:1px dashed rgba(255,255,255,.08);border-radius:22px;color:var(--text-secondary)}
+        .ticket-empty-state i{font-size:42px;color:var(--accent-primary);margin-bottom:10px}
+        .ticket-toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+        @media (max-width: 1060px){.ticket-shell{grid-template-columns:1fr}.ticket-pane{position:static}.ticket-thread{min-height:0}.ticket-summary-grid{grid-template-columns:1fr 1fr 1fr}}
+        @media (max-width: 720px){.ticket-summary-grid{grid-template-columns:1fr}.ticket-thread-head,.ticket-row-top,.ticket-toolbar{flex-direction:column;align-items:flex-start}}
+    </style>
+</head>
+<body>
+<div class="page-wrapper">
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo"><span>KatsuCases</span></a>
+        <nav class="nav">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/cases" class="nav-link">Cases</a>
+            <a href="/settings" class="nav-link">Settings</a>
+            <a href="/inventory" class="nav-link">Inventory</a>
+        </nav>
+        <div class="header-actions">
+            <div class="balance-display"><i class="ri-wallet-3-line"></i><span class="balance-value">$0.00</span></div>
+            <div class="user-area" style="display:flex; align-items:center; gap:16px;">
+                <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
+                <div class="user-menu">
+                    <div class="user-menu-trigger"><div class="user-avatar"><span class="user-initial">U</span></div><span class="user-name">Username</span></div>
+                    <div class="user-menu-dropdown">
+                        <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                        <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                        <a href="/settings" class="user-menu-item"><i class="ri-settings-3-line"></i> Settings</a>
+                        <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+            <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><i class="ri-menu-line"></i></button>
+        </div>
+    </div>
+</header>
+<main class="main-content">
+    <section class="section-sm">
+        <div class="container" style="max-width:1320px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; margin-bottom:24px;">
+                <div>
+                    <div class="section-kicker">SUPPORT DESK</div>
+                    <h1 style="margin:8px 0 10px;">Live account tickets</h1>
+                    <p style="color:var(--text-secondary); max-width:760px;">Open a real support ticket for rollback requests, item issues, balance problems, claim disputes, marketplace problems, and account recovery. This desk refreshes live so replies land more like a real game support inbox.</p>
+                </div>
+                <a href="/settings" class="btn btn-secondary"><i class="ri-settings-3-line"></i> Account Settings</a>
+            </div>
+            <div class="ticket-shell">
+                <aside class="ticket-pane">
+                    <div class="ticket-toolbar">
+                        <div>
+                            <h3 style="margin:0;">Create ticket</h3>
+                            <p style="margin:6px 0 0; color:var(--text-secondary); font-size:13px;">Clear details help support move faster.</p>
+                        </div>
+                        <button id="ticketRefreshBtn" class="btn btn-ghost btn-sm" type="button"><i class="ri-refresh-line"></i> Refresh</button>
+                    </div>
+                    <form id="supportForm" style="display:grid; gap:14px; margin-top:16px;">
+                        <input id="ticketSubject" class="input" maxlength="120" placeholder="Subject">
+                        <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px;">
+                            <select id="ticketCategory" class="input"><option value="account">Account</option><option value="rollback">Rollback</option><option value="marketplace">Marketplace</option><option value="trade">Trade</option><option value="case">Case opening</option><option value="claim">Claim / reward link</option><option value="other">Other</option></select>
+                            <select id="ticketPriority" class="input"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select>
+                        </div>
+                        <textarea id="ticketMessage" class="textarea" rows="8" maxlength="2000" placeholder="Describe what happened, the time it happened, and what support should check."></textarea>
+                        <button class="btn btn-primary" type="submit"><i class="ri-send-plane-2-line"></i> Open Ticket</button>
+                    </form>
+                    <div class="ticket-summary-grid" style="margin-top:18px;">
+                        <div class="ticket-summary-card"><span class="ticket-pill"><i class="ri-coupon-2-line"></i> Total</span><strong id="ticketCountTotal">0</strong></div>
+                        <div class="ticket-summary-card"><span class="ticket-pill status-open"><i class="ri-loader-4-line"></i> Open</span><strong id="ticketCountOpen">0</strong></div>
+                        <div class="ticket-summary-card"><span class="ticket-pill status-resolved"><i class="ri-check-line"></i> Resolved</span><strong id="ticketCountResolved">0</strong></div>
+                    </div>
+                    <div class="ticket-list" id="supportTicketsList"></div>
+                </aside>
+                <section class="ticket-thread">
+                    <div class="ticket-thread-head">
+                        <div>
+                            <div class="section-kicker">ACTIVE THREAD</div>
+                            <h2 id="activeTicketTitle" style="margin:8px 0 0;">No ticket selected</h2>
+                        </div>
+                        <div class="ticket-thread-meta" id="activeTicketMeta"></div>
+                    </div>
+                    <div class="profile-account-note" id="activeTicketHint">Pick a ticket from the left to read the full thread and send replies.</div>
+                    <div class="ticket-thread-log" id="supportThread"></div>
+                    <form id="supportReplyForm" class="ticket-compose" style="display:none;">
+                        <textarea id="supportReplyMessage" class="textarea" rows="4" maxlength="2000" placeholder="Reply to this ticket"></textarea>
+                        <div><button class="btn btn-secondary" type="submit"><i class="ri-reply-line"></i> Send Reply</button></div>
+                    </form>
+                </section>
+            </div>
+        </div>
+    </section>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+<script src="/js/main.js"></script>
+<script>
+let supportTickets = [];
+let activeTicketId = null;
+let supportPoll = null;
+function ticketStatusClass(status = '') { return ['status', String(status || '').toLowerCase()].join(' '); }
+function ticketRowMarkup(ticket) {
+    const replies = Array.isArray(ticket.replies) ? ticket.replies : [];
+    const lastReply = replies[replies.length - 1];
+    return `<button class="ticket-row ${Number(ticket.id) === Number(activeTicketId) ? 'active' : ''}" type="button" data-ticket-id="${Number(ticket.id)}"><div class="ticket-row-top"><strong>#${Number(ticket.id)} · ${KatsuCases.escapeHtml(ticket.subject || 'Untitled ticket')}</strong><span class="ticket-pill ${ticketStatusClass(ticket.status)}">${KatsuCases.escapeHtml(ticket.status || 'open')}</span></div><div class="ticket-sub"><span>${KatsuCases.escapeHtml(ticket.category || 'general')}</span><span>${KatsuCases.escapeHtml(ticket.priority || 'normal')} priority</span><span>${new Date(ticket.updated_at || ticket.created_at).toLocaleString()}</span></div><div style="margin-top:10px; color:var(--text-secondary); font-size:13px; line-height:1.5;">${KatsuCases.escapeHtml((lastReply && lastReply.message) || '').slice(0, 120) || 'No replies yet.'}</div></button>`;
+}
+function ticketBubbleMarkup(reply) {
+    const roleClass = reply.internal ? 'ticket-bubble-note' : (reply.author_type === 'admin' ? 'support' : '');
+    return `<article class="ticket-bubble ${roleClass}"><div class="ticket-bubble-head"><strong style="color:var(--text-primary);">${KatsuCases.escapeHtml(reply.display_name || reply.username || reply.author_type || 'Support')}${reply.internal ? ' · internal' : ''}</strong><span>${new Date(reply.created_at).toLocaleString()}</span></div><div class="ticket-bubble-body">${KatsuCases.escapeHtml(reply.message || '')}</div></article>`;
+}
+function renderTicketSummary() {
+    const total = supportTickets.length;
+    const openish = supportTickets.filter((ticket) => ['open', 'pending', 'customer-replied'].includes(String(ticket.status || '').toLowerCase())).length;
+    const resolved = supportTickets.filter((ticket) => ['resolved', 'closed'].includes(String(ticket.status || '').toLowerCase())).length;
+    document.getElementById('ticketCountTotal').textContent = String(total);
+    document.getElementById('ticketCountOpen').textContent = String(openish);
+    document.getElementById('ticketCountResolved').textContent = String(resolved);
+}
+function renderTicketList() {
+    const wrap = document.getElementById('supportTicketsList');
+    if (!supportTickets.length) {
+        wrap.innerHTML = '<div class="ticket-empty-state"><div><i class="ri-customer-service-2-line"></i><div>No tickets yet</div><div style="margin-top:8px;">Open one from the form above.</div></div></div>';
+        return;
+    }
+    wrap.innerHTML = supportTickets.map(ticketRowMarkup).join('');
+    wrap.querySelectorAll('[data-ticket-id]').forEach((button) => button.addEventListener('click', () => { activeTicketId = Number(button.dataset.ticketId); renderSupportDesk(); }));
+}
+function renderActiveTicket() {
+    const ticket = supportTickets.find((entry) => Number(entry.id) === Number(activeTicketId)) || supportTickets[0] || null;
+    if (ticket && activeTicketId === null) activeTicketId = Number(ticket.id);
+    const title = document.getElementById('activeTicketTitle');
+    const meta = document.getElementById('activeTicketMeta');
+    const log = document.getElementById('supportThread');
+    const hint = document.getElementById('activeTicketHint');
+    const form = document.getElementById('supportReplyForm');
+    if (!ticket) {
+        title.textContent = 'No ticket selected';
+        meta.innerHTML = '';
+        hint.style.display = 'block';
+        log.innerHTML = '<div class="ticket-empty-state"><div><i class="ri-mail-open-line"></i><div>No active support thread yet.</div></div></div>';
+        form.style.display = 'none';
+        return;
+    }
+    title.textContent = `#${Number(ticket.id)} · ${ticket.subject || 'Untitled ticket'}`;
+    meta.innerHTML = `<span class="ticket-pill ${ticketStatusClass(ticket.status)}">${KatsuCases.escapeHtml(ticket.status || 'open')}</span><span class="ticket-pill"><i class="ri-price-tag-3-line"></i>${KatsuCases.escapeHtml(ticket.category || 'general')}</span><span class="ticket-pill"><i class="ri-alarm-warning-line"></i>${KatsuCases.escapeHtml(ticket.priority || 'normal')}</span><span class="ticket-pill"><i class="ri-time-line"></i>${new Date(ticket.updated_at || ticket.created_at).toLocaleString()}</span>`;
+    hint.style.display = 'none';
+    log.innerHTML = (Array.isArray(ticket.replies) ? ticket.replies : []).map(ticketBubbleMarkup).join('') || '<div class="ticket-empty-state"><div><i class="ri-chat-1-line"></i><div>No replies yet.</div></div></div>';
+    log.scrollTop = log.scrollHeight;
+    form.style.display = 'grid';
+    form.dataset.ticketId = String(ticket.id);
+}
+function renderSupportDesk() { renderTicketSummary(); renderTicketList(); renderActiveTicket(); }
+async function loadTickets(silent = false) {
+    try {
+        const data = await KatsuCases.api.get('/api/support/tickets');
+        supportTickets = Array.isArray(data.tickets) ? data.tickets : [];
+        if (!supportTickets.some((ticket) => Number(ticket.id) === Number(activeTicketId))) activeTicketId = supportTickets.length ? Number(supportTickets[0].id) : null;
+        renderSupportDesk();
+    } catch (error) { if (!silent) KatsuCases.showToast(error.message || 'Failed to load support tickets', 'error'); }
+}
+function startSupportPolling() { if (!supportPoll) supportPoll = window.setInterval(() => loadTickets(true), 6000); }
+document.getElementById('supportForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = event.target.querySelector('button[type="submit"]');
+    KatsuCases.setLoading(true, button);
+    try {
+        const result = await KatsuCases.api.post('/api/support/tickets', { subject: document.getElementById('ticketSubject').value, category: document.getElementById('ticketCategory').value, priority: document.getElementById('ticketPriority').value, message: document.getElementById('ticketMessage').value });
+        event.target.reset();
+        activeTicketId = Number(result.ticket?.id || 0) || activeTicketId;
+        KatsuCases.showToast('Support ticket opened', 'success');
+        await loadTickets(true);
+    } catch (error) { KatsuCases.showToast(error.message || 'Failed to create support ticket', 'error'); }
+    finally { KatsuCases.setLoading(false, button); }
+});
+document.getElementById('supportReplyForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const ticketId = event.target.dataset.ticketId;
+    const messageField = document.getElementById('supportReplyMessage');
+    const message = messageField.value.trim();
+    if (!ticketId || !message) return;
+    const button = event.target.querySelector('button[type="submit"]');
+    KatsuCases.setLoading(true, button);
+    try {
+        await KatsuCases.api.post(`/api/support/tickets/${ticketId}/reply`, { message });
+        messageField.value = '';
+        KatsuCases.showToast('Reply sent', 'success');
+        await loadTickets(true);
+    } catch (error) { KatsuCases.showToast(error.message || 'Failed to reply to ticket', 'error'); }
+    finally { KatsuCases.setLoading(false, button); }
+});
+document.getElementById('ticketRefreshBtn').addEventListener('click', () => loadTickets());
+document.addEventListener('DOMContentLoaded', async () => { KatsuCases.init(); await loadTickets(); startSupportPolling(); });
+</script>
+</body>
+</html>

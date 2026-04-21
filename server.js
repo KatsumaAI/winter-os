@@ -1,3 +1,5 @@
+const { loadEnv } = require('./utils/env');
+loadEnv();
 const express = require('express');
 const session = require('express-session');
 const JsonFileSessionStore = require('./session-store');
@@ -12,6 +14,7 @@ if (!fs.existsSync(dataDir)) {
 
 // Initialize database
 const { initializeDatabase } = require('./database');
+const { startAutoBackupScheduler } = require('./utils/gitBackup');
 initializeDatabase();
 
 const app = express();
@@ -62,5 +65,9 @@ app.use((req, res) => {
 
 // Start server
 app.listen(PORT, () => {
+    const scheduler = startAutoBackupScheduler();
     console.log(`KatsuCases server running on http://localhost:${PORT}`);
+    if (scheduler.enabled) {
+        console.log(`Gist autosave enabled every ${scheduler.intervalMinutes} minute(s)`);
+    }
 });

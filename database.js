@@ -3,6 +3,7 @@ const path = require('path');
 
 const dataDir = path.join(__dirname, 'data');
 const dataPath = path.join(dataDir, 'katsucases.json');
+const builtInCatalogPath = path.join(dataDir, 'builtin-case-catalog.json');
 
 const DEFAULT_TABLES = {
     users: [],
@@ -14,10 +15,12 @@ const DEFAULT_TABLES = {
     trades: [],
     trade_items: [],
     transactions: [],
-    notifications: []
+    notifications: [],
+    support_tickets: [],
+    account_snapshots: []
 };
 
-const ID_TABLES = ['users', 'inventory', 'cases', 'case_contents', 'openings', 'marketplace', 'trades', 'trade_items', 'transactions', 'notifications'];
+const ID_TABLES = ['users', 'inventory', 'cases', 'case_contents', 'openings', 'marketplace', 'trades', 'trade_items', 'transactions', 'notifications', 'support_tickets', 'account_snapshots'];
 const RARITY_SORT_ORDER = {
     mythical: 1,
     legendary: 2,
@@ -33,6 +36,35 @@ function nowIso() {
 
 function clone(value) {
     return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+}
+
+function safeReadJson(filePath, fallback) {
+    try {
+        return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    } catch (error) {
+        return fallback;
+    }
+}
+
+function normalizeCatalogKey(value = '') {
+    return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function pushSeedRow(tableName, row) {
+    const record = { ...row };
+    if (ID_TABLES.includes(tableName)) {
+        record.id = state.meta.nextIds[tableName]++;
+    }
+    table(tableName).push(record);
+    return record;
+}
+
+function loadBuiltInCaseCatalog() {
+    const raw = safeReadJson(builtInCatalogPath, { cases: [], case_contents: [] });
+    return {
+        cases: Array.isArray(raw?.cases) ? raw.cases : [],
+        case_contents: Array.isArray(raw?.case_contents) ? raw.case_contents : []
+    };
 }
 
 function ensureDataDir() {
@@ -112,12 +144,31 @@ function loadState() {
         if (!user.daily_mission_claims || typeof user.daily_mission_claims !== 'object' || Array.isArray(user.daily_mission_claims)) { user.daily_mission_claims = {}; mutated = true; }
         if (!Array.isArray(user.favorite_case_ids)) { user.favorite_case_ids = []; mutated = true; }
         if (user.daily_claim_total === undefined) { user.daily_claim_total = 0; mutated = true; }
+        if (user.offline_roll_enabled === undefined) { user.offline_roll_enabled = 0; mutated = true; }
+        if (user.offline_roll_last_at === undefined) { user.offline_roll_last_at = null; mutated = true; }
+        if (user.offline_roll_total_earned === undefined) { user.offline_roll_total_earned = 0; mutated = true; }
+        if (user.account_status === undefined) { user.account_status = 'active'; mutated = true; }
+        if (user.theme_mode === undefined) { user.theme_mode = 'dark'; mutated = true; }
+        if (!Array.isArray(user.known_ips)) { user.known_ips = []; mutated = true; }
+        if (user.signup_ip === undefined) { user.signup_ip = null; mutated = true; }
+        if (user.last_login_ip === undefined) { user.last_login_ip = null; mutated = true; }
+        if (user.last_login_at === undefined) { user.last_login_at = null; mutated = true; }
+        if (user.site_role === undefined) { user.site_role = 'player'; mutated = true; }
+        if (user.force_logout_at === undefined) { user.force_logout_at = null; mutated = true; }
+        if (user.force_logout_reason === undefined) { user.force_logout_reason = ''; mutated = true; }
+        if (user.suspected_ban_evasion === undefined) { user.suspected_ban_evasion = 0; mutated = true; }
+        if (user.suspected_ban_evasion_at === undefined) { user.suspected_ban_evasion_at = null; mutated = true; }
+        if (user.suspected_ban_evasion_ip === undefined) { user.suspected_ban_evasion_ip = null; mutated = true; }
     }
     for (const caseRow of table('cases')) {
         if (caseRow.launch_at === undefined) { caseRow.launch_at = null; mutated = true; }
         if (caseRow.is_hidden === undefined) { caseRow.is_hidden = 0; mutated = true; }
+        if (caseRow.rotation_name === undefined) { caseRow.rotation_name = ''; mutated = true; }
+        if (caseRow.rotation_starts_at === undefined) { caseRow.rotation_starts_at = null; mutated = true; }
+        if (caseRow.rotation_ends_at === undefined) { caseRow.rotation_ends_at = null; mutated = true; }
     }
     if (mutated) saveState();
+    ensureBuiltInCaseCatalog();
 }
 
 function saveState() {
@@ -187,6 +238,7 @@ function mapUserPublic(user) {
         region: user.region || '',
         badges: Array.isArray(user.badges) ? user.badges : [],
         custom_role: user.custom_role || '',
+        site_role: user.site_role || 'player',
         free_rolls: Number(user.free_rolls || 0)
     };
 }
@@ -471,6 +523,16 @@ function runStatement(normalized, params) {
                 daily_mission_claims: {},
                 favorite_case_ids: [],
                 daily_claim_total: 0,
+                offline_roll_enabled: 0,
+                offline_roll_last_at: null,
+                offline_roll_total_earned: 0,
+                account_status: 'active',
+                theme_mode: 'dark',
+                known_ips: [],
+                signup_ip: null,
+                last_login_ip: null,
+                last_login_at: null,
+                site_role: 'player',
                 created_at: nowIso()
             });
             return { lastInsertRowid: row.id, changes: 1 };
@@ -643,6 +705,80 @@ const db = {
 
 
 
+
+function ensureBuiltInCaseCatalog() {
+    const catalog = loadBuiltInCaseCatalog();
+    if (!catalog.cases.length) return;
+
+    const contentsByCaseKey = new Map();
+    for (const entry of catalog.case_contents) {
+        const key = normalizeCatalogKey(entry.case_name || '');
+        if (!key) continue;
+        if (!contentsByCaseKey.has(key)) contentsByCaseKey.set(key, []);
+        contentsByCaseKey.get(key).push(entry);
+    }
+
+    const existingCases = new Map(table('cases').map((row) => [normalizeCatalogKey(row.name), row]));
+    let mutated = false;
+
+    for (const template of catalog.cases) {
+        const key = normalizeCatalogKey(template.name || '');
+        if (!key) continue;
+        let caseRow = existingCases.get(key);
+        if (!caseRow) {
+            caseRow = pushSeedRow('cases', {
+                name: template.name,
+                description: template.description || '',
+                price: Number(template.price || 0),
+                image_color: template.image_color || '#4f46e5',
+                is_featured: Number(template.is_featured || 0),
+                category: template.category || 'standard',
+                min_odds: Number(template.min_odds || 1),
+                max_odds: Number(template.max_odds || 1000),
+                times_opened: Number(template.times_opened || 0),
+                created_at: template.created_at || nowIso(),
+                launch_at: template.launch_at || null,
+                is_hidden: Number(template.is_hidden || 0),
+                rotation_name: template.rotation_name || '',
+                rotation_starts_at: template.rotation_starts_at || null,
+                rotation_ends_at: template.rotation_ends_at || null
+            });
+            existingCases.set(key, caseRow);
+            mutated = true;
+        } else {
+            if (caseRow.rotation_name === undefined) { caseRow.rotation_name = template.rotation_name || ''; mutated = true; }
+            if (caseRow.rotation_starts_at === undefined) { caseRow.rotation_starts_at = template.rotation_starts_at || null; mutated = true; }
+            if (caseRow.rotation_ends_at === undefined) { caseRow.rotation_ends_at = template.rotation_ends_at || null; mutated = true; }
+            if (caseRow.launch_at === undefined) { caseRow.launch_at = template.launch_at || null; mutated = true; }
+            if (caseRow.is_hidden === undefined) { caseRow.is_hidden = Number(template.is_hidden || 0); mutated = true; }
+        }
+
+        const currentContents = table('case_contents').filter((row) => Number(row.case_id) === Number(caseRow.id));
+        const existingContentKeys = new Set(currentContents.map((row) => normalizeCatalogKey(`${row.pokemon_name}::${row.pokemon_form || ''}::${row.rarity || ''}::${row.odds || ''}`)));
+        const targetContents = contentsByCaseKey.get(key) || [];
+        for (const content of targetContents) {
+            const contentKey = normalizeCatalogKey(`${content.pokemon_name}::${content.pokemon_form || ''}::${content.rarity || ''}::${content.odds || ''}`);
+            if (!contentKey || existingContentKeys.has(contentKey)) continue;
+            existingContentKeys.add(contentKey);
+            pushSeedRow('case_contents', {
+                case_id: Number(caseRow.id),
+                pokemon_id: Number(content.pokemon_id || 0) || null,
+                pokemon_name: content.pokemon_name || 'Pokemon',
+                pokemon_form: content.pokemon_form || null,
+                rarity: content.rarity || 'common',
+                sprite_url: content.sprite_url || null,
+                odds: Number(content.odds || 1),
+                is_shiny: Number(content.is_shiny || 0),
+                estimated_value: Number(content.estimated_value || 0)
+            });
+            mutated = true;
+        }
+    }
+
+    if (mutated) saveState();
+}
+
+
 const notifications = {
     create(userId, payload = {}) {
         const row = insertRow('notifications', {
@@ -698,7 +834,15 @@ function seedInitialData() {
         { name: 'Alola Tropics Case', description: 'Rare Alola variants', price: 6.99, image_color: '#f97316', is_featured: 0, category: 'daily', min_odds: 200, max_odds: 20000 },
         { name: 'Mythical Mystery Case', description: 'Legendary and Mythical Pokémon', price: 14.99, image_color: '#ec4899', is_featured: 1, category: 'special', min_odds: 10000, max_odds: 1000000 },
         { name: 'Shiny Hunter Case', description: 'Increased shiny odds', price: 8.99, image_color: '#fbbf24', is_featured: 0, category: 'special', min_odds: 500, max_odds: 50000 },
-        { name: 'Community Favorites Case', description: 'Fan-favorite Pokémon', price: 3.49, image_color: '#3b82f6', is_featured: 0, category: 'standard', min_odds: 20, max_odds: 2000 }
+        { name: 'Community Favorites Case', description: 'Fan-favorite Pokémon', price: 3.49, image_color: '#3b82f6', is_featured: 0, category: 'standard', min_odds: 20, max_odds: 2000 },
+        { name: 'Arcade Surge Case', description: 'High-velocity pulls tuned for flashy session streaks', price: 4.49, image_color: '#4f46e5', is_featured: 1, category: 'featured', min_odds: 20, max_odds: 5000 },
+        { name: 'Crimson Eclipse Case', description: 'Dark premium case with heavier late-reel hits', price: 11.99, image_color: '#b91c1c', is_featured: 1, category: 'special', min_odds: 400, max_odds: 100000 },
+        { name: 'Prism Skyline Case', description: 'Premium mix built around expensive mid-tier pulls', price: 6.49, image_color: '#2563eb', is_featured: 0, category: 'standard', min_odds: 50, max_odds: 12000 },
+        { name: 'Frontier Relic Case', description: 'Older rare creatures and fossil-heavy chase lines', price: 7.49, image_color: '#a16207', is_featured: 0, category: 'standard', min_odds: 100, max_odds: 18000 },
+        { name: 'Midnight Voltage Case', description: 'Night-style case with sharper rare and epic pressure', price: 8.49, image_color: '#7c3aed', is_featured: 1, category: 'featured', min_odds: 100, max_odds: 40000 },
+        { name: 'Royal Bloom Case', description: 'Elegant high-value collection with balanced chase depth', price: 9.49, image_color: '#be185d', is_featured: 0, category: 'special', min_odds: 150, max_odds: 75000 },
+        { name: 'Aether Storm Case', description: 'Storm-tier premium case with volatile upper-end value', price: 12.99, image_color: '#0891b2', is_featured: 1, category: 'special', min_odds: 500, max_odds: 150000 },
+        { name: 'Obsidian Pulse Case', description: 'Dense late-game pool for players chasing larger reveals', price: 13.49, image_color: '#4338ca', is_featured: 1, category: 'special', min_odds: 800, max_odds: 200000 }
     ];
 
     const insertedCases = cases.map((item) => insertRow('cases', {
@@ -773,18 +917,21 @@ function seedInitialData() {
     for (const caseInfo of insertedCases) {
         const selectedPokemon = [];
         const targetCounts = {
-            common: 15,
-            uncommon: 10,
-            rare: 6,
-            epic: 4,
-            legendary: 3,
-            mythical: 2
+            common: 8,
+            uncommon: 8,
+            rare: 8,
+            epic: 6,
+            legendary: 6,
+            mythical: 4
         };
 
         for (const [rarity, count] of Object.entries(targetCounts)) {
-            const pool = pokemonPool.filter((pokemon) => pokemon.rarity === rarity);
-            for (let i = 0; i < count; i += 1) {
-                const base = pool[Math.floor(Math.random() * pool.length)];
+            const pool = pokemonPool.filter((pokemon) => pokemon.rarity === rarity).slice();
+            for (let i = pool.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+            pool.slice(0, Math.min(count, pool.length)).forEach((base) => {
                 const isShiny = Math.random() < (rarity === 'common' ? 0.03 : 0.08);
                 let odds = base.odds;
                 if (caseInfo.category === 'featured') odds = Math.max(1, Math.floor(odds * 0.8));
@@ -796,16 +943,6 @@ function seedInitialData() {
                     is_shiny: isShiny ? 1 : 0,
                     sprite_variant: isShiny ? `${base.sprite}-shiny` : base.sprite
                 });
-            }
-        }
-
-        while (selectedPokemon.length < 60) {
-            const pool = Math.random() < 0.6 ? pokemonPool.filter((pokemon) => pokemon.rarity === 'common') : pokemonPool.filter((pokemon) => pokemon.rarity === 'uncommon');
-            const base = pool[Math.floor(Math.random() * pool.length)];
-            selectedPokemon.push({
-                ...base,
-                is_shiny: Math.random() < 0.05 ? 1 : 0,
-                sprite_variant: base.sprite
             });
         }
 
@@ -865,6 +1002,7 @@ function seedInitialData() {
 function initializeDatabase() {
     loadState();
     seedInitialData();
+    ensureBuiltInCaseCatalog();
 }
 
 module.exports = {

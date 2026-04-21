@@ -152,7 +152,7 @@
                     <div class="live-pull-head">
                         <div>
                             <strong>Round ${round.round}</strong>
-                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Winner: ${KatsuCases.escapeHtml(round.winner_username)}</div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${round.is_draw ? 'Round ended in a draw' : `Winner: ${KatsuCases.escapeHtml(round.winner_username)}`}</div>
                         </div>
                         <span class="casevs-room-chip"><i class="ri-flashlight-line"></i> Saved replay data</span>
                     </div>
@@ -247,7 +247,7 @@
                                     <span class="casevs-room-chip"><i class="ri-coin-line"></i> ${KatsuCases.formatCurrency(room.case_price)} each</span>
                                 </div>
                             </div>
-                            <span class="badge badge-${room.status === 'finished' ? 'legendary' : room.status === 'waiting' ? 'common' : 'epic'}">${KatsuCases.escapeHtml(room.status)}</span>
+                            <span class="badge badge-${room.status === 'finished' ? 'legendary' : room.status === 'draw' ? 'mythical' : room.status === 'waiting' ? 'common' : 'epic'}">${KatsuCases.escapeHtml(room.status)}</span>
                         </div>
                         <div class="casevs-player-row">
                             <div class="casevs-player-pill">
@@ -270,7 +270,7 @@
                                 </div>
                             </div>
                         </div>
-                        ${room.winner_username ? `<div class="casevs-room-winner">Winner: <strong>${KatsuCases.escapeHtml(room.winner_username)}</strong>${room.summary?.pot_amount ? ` · Pot ${KatsuCases.formatCurrency(room.summary.pot_amount)}` : ''}</div>` : ''}
+                        ${(room.winner_username || room.status === 'draw') ? `<div class="casevs-room-winner">${room.status === 'draw' ? '<strong>Draw</strong> · Pot split back to both players' : `Winner: <strong>${KatsuCases.escapeHtml(room.winner_username)}</strong>`}${room.summary?.pot_amount ? ` · Pot ${KatsuCases.formatCurrency(room.summary.pot_amount)}` : ''}</div>` : ''}
                         <div class="live-pull-actions" style="margin-top:16px;">
                             <button class="btn btn-ghost" onclick="viewRoom(${room.id})"><i class="ri-eye-line"></i> Spectate</button>
                             ${room.can_join && KatsuCases.state.user ? `<button class="btn btn-primary" onclick="joinRoom(${room.id})"><i class="ri-login-box-line"></i> Join Room</button>` : ''}
@@ -315,8 +315,7 @@
                 await loadRooms();
                 selectedRoomId = data.room.id;
                 selectedRoomUpdatedAt = String(data.room.updated_at || '');
-                renderRoomViewer(data.room, { playbackRound: 1, autoplay: false });
-                startRoomPlayback(data.room);
+                renderRoomViewer(data.room, { playbackRound: 0, autoplay: false });
             } catch (error) {
                 KatsuCases.showToast(error.message || 'Failed to join room', 'error');
             } finally {
@@ -354,7 +353,7 @@
                         <h3 style="margin-bottom:6px;">${KatsuCases.escapeHtml(room.case_name)}</h3>
                         <p style="color:var(--text-secondary);">Room #${room.id} · seed ${KatsuCases.escapeHtml(room.seed)}</p>
                     </div>
-                    <span class="badge badge-${room.status === 'finished' ? 'legendary' : room.status === 'waiting' ? 'common' : 'epic'}">${KatsuCases.escapeHtml(room.status)}</span>
+                    <span class="badge badge-${room.status === 'finished' ? 'legendary' : room.status === 'draw' ? 'mythical' : room.status === 'waiting' ? 'common' : 'epic'}">${KatsuCases.escapeHtml(room.status)}</span>
                 </div>
                 <div class="casevs-player-row" style="margin-top:18px;">
                     ${players.map((player, index) => `
@@ -365,8 +364,8 @@
                         ${index === 0 ? '<div class="casevs-vs-badge">VS</div>' : ''}
                     `).join('')}
                 </div>
-                ${activeRound ? `<div class="admin-rain-card" style="margin-top:18px;"><strong>Live Round ${activeRound.round}</strong><div class="rain-meta">Watching both rolls resolve live with the saved seeds and the exact stored result data.</div></div>${renderRoomRoundPair(activeRound)}` : ''}
-                ${room.winner_username && (!playbackRound || playbackRound >= rounds.length) ? `<div style="margin-top:18px; padding:14px; border-radius:14px; background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.18);">Winner: <strong>${KatsuCases.escapeHtml(room.winner_username)}</strong>${summary?.pot_amount ? ` · Pot ${KatsuCases.formatCurrency(summary.pot_amount)}` : ''}</div>` : ''}
+                ${activeRound ? `<div class="admin-rain-card" style="margin-top:18px;"><strong>${activeRound.is_draw ? `Round ${activeRound.round} draw` : `Live Round ${activeRound.round}`}</strong><div class="rain-meta">Watching both rolls resolve live with the saved seeds and the exact stored result data.</div></div>${renderRoomRoundPair(activeRound)}` : ''}
+                ${(!playbackRound || playbackRound >= rounds.length) && (room.winner_username || room.status === 'draw') ? `<div style="margin-top:18px; padding:14px; border-radius:14px; background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.18);">${room.status === 'draw' ? 'Result: <strong>Draw</strong> · Both players matched the same value and had their entry returned.' : `Winner: <strong>${KatsuCases.escapeHtml(room.winner_username)}</strong>`}${summary?.pot_amount ? ` · Pot ${KatsuCases.formatCurrency(summary.pot_amount)}` : ''}</div>` : ''}
                 <div class="casevs-rounds">
                     ${activeRounds.length ? (roundsMarkup || '') : '<div class="empty-state"><i class="ri-time-line"></i><h3>Waiting for challenger</h3><p>This room has not started yet.</p></div>'}
                 </div>
@@ -387,7 +386,7 @@
                         const updatedAt = String(data.room.updated_at || '');
                         if (updatedAt !== selectedRoomUpdatedAt) {
                             selectedRoomUpdatedAt = updatedAt;
-                            if (data.room.status === 'finished') {
+                            if (data.room.status === 'finished' || data.room.status === 'draw') {
                                 if (!roomPlaybackTimer) {
                                     renderRoomViewer(data.room, { playbackRound: 0, autoplay: false });
                                     startRoomPlayback(data.room);
@@ -400,7 +399,7 @@
                         return;
                     }
                 }
-            }, 3000);
+            }, 1500);
         });
     </script>
 </body>

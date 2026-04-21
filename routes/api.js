@@ -2,17 +2,21 @@ const express = require('express');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const router = express.Router();
 const { db, notifications } = require('../database');
 const { isAuthenticated, optionalAuth } = require('../middleware/auth');
-const { isAdminUserId, getOwnerUserId } = require('../utils/roles');
-const { loadConfig: loadGistBackupConfig, saveConfig: saveGistBackupConfig, getStatus: getGistBackupStatus, backupNow: runGistBackupNow, restoreNow: runGistRestoreNow } = require('../utils/gitBackup');
+const { isAdminUserId, getOwnerUserId, hasAdminAccess, isOwnerUserId, getUserSiteRole, normalizeSiteRole } = require('../utils/roles');
+const { loadConfig: loadGistBackupConfig, saveConfig: saveGistBackupConfig, getStatus: getGistBackupStatus, listVersions: listGistBackupVersions, backupNow: runGistBackupNow, restoreNow: runGistRestoreNow } = require('../utils/gitBackup');
 
 const dataDir = path.join(__dirname, '..', 'data');
 const appDataPath = path.join(dataDir, 'katsucases.json');
 const replayDataPath = path.join(dataDir, 'replays.json');
 const caseVsDataPath = path.join(dataDir, 'casevs.json');
 const communityDataPath = path.join(dataDir, 'community.json');
+const claimPagePath = path.join(__dirname, '..', 'views', 'claim.html');
+
+const activeCaseVsJobs = new Set();
 
 const RARITY_SCORE = {
     common: 1,
@@ -33,12 +37,17 @@ const RARITY_VALUE_MULTIPLIER = {
 };
 
 const BADGE_META = {
-    owner: { label: 'OWNER', className: 'badge-legendary' },
+    owner: { label: 'OWNER', className: 'badge-legendary badge-animated-glow' },
     vip: { label: 'VIP', className: 'badge-epic' },
     beta: { label: 'BETA', className: 'badge-rare' },
     'beta tester': { label: 'BETA', className: 'badge-rare' },
     moderator: { label: 'MOD', className: 'badge-uncommon' },
-    creator: { label: 'CREATOR', className: 'badge-mythical' }
+    creator: { label: 'CREATOR', className: 'badge-mythical badge-animated-glow' },
+    verified: { label: 'VERIFIED', className: 'badge-verified badge-animated-sheen' },
+    staff: { label: 'STAFF', className: 'badge-staff badge-animated-glow' },
+    partner: { label: 'PARTNER', className: 'badge-partner badge-animated-sheen' },
+    helper: { label: 'HELPER', className: 'badge-helper' },
+    artist: { label: 'ARTIST', className: 'badge-artist' }
 };
 
 const SYSTEM_IDENTITY = {
@@ -217,12 +226,51 @@ function normalizeText(value) {
     return String(value ?? '').trim();
 }
 
+function wantsHtmlResponse(req) {
+    const accept = String(req.headers.accept || '').toLowerCase();
+    return accept.includes('text/html') && !accept.includes('application/json');
+}
+
+function ensureSecurityFlags(state) {
+    if (!state.meta || typeof state.meta !== 'object') state.meta = {};
+    if (!Array.isArray(state.meta.security_flags)) state.meta.security_flags = [];
+    return state.meta.security_flags;
+}
+
+function listBanEvasionFlags(state, limit = 30) {
+    return ensureSecurityFlags(state)
+        .filter((entry) => String(entry.type || '').toLowerCase() === 'ban_evasion')
+        .slice()
+        .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')))
+        .slice(0, limit)
+        .map((entry) => ({
+            ...entry,
+            user: entry.user_id ? getUserById(entry.user_id) : null,
+            related_users: safeArray(entry.related_user_ids).map((userId) => getUserById(userId)).filter(Boolean).map((user) => ({
+                id: user.id,
+                username: user.username,
+                display_name: getUserDisplayName(user),
+                site_role: getUserSiteRole(user),
+                account_status: user.account_status || 'active'
+            }))
+        }));
+}
+
 function normalizeBadgeKey(value) {
     return normalizeText(value).toLowerCase();
 }
 
 function slugifyPokemonName(value) {
-    return String(value || 'pokemon').toLowerCase().replace(/[^a-z0-9]+/g, '');
+    return String(value || 'pokemon')
+        .toLowerCase()
+        .replace(/['’.]/g, '')
+        .replace(/♀/g, 'f')
+        .replace(/♂/g, 'm')
+        .replace(/[^a-z0-9]+/g, '');
+}
+
+function getBasePokemonName(value) {
+    return String(value || 'pokemon').toLowerCase().split('-')[0].replace(/[^a-z0-9]+/g, '') || 'pokemon';
 }
 
 
@@ -389,7 +437,23 @@ function buildSpriteUrl(pokemonName, spriteUrl = '') {
             return normalized;
         }
     }
-    return `https://play.pokemonshowdown.com/sprites/ani/${slugifyPokemonName(pokemonName)}.gif`;
+    const slug = slugifyPokemonName(pokemonName);
+    const base = getBasePokemonName(pokemonName);
+    return `https://play.pokemonshowdown.com/sprites/ani/${slug}.gif#fallback=${base}`;
+}
+
+function getCaseContentIdentity(item = {}) {
+    return `${normalizeText(item.pokemon_name).toLowerCase()}::${normalizeText(item.pokemon_form || '').toLowerCase()}::${Number(item.is_shiny || 0)}`;
+}
+
+function dedupeCaseContents(contents = []) {
+    const seen = new Set();
+    return safeArray(contents).filter((item) => {
+        const key = getCaseContentIdentity(item);
+        if (!normalizeText(item?.pokemon_name) || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
 }
 
 function getItemWeight(item) {
@@ -484,6 +548,192 @@ function getUserByUsernameLike(identifier) {
     }) || null;
 }
 
+
+const OFFLINE_ROLL_DEFAULTS = {
+    interval_minutes: 120,
+    cap: 24
+};
+
+function ensureStateMeta(state) {
+    if (!state.meta || typeof state.meta !== 'object') state.meta = {};
+    if (!state.meta.nextIds || typeof state.meta.nextIds !== 'object') state.meta.nextIds = {};
+    if (!state.meta.platform_config || typeof state.meta.platform_config !== 'object') state.meta.platform_config = {};
+    const config = state.meta.platform_config;
+    if (!Number.isFinite(Number(config.offline_roll_interval_minutes))) config.offline_roll_interval_minutes = OFFLINE_ROLL_DEFAULTS.interval_minutes;
+    if (!Number.isFinite(Number(config.offline_roll_cap))) config.offline_roll_cap = OFFLINE_ROLL_DEFAULTS.cap;
+    if (!Number.isFinite(Number(config.gist_backup_max_versions))) config.gist_backup_max_versions = Number(process.env.GIST_BACKUP_MAX_VERSIONS || 8) || 8;
+    return config;
+}
+
+function ensureUserAccountDefaults(user) {
+    if (!user) return user;
+    if (user.offline_roll_enabled === undefined) user.offline_roll_enabled = 0;
+    if (user.offline_roll_last_at === undefined) user.offline_roll_last_at = null;
+    if (user.offline_roll_total_earned === undefined) user.offline_roll_total_earned = 0;
+    if (user.account_status === undefined) user.account_status = 'active';
+    if (user.hide_inventory === undefined) user.hide_inventory = 0;
+    return user;
+}
+
+function nextStateId(state, tableName) {
+    ensureStateMeta(state);
+    const rows = safeArray(state.tables?.[tableName]);
+    const current = Number(state.meta.nextIds[tableName] || 0);
+    if (current > 0) {
+        state.meta.nextIds[tableName] = current + 1;
+        return current;
+    }
+    const fallback = rows.reduce((max, row) => Math.max(max, Number(row?.id || 0)), 0) + 1;
+    state.meta.nextIds[tableName] = fallback + 1;
+    return fallback;
+}
+
+function applyOfflineRollAccrual(state, userRow) {
+    ensureUserAccountDefaults(userRow);
+    const platformConfig = ensureStateMeta(state);
+    const intervalMinutes = Math.max(15, parseInt(platformConfig.offline_roll_interval_minutes, 10) || OFFLINE_ROLL_DEFAULTS.interval_minutes);
+    const cap = Math.max(1, parseInt(platformConfig.offline_roll_cap, 10) || OFFLINE_ROLL_DEFAULTS.cap);
+    const now = Date.now();
+    const currentFreeRolls = Math.max(0, Number(userRow.free_rolls || 0));
+
+    if (!Number(userRow.offline_roll_enabled)) {
+        if (!userRow.offline_roll_last_at) userRow.offline_roll_last_at = new Date(now).toISOString();
+        return {
+            enabled: false,
+            interval_minutes: intervalMinutes,
+            cap,
+            earned_now: 0,
+            free_rolls: currentFreeRolls,
+            next_roll_in_minutes: intervalMinutes
+        };
+    }
+
+    if (currentFreeRolls >= cap) {
+        userRow.offline_roll_last_at = new Date(now).toISOString();
+        return {
+            enabled: true,
+            interval_minutes: intervalMinutes,
+            cap,
+            earned_now: 0,
+            free_rolls: currentFreeRolls,
+            next_roll_in_minutes: intervalMinutes
+        };
+    }
+
+    const intervalMs = intervalMinutes * 60 * 1000;
+    const parsedLast = userRow.offline_roll_last_at ? new Date(userRow.offline_roll_last_at).getTime() : NaN;
+    const safeLast = Number.isFinite(parsedLast) && parsedLast > 0 ? parsedLast : now;
+    const elapsed = Math.max(0, now - safeLast);
+    const generated = Math.floor(elapsed / intervalMs);
+    const room = Math.max(0, cap - currentFreeRolls);
+    const awarded = Math.max(0, Math.min(room, generated));
+
+    if (!userRow.offline_roll_last_at) {
+        userRow.offline_roll_last_at = new Date(now).toISOString();
+    } else if (generated > 0) {
+        userRow.offline_roll_last_at = new Date(safeLast + generated * intervalMs).toISOString();
+    }
+
+    if (awarded > 0) {
+        userRow.free_rolls = currentFreeRolls + awarded;
+        userRow.offline_roll_total_earned = Math.max(0, Number(userRow.offline_roll_total_earned || 0)) + awarded;
+    }
+
+    const baseForNext = userRow.offline_roll_last_at ? new Date(userRow.offline_roll_last_at).getTime() : now;
+    const nextIn = userRow.free_rolls >= cap
+        ? intervalMinutes
+        : Math.max(1, Math.ceil((intervalMs - Math.max(0, now - baseForNext)) / 60000));
+
+    return {
+        enabled: true,
+        interval_minutes: intervalMinutes,
+        cap,
+        earned_now: awarded,
+        free_rolls: Math.max(0, Number(userRow.free_rolls || 0)),
+        next_roll_in_minutes: nextIn
+    };
+}
+
+function buildOfflineRollSummary(state, userRow) {
+    const summary = applyOfflineRollAccrual(state, userRow);
+    return {
+        ...summary,
+        total_earned: Math.max(0, Number(userRow.offline_roll_total_earned || 0)),
+        last_tick_at: userRow.offline_roll_last_at || null
+    };
+}
+
+function buildUserAccountSnapshot(state, userId, { actorId = null, reason = '', label = '' } = {}) {
+    const users = safeArray(state.tables?.users);
+    const userRow = users.find((row) => Number(row.id) === Number(userId));
+    if (!userRow) return null;
+    state.tables.account_snapshots = safeArray(state.tables.account_snapshots);
+    const snapshot = {
+        id: nextStateId(state, 'account_snapshots'),
+        user_id: Number(userId),
+        username: userRow.username,
+        created_at: new Date().toISOString(),
+        created_by_user_id: actorId ? Number(actorId) : null,
+        reason: normalizeText(reason).slice(0, 160) || 'Manual snapshot',
+        label: normalizeText(label).slice(0, 80) || 'Snapshot',
+        snapshot: {
+            user: JSON.parse(JSON.stringify(userRow)),
+            inventory: safeArray(state.tables?.inventory).filter((row) => Number(row.user_id) === Number(userId)).map((row) => JSON.parse(JSON.stringify(row))),
+            openings: safeArray(state.tables?.openings).filter((row) => Number(row.user_id) === Number(userId)).map((row) => JSON.parse(JSON.stringify(row))),
+            marketplace: safeArray(state.tables?.marketplace).filter((row) => Number(row.seller_id) === Number(userId)).map((row) => JSON.parse(JSON.stringify(row))),
+            transactions: safeArray(state.tables?.transactions).filter((row) => Number(row.user_id) === Number(userId)).slice(-250).map((row) => JSON.parse(JSON.stringify(row))),
+            notifications: safeArray(state.tables?.notifications).filter((row) => Number(row.user_id) === Number(userId)).slice(-120).map((row) => JSON.parse(JSON.stringify(row)))
+        }
+    };
+    state.tables.account_snapshots.unshift(snapshot);
+    state.tables.account_snapshots = state.tables.account_snapshots.slice(0, 250);
+    return snapshot;
+}
+
+function restoreUserAccountSnapshot(state, userId, snapshotId) {
+    const snapshot = safeArray(state.tables?.account_snapshots).find((row) => Number(row.id) === Number(snapshotId) && Number(row.user_id) === Number(userId));
+    if (!snapshot?.snapshot?.user) return null;
+    const payload = snapshot.snapshot;
+    state.tables.users = safeArray(state.tables.users).filter((row) => Number(row.id) !== Number(userId));
+    state.tables.users.push(JSON.parse(JSON.stringify(payload.user)));
+    state.tables.inventory = safeArray(state.tables.inventory).filter((row) => Number(row.user_id) !== Number(userId)).concat(safeArray(payload.inventory).map((row) => JSON.parse(JSON.stringify(row))));
+    state.tables.openings = safeArray(state.tables.openings).filter((row) => Number(row.user_id) !== Number(userId)).concat(safeArray(payload.openings).map((row) => JSON.parse(JSON.stringify(row))));
+    state.tables.marketplace = safeArray(state.tables.marketplace).filter((row) => Number(row.seller_id) !== Number(userId)).concat(safeArray(payload.marketplace).map((row) => JSON.parse(JSON.stringify(row))));
+    state.tables.transactions = safeArray(state.tables.transactions).filter((row) => Number(row.user_id) !== Number(userId)).concat(safeArray(payload.transactions).map((row) => JSON.parse(JSON.stringify(row))));
+    state.tables.notifications = safeArray(state.tables.notifications).filter((row) => Number(row.user_id) !== Number(userId)).concat(safeArray(payload.notifications).map((row) => JSON.parse(JSON.stringify(row))));
+    return snapshot;
+}
+
+function summarizeAccountSnapshots(userId, limit = 20) {
+    return safeArray(getTable('account_snapshots'))
+        .filter((row) => Number(row.user_id) === Number(userId))
+        .slice()
+        .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')))
+        .slice(0, limit)
+        .map((row) => ({
+            id: row.id,
+            user_id: row.user_id,
+            username: row.username,
+            created_at: row.created_at,
+            created_by_user_id: row.created_by_user_id,
+            reason: row.reason,
+            label: row.label
+        }));
+}
+
+function buildSupportReply(authorType, actor, message, internal = false) {
+    return {
+        id: Math.random().toString(36).slice(2, 10),
+        created_at: new Date().toISOString(),
+        author_type: authorType,
+        user_id: actor?.id || null,
+        username: actor?.username || (authorType === 'admin' ? 'KatsuCases' : 'User'),
+        display_name: getUserDisplayName(actor) || (authorType === 'admin' ? 'Support' : 'User'),
+        message: normalizeText(message).slice(0, 2000),
+        internal: Boolean(internal)
+    };
+}
+
 function getUserDisplayName(user) {
     return normalizeText(user?.display_name) || normalizeText(user?.username) || 'User';
 }
@@ -537,7 +787,10 @@ function getProfileLink(user) {
 function isCaseLive(caseInfo) {
     if (!caseInfo) return false;
     if (Number(caseInfo.is_hidden)) return false;
-    if (caseInfo.launch_at && new Date(caseInfo.launch_at).getTime() > Date.now()) return false;
+    const now = Date.now();
+    if (caseInfo.launch_at && new Date(caseInfo.launch_at).getTime() > now) return false;
+    if (caseInfo.rotation_starts_at && new Date(caseInfo.rotation_starts_at).getTime() > now) return false;
+    if (caseInfo.rotation_ends_at && new Date(caseInfo.rotation_ends_at).getTime() < now) return false;
     return true;
 }
 
@@ -697,8 +950,15 @@ function writeCommunityStore(value) {
 }
 
 function requireAdmin(req, res, next) {
-    if (!req.user || !isAdminUserId(req.user.id)) {
+    if (!req.user || !hasAdminAccess(req.user)) {
         return res.status(403).json({ error: 'Admin access required' });
+    }
+    next();
+}
+
+function requireOwner(req, res, next) {
+    if (!req.user || !isOwnerUserId(req.user.id)) {
+        return res.status(403).json({ error: 'Owner access required' });
     }
     next();
 }
@@ -714,7 +974,7 @@ function addCommunityMessage(store, payload) {
         user_id: payload.user_id || linkedUser?.id || null,
         username: payload.username || linkedUser?.username || profile.username || 'KatsuCases',
         display_name: payload.display_name || profile.display_name || payload.username || 'KatsuCases',
-        is_admin: Boolean(payload.is_admin || (linkedUser && isAdminUserId(linkedUser.id))),
+        is_admin: Boolean(payload.is_admin || (linkedUser && hasAdminAccess(linkedUser)) || hasAdminAccess(payload.user)),
         avatar_url: payload.avatar_url !== undefined ? payload.avatar_url : profile.avatar_url,
         region: payload.region !== undefined ? payload.region : profile.region,
         pronouns: payload.pronouns !== undefined ? payload.pronouns : profile.pronouns,
@@ -958,11 +1218,17 @@ function searchUsersList(query, excludeUserId = null, limit = 8) {
             email: user.email,
             balance: Number(user.balance || 0),
             created_at: user.created_at,
-            is_admin: isAdminUserId(user.id),
+            site_role: getUserSiteRole(user),
+            is_owner: isOwnerUserId(user.id),
+            is_admin: hasAdminAccess(user),
             avatar_url: user.avatar_url || null,
             region: user.region || '',
             badges: getUserBadges(user).map(serializeBadge),
             custom_role: user.custom_role || '',
+            account_status: user.account_status || 'active',
+            signup_ip: user.signup_ip || null,
+            last_login_ip: user.last_login_ip || null,
+            suspected_ban_evasion: Boolean(Number(user.suspected_ban_evasion || 0)),
             pity: getPitySummaryForUser(user)
         }));
 }
@@ -1285,7 +1551,7 @@ router.get('/cases', (req, res) => {
     try {
         const { category, featured } = req.query;
         const viewer = req.session?.userId ? getUserById(req.session.userId) : null;
-        const canSeeHidden = Boolean(viewer && isAdminUserId(viewer.id));
+        const canSeeHidden = Boolean(viewer && hasAdminAccess(viewer));
 
         let query = 'SELECT * FROM cases';
         const params = [];
@@ -1312,17 +1578,23 @@ router.get('/cases', (req, res) => {
 
         const favoriteIds = new Set(safeArray(viewer?.favorite_case_ids).map((value) => Number(value)));
         const casesWithCounts = cases.map((c) => {
-            const contents = db.prepare('SELECT COUNT(*) as count FROM case_contents WHERE case_id = ?').get(c.id);
-            const contentRows = db.prepare('SELECT * FROM case_contents WHERE case_id = ? ORDER BY odds ASC').all(c.id).map((row) => enrichCaseContent(row, c));
-            const rarities = db.prepare(`
-                SELECT rarity, COUNT(*) as count, MIN(odds) as min_odds, MAX(odds) as max_odds 
-                FROM case_contents 
-                WHERE case_id = ? 
-                GROUP BY rarity
-            `).all(c.id);
+            const contentRows = dedupeCaseContents(
+                db.prepare('SELECT * FROM case_contents WHERE case_id = ? ORDER BY odds ASC').all(c.id).map((row) => enrichCaseContent(row, c))
+            );
+            const rarityMap = {};
+            contentRows.forEach((item) => {
+                const rarity = item.rarity || 'common';
+                if (!rarityMap[rarity]) {
+                    rarityMap[rarity] = { rarity, count: 0, min_odds: Number(item.odds || 0), max_odds: Number(item.odds || 0) };
+                }
+                rarityMap[rarity].count += 1;
+                rarityMap[rarity].min_odds = Math.min(rarityMap[rarity].min_odds, Number(item.odds || 0));
+                rarityMap[rarity].max_odds = Math.max(rarityMap[rarity].max_odds, Number(item.odds || 0));
+            });
+            const rarities = Object.values(rarityMap);
             return {
                 ...c,
-                total_items: contents.count,
+                total_items: contentRows.length,
                 rarity_breakdown: rarities,
                 is_live: isCaseLive(c),
                 next_launch_at: c.launch_at || null,
@@ -1343,7 +1615,7 @@ router.get('/cases/:id', (req, res) => {
     try {
         const { id } = req.params;
         const viewer = req.session?.userId ? getUserById(req.session.userId) : null;
-        const canSeeHidden = Boolean(viewer && isAdminUserId(viewer.id));
+        const canSeeHidden = Boolean(viewer && hasAdminAccess(viewer));
 
         const caseInfo = db.prepare('SELECT * FROM cases WHERE id = ?').get(id);
         if (!caseInfo) {
@@ -1353,7 +1625,7 @@ router.get('/cases/:id', (req, res) => {
             return res.status(404).json({ error: 'Case not found' });
         }
 
-        const contents = db.prepare('SELECT * FROM case_contents WHERE case_id = ? ORDER BY odds ASC').all(id).map((row) => enrichCaseContent(row, caseInfo));
+        const contents = dedupeCaseContents(db.prepare('SELECT * FROM case_contents WHERE case_id = ? ORDER BY odds ASC').all(id).map((row) => enrichCaseContent(row, caseInfo)));
         const byRarity = {};
         const rarities = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical'];
 
@@ -1386,7 +1658,18 @@ router.post('/cases/:id/open', isAuthenticated, (req, res) => {
             return res.status(404).json({ error: 'Case not found' });
         }
 
-        const liveUser = getUserById(userId);
+        const accrualState = readAppState();
+        ensureStateMeta(accrualState);
+        const liveUser = safeArray(accrualState.tables?.users).find((row) => Number(row.id) === Number(userId));
+        if (!liveUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        ensureUserAccountDefaults(liveUser);
+        if (String(liveUser.account_status || 'active').toLowerCase() === 'suspended') {
+            return res.status(403).json({ error: 'This account is suspended' });
+        }
+        applyOfflineRollAccrual(accrualState, liveUser);
+        writeJson(appDataPath, accrualState);
         const freeRolls = Math.max(0, Number(liveUser?.free_rolls || 0));
         const paidRolls = Math.max(0, amount - freeRolls);
         const freeRollsUsed = Math.min(amount, freeRolls);
@@ -1395,7 +1678,7 @@ router.post('/cases/:id/open', isAuthenticated, (req, res) => {
             return res.status(400).json({ error: 'Insufficient balance' });
         }
 
-        const contents = db.prepare('SELECT * FROM case_contents WHERE case_id = ?').all(id).map((row) => enrichCaseContent(row, caseInfo));
+        const contents = dedupeCaseContents(db.prepare('SELECT * FROM case_contents WHERE case_id = ?').all(id).map((row) => enrichCaseContent(row, caseInfo)));
         const baseSeed = createSeed();
         const results = [];
         ensureUserFeatureDefaults(liveUser);
@@ -1651,6 +1934,145 @@ router.post('/marketplace/:id/buy', isAuthenticated, (req, res) => {
 });
 
 // Get user inventory
+
+router.get('/settings', isAuthenticated, (req, res) => {
+    try {
+        const state = readAppState();
+        ensureStateMeta(state);
+        const userRow = safeArray(state.tables?.users).find((row) => Number(row.id) === Number(req.user.id));
+        if (!userRow) return res.status(404).json({ error: 'User not found' });
+        ensureUserAccountDefaults(userRow);
+        const offline_roll = buildOfflineRollSummary(state, userRow);
+        writeJson(appDataPath, state);
+        res.json({
+            profile: {
+                id: userRow.id,
+                username: userRow.username,
+                display_name: userRow.display_name || userRow.username,
+                email: userRow.email,
+                avatar_url: userRow.avatar_url || '',
+                pronouns: userRow.pronouns || '',
+                region: userRow.region || '',
+                hide_inventory: Boolean(Number(userRow.hide_inventory || 0))
+            },
+            preferences: {
+                offline_roll_enabled: Boolean(Number(userRow.offline_roll_enabled || 0)),
+                theme_mode: userRow.theme_mode || 'dark'
+            },
+            offline_roll,
+            platform: {
+                offline_roll_interval_minutes: Number(state.meta.platform_config.offline_roll_interval_minutes || OFFLINE_ROLL_DEFAULTS.interval_minutes),
+                offline_roll_cap: Number(state.meta.platform_config.offline_roll_cap || OFFLINE_ROLL_DEFAULTS.cap)
+            }
+        });
+    } catch (error) {
+        console.error('Settings load error:', error);
+        res.status(500).json({ error: 'Failed to load settings' });
+    }
+});
+
+router.put('/settings', isAuthenticated, (req, res) => {
+    try {
+        const state = readAppState();
+        ensureStateMeta(state);
+        const users = safeArray(state.tables?.users);
+        const currentUser = users.find((row) => Number(row.id) === Number(req.user.id));
+        if (!currentUser) return res.status(404).json({ error: 'User not found' });
+        ensureUserAccountDefaults(currentUser);
+        const original = JSON.stringify({
+            username: currentUser.username,
+            display_name: currentUser.display_name,
+            avatar_url: currentUser.avatar_url || '',
+            pronouns: currentUser.pronouns || '',
+            region: currentUser.region || '',
+            hide_inventory: Number(currentUser.hide_inventory || 0),
+            offline_roll_enabled: Number(currentUser.offline_roll_enabled || 0),
+            theme_mode: currentUser.theme_mode || 'dark'
+        });
+
+        const username = normalizeText(req.body.username || currentUser.username);
+        if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+            return res.status(400).json({ error: 'Username must be 3-20 characters using letters, numbers, or underscores' });
+        }
+        const conflict = users.find((row) => Number(row.id) !== Number(req.user.id) && String(row.username || '').toLowerCase() === username.toLowerCase());
+        if (conflict) {
+            return res.status(400).json({ error: 'That username is already taken' });
+        }
+        const previousUsername = currentUser.username;
+        buildUserAccountSnapshot(state, req.user.id, { actorId: req.user.id, reason: 'Account settings updated', label: 'Settings change' });
+        currentUser.display_name = normalizeText(req.body.display_name || req.body.displayName || currentUser.display_name || username).slice(0, 24) || username;
+        currentUser.avatar_url = normalizeText(req.body.avatar_url || req.body.avatarUrl || currentUser.avatar_url || '').slice(0, 300) || null;
+        currentUser.pronouns = normalizeText(req.body.pronouns || currentUser.pronouns || '').slice(0, 24);
+        currentUser.region = normalizeText(req.body.region || currentUser.region || '').slice(0, 48);
+        currentUser.hide_inventory = req.body.hide_inventory === undefined ? Number(currentUser.hide_inventory || 0) : (req.body.hide_inventory ? 1 : 0);
+        if (req.body.offline_roll_enabled !== undefined) {
+            currentUser.offline_roll_enabled = req.body.offline_roll_enabled ? 1 : 0;
+            currentUser.offline_roll_last_at = new Date().toISOString();
+        }
+        if (req.body.theme_mode !== undefined) {
+            currentUser.theme_mode = ['light', 'dark'].includes(String(req.body.theme_mode).toLowerCase()) ? String(req.body.theme_mode).toLowerCase() : 'dark';
+        }
+        if (previousUsername !== username) {
+            if (!Array.isArray(currentUser.username_history)) currentUser.username_history = [];
+            currentUser.username_history.push(previousUsername);
+            currentUser.username_history = currentUser.username_history.slice(-12);
+            currentUser.username = username;
+            safeArray(state.tables?.inventory).forEach((row) => {
+                if (Number(row.original_owner_id || 0) === Number(req.user.id)) row.original_owner_username = username;
+            });
+            safeArray(state.tables?.openings).forEach((row) => {
+                if (Number(row.user_id) === Number(req.user.id)) row.username = username;
+            });
+            safeArray(state.tables?.marketplace).forEach((row) => {
+                if (Number(row.seller_id) === Number(req.user.id)) row.seller_username = username;
+            });
+            safeArray(state.tables?.trades).forEach((row) => {
+                if (Number(row.sender_id) === Number(req.user.id)) row.sender_username = username;
+                if (Number(row.receiver_id) === Number(req.user.id)) row.receiver_username = username;
+            });
+            const roomStore = readCaseVsStore();
+            safeArray(roomStore.rooms).forEach((room) => {
+                safeArray(room.players).forEach((player) => {
+                    if (Number(player.user_id) === Number(req.user.id)) {
+                        player.username = username;
+                        player.display_name = currentUser.display_name || username;
+                    }
+                });
+                safeArray(room.rounds_data).forEach((round) => {
+                    safeArray(round.pulls).forEach((pull) => {
+                        if (Number(pull.user_id) === Number(req.user.id)) pull.username = username;
+                    });
+                });
+                if (Number(room.winner_id || 0) === Number(req.user.id)) room.winner_username = username;
+            });
+            writeCaseVsStore(roomStore);
+            const communityStore = readCommunityStore();
+            safeArray(communityStore.messages).forEach((message) => {
+                if (Number(message.user_id || 0) === Number(req.user.id)) {
+                    message.username = username;
+                    message.display_name = currentUser.display_name || username;
+                    message.avatar_url = currentUser.avatar_url || null;
+                    message.region = currentUser.region || '';
+                    message.pronouns = currentUser.pronouns || '';
+                }
+            });
+            if (communityStore.presence && communityStore.presence[req.user.id]) {
+                communityStore.presence[req.user.id].username = username;
+                communityStore.presence[req.user.id].display_name = currentUser.display_name || username;
+                communityStore.presence[req.user.id].avatar_url = currentUser.avatar_url || null;
+                communityStore.presence[req.user.id].region = currentUser.region || '';
+            }
+            writeCommunityStore(communityStore);
+        }
+        const updatedOffline = buildOfflineRollSummary(state, currentUser);
+        writeJson(appDataPath, state);
+        res.json({ success: true, settings: { profile: currentUser, offline_roll: updatedOffline } });
+    } catch (error) {
+        console.error('Settings save error:', error);
+        res.status(500).json({ error: 'Failed to save settings' });
+    }
+});
+
 router.get('/inventory', isAuthenticated, (req, res) => {
     try {
         const { rarity, sort, listed } = req.query;
@@ -2087,6 +2509,7 @@ router.get('/pokemon/search', isAuthenticated, async (req, res) => {
         const results = matches.slice(0, limit).map((name) => ({
             name,
             label: name.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' '),
+            base_name: String(name).split('-')[0],
             sprite_url: buildSpriteUrl(name)
         }));
         res.json({ pokemon: results });
@@ -2118,6 +2541,7 @@ router.get('/profiles/:identifier', optionalAuth, (req, res) => {
             region: user.region || '',
             badges: getUserBadges(user).map(serializeBadge),
             custom_role: user.custom_role || '',
+            account_status: user.account_status || 'active',
             created_at: user.created_at,
             balance: Number(user.balance || 0),
             cases_opened: Number(user.cases_opened || 0),
@@ -2159,11 +2583,13 @@ router.put('/profile', isAuthenticated, (req, res) => {
         const region = normalizeText(req.body.region || '').slice(0, 48);
         const hideInventory = req.body.hide_inventory === undefined ? null : (req.body.hide_inventory ? 1 : 0);
         const state = readAppState();
+        ensureStateMeta(state);
         const users = safeArray(state.tables?.users);
         const currentUser = users.find((row) => Number(row.id) === Number(req.user.id));
         if (!currentUser) {
             return res.status(404).json({ error: 'User not found' });
         }
+        ensureUserAccountDefaults(currentUser);
         if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
             return res.status(400).json({ error: 'Username must be 3-20 characters using letters, numbers, or underscores' });
         }
@@ -2172,6 +2598,15 @@ router.put('/profile', isAuthenticated, (req, res) => {
             return res.status(400).json({ error: 'That username is already taken' });
         }
         const previousUsername = currentUser.username;
+        buildUserAccountSnapshot(state, req.user.id, { actorId: req.user.id, reason: 'Profile settings updated', label: 'Profile change' });
+        const originalProfileState = JSON.stringify({
+            username: currentUser.username,
+            display_name: currentUser.display_name,
+            avatar_url: currentUser.avatar_url || '',
+            pronouns: currentUser.pronouns || '',
+            region: currentUser.region || '',
+            hide_inventory: Number(currentUser.hide_inventory || 0)
+        });
         if (!Array.isArray(currentUser.username_history)) currentUser.username_history = [];
         if (previousUsername && previousUsername !== username) {
             const nextHistory = currentUser.username_history
@@ -2251,6 +2686,168 @@ function serializeCaseVsPull(pull) {
     if (!pull) return pull;
     const { track, ...rest } = pull;
     return rest;
+}
+
+function compareCaseVsPulls(a, b) {
+    const scoreDelta = Number(b?.score || 0) - Number(a?.score || 0);
+    if (scoreDelta !== 0) return scoreDelta;
+    const valueDelta = Number(b?.estimated_value || 0) - Number(a?.estimated_value || 0);
+    if (valueDelta !== 0) return valueDelta;
+    const rarityDelta = Number(RARITY_SCORE[b?.rarity] || 0) - Number(RARITY_SCORE[a?.rarity] || 0);
+    if (rarityDelta !== 0) return rarityDelta;
+    const oddsDelta = Number(b?.odds || 0) - Number(a?.odds || 0);
+    if (oddsDelta !== 0) return oddsDelta;
+    return String(b?.pokemon_name || '').localeCompare(String(a?.pokemon_name || ''));
+}
+
+function isCaseVsTie(a, b) {
+    return Boolean(a && b)
+        && Number(a?.score || 0) === Number(b?.score || 0)
+        && Number(a?.estimated_value || 0) === Number(b?.estimated_value || 0)
+        && Number(RARITY_SCORE[a?.rarity] || 0) === Number(RARITY_SCORE[b?.rarity] || 0)
+        && Number(a?.odds || 0) === Number(b?.odds || 0);
+}
+
+function resolveCaseVsRoundOutcome(pulls = []) {
+    const ordered = safeArray(pulls).slice().sort(compareCaseVsPulls);
+    const top = ordered[0] || null;
+    const runnerUp = ordered[1] || null;
+    const isDraw = isCaseVsTie(top, runnerUp);
+    return {
+        winner: isDraw ? null : top,
+        isDraw,
+        ordered
+    };
+}
+
+function pickBestPlayerPull(room, userId) {
+    const pulls = safeArray(room?.rounds_data).flatMap((round) => safeArray(round.pulls)).filter((pull) => Number(pull.user_id) === Number(userId));
+    return pulls.slice().sort(compareCaseVsPulls)[0] || null;
+}
+
+function scheduleCaseVsRoomPlayback(roomId, delayMs = 220) {
+    if (activeCaseVsJobs.has(Number(roomId))) return;
+    activeCaseVsJobs.add(Number(roomId));
+    const executeRound = (roundNumber = 1) => {
+        setTimeout(() => {
+            try {
+                const store = readCaseVsStore();
+                const room = safeArray(store.rooms).find((entry) => Number(entry.id) === Number(roomId));
+                if (!room || room.status !== 'rolling') {
+                    activeCaseVsJobs.delete(Number(roomId));
+                    return;
+                }
+                const caseInfo = db.prepare('SELECT * FROM cases WHERE id = ?').get(room.case_id);
+                if (!caseInfo) {
+                    room.status = 'cancelled';
+                    room.updated_at = new Date().toISOString();
+                    writeCaseVsStore(store);
+                    activeCaseVsJobs.delete(Number(roomId));
+                    return;
+                }
+                const contents = dedupeCaseContents(db.prepare('SELECT * FROM case_contents WHERE case_id = ?').all(room.case_id));
+                const pulls = safeArray(room.players).map((player, index) => {
+                    const seed = `${room.seed}-r${roundNumber}-p${index + 1}`;
+                    const result = openCaseForUser({
+                        userId: player.user_id,
+                        username: player.username,
+                        caseInfo,
+                        contents,
+                        seed,
+                        source: 'case_vs',
+                        roomId: room.id
+                    });
+                    db.prepare('UPDATE cases SET times_opened = times_opened + 1 WHERE id = ?').run(room.case_id);
+                    return {
+                        user_id: player.user_id,
+                        username: player.username,
+                        score: scoreResult(result),
+                        ...result
+                    };
+                });
+
+                const outcome = resolveCaseVsRoundOutcome(pulls);
+                room.rounds_data = safeArray(room.rounds_data);
+                room.rounds_data.push({
+                    round: roundNumber,
+                    winner_user_id: outcome.winner ? outcome.winner.user_id : null,
+                    winner_username: outcome.winner ? outcome.winner.username : null,
+                    is_draw: outcome.isDraw,
+                    pulls
+                });
+                room.updated_at = new Date().toISOString();
+                writeCaseVsStore(store);
+
+                if (roundNumber < Number(room.rounds || 1)) {
+                    executeRound(roundNumber + 1);
+                    return;
+                }
+
+                const [playerA, playerB] = safeArray(room.players);
+                const winsA = safeArray(room.rounds_data).filter((round) => Number(round.winner_user_id) === Number(playerA?.user_id)).length;
+                const winsB = safeArray(room.rounds_data).filter((round) => Number(round.winner_user_id) === Number(playerB?.user_id)).length;
+                const bestPullA = pickBestPlayerPull(room, playerA?.user_id);
+                const bestPullB = pickBestPlayerPull(room, playerB?.user_id);
+                const bestPull = [bestPullA, bestPullB].filter(Boolean).slice().sort(compareCaseVsPulls)[0] || null;
+                const tiebreakCompare = bestPullA && bestPullB ? compareCaseVsPulls(bestPullA, bestPullB) : 0;
+                const isPerfectDraw = winsA === winsB && isCaseVsTie(bestPullA, bestPullB);
+                const winner = winsA === winsB
+                    ? (isPerfectDraw ? null : (tiebreakCompare <= 0 ? playerA : playerB))
+                    : (winsA > winsB ? playerA : playerB);
+
+                room.summary = {
+                    wins: { [playerA.user_id]: winsA, [playerB.user_id]: winsB },
+                    best_pull: bestPull,
+                    pot_amount: Number((Number(room.case_price || 0) * Number(room.rounds || 1) * safeArray(room.players).length).toFixed(2)),
+                    loser_user_id: winner ? (Number(playerA.user_id) === Number(winner.user_id) ? Number(playerB.user_id) : Number(playerA.user_id)) : null,
+                    draw: !winner,
+                    draw_reason: !winner ? 'matched_rounds_and_best_pull' : null
+                };
+
+                const totalPot = Number(room.summary.pot_amount || 0);
+                const state = readAppState();
+                const users = safeArray(state.tables?.users);
+                if (!winner) {
+                    const split = Number((totalPot / Math.max(1, safeArray(room.players).length)).toFixed(2));
+                    safeArray(room.players).forEach((player) => {
+                        const userRow = users.find((entry) => Number(entry.id) === Number(player.user_id));
+                        if (userRow) {
+                            userRow.balance = Number((Number(userRow.balance || 0) + split).toFixed(2));
+                            userRow.total_earned = Number((Number(userRow.total_earned || 0) + split).toFixed(2));
+                        }
+                        db.prepare('INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)').run(player.user_id, 'casevs_draw', split, `Case Vs room #${room.id} ended in a draw`);
+                        notifyUser(player.user_id, 'casevs_finished', 'Case Vs draw', `Room #${room.id} ended in a draw. Your entry was returned.`, '/casevs', { roomId: room.id, pot_amount: totalPot, draw: true });
+                    });
+                    room.status = 'draw';
+                    room.winner_user_id = null;
+                    room.winner_username = null;
+                } else {
+                    const winnerUserId = Number(winner.user_id);
+                    const winningUser = users.find((entry) => Number(entry.id) === winnerUserId);
+                    if (winningUser) {
+                        winningUser.balance = Number((Number(winningUser.balance || 0) + totalPot).toFixed(2));
+                        winningUser.total_earned = Number((Number(winningUser.total_earned || 0) + totalPot).toFixed(2));
+                    }
+                    db.prepare('INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)').run(winnerUserId, 'casevs_win', totalPot, `Won Case Vs room #${room.id}`);
+                    notifyUser(playerA.user_id, 'casevs_finished', 'Case Vs finished', `${winner.username} won room #${room.id}${winnerUserId === Number(playerA.user_id) ? ` and banked $${formatAmount(totalPot)}.` : '.'}`, '/casevs', { roomId: room.id, pot_amount: totalPot });
+                    notifyUser(playerB.user_id, 'casevs_finished', 'Case Vs finished', `${winner.username} won room #${room.id}${winnerUserId === Number(playerB.user_id) ? ` and banked $${formatAmount(totalPot)}.` : '.'}`, '/casevs', { roomId: room.id, pot_amount: totalPot });
+                    room.status = 'finished';
+                    room.winner_user_id = winnerUserId;
+                    room.winner_username = winner.username;
+                }
+
+                room.updated_at = new Date().toISOString();
+                writeJson(appDataPath, state);
+                writeCaseVsStore(store);
+                activeCaseVsJobs.delete(Number(roomId));
+            } catch (error) {
+                console.error('Case Vs background execution error:', error);
+                activeCaseVsJobs.delete(Number(roomId));
+            }
+        }, roundNumber === 1 ? delayMs : 1250);
+    };
+
+    executeRound(1);
 }
 
 function serializeCaseVsRoom(room) {
@@ -2368,77 +2965,21 @@ router.post('/casevs/rooms/:id/join', isAuthenticated, (req, res) => {
 
         room.players.push({ user_id: req.user.id, username: req.user.username, joined_at: new Date().toISOString() });
         room.status = 'rolling';
+        room.started_at = new Date().toISOString();
+        room.rounds_data = safeArray(room.rounds_data);
+        room.summary = null;
+        room.winner_user_id = null;
+        room.winner_username = null;
         room.updated_at = new Date().toISOString();
-
-        const caseInfo = db.prepare('SELECT * FROM cases WHERE id = ?').get(room.case_id);
-        const contents = db.prepare('SELECT * FROM case_contents WHERE case_id = ?').all(room.case_id);
-        const roundWins = {};
-        let bestPull = null;
 
         db.prepare('UPDATE users SET balance = balance - ? WHERE id = ?').run(entryCost, creator.id);
         db.prepare('UPDATE users SET balance = balance - ? WHERE id = ?').run(entryCost, joiner.id);
         db.prepare('INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)').run(creator.id, 'purchase', -entryCost, `Joined Case Vs room #${room.id}`);
         db.prepare('INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)').run(joiner.id, 'purchase', -entryCost, `Joined Case Vs room #${room.id}`);
 
-        for (let round = 1; round <= Number(room.rounds); round += 1) {
-            const pulls = room.players.map((player, index) => {
-                const seed = `${room.seed}-r${round}-p${index + 1}`;
-                const result = openCaseForUser({
-                    userId: player.user_id,
-                    username: player.username,
-                    caseInfo,
-                    contents,
-                    seed,
-                    source: 'case_vs',
-                    roomId: room.id
-                });
-                db.prepare('UPDATE cases SET times_opened = times_opened + 1 WHERE id = ?').run(room.case_id);
-                return {
-                    user_id: player.user_id,
-                    username: player.username,
-                    score: scoreResult(result),
-                    ...result
-                };
-            });
-            pulls.sort((a, b) => b.score - a.score || (RARITY_SCORE[b.rarity] - RARITY_SCORE[a.rarity]));
-            const roundWinner = pulls[0];
-            roundWins[roundWinner.user_id] = (roundWins[roundWinner.user_id] || 0) + 1;
-            if (!bestPull || roundWinner.score > bestPull.score) bestPull = roundWinner;
-            room.rounds_data.push({ round, winner_user_id: roundWinner.user_id, winner_username: roundWinner.username, pulls });
-        }
-
-        const [playerA, playerB] = room.players;
-        const winsA = roundWins[playerA.user_id] || 0;
-        const winsB = roundWins[playerB.user_id] || 0;
-        const winner = winsA === winsB ? bestPull : (winsA > winsB ? playerA : playerB);
-
-        room.winner_user_id = winner.user_id;
-        room.winner_username = winner.username;
-        room.status = 'finished';
-        room.updated_at = new Date().toISOString();
-        const totalPot = Number((entryCost * room.players.length).toFixed(2));
-        const winnerUserId = Number(winner.user_id);
-        const loserUserId = Number(playerA.user_id) === winnerUserId ? Number(playerB.user_id) : Number(playerA.user_id);
-        const state = readAppState();
-        const winningUser = safeArray(state.tables?.users).find((row) => Number(row.id) === winnerUserId);
-        if (winningUser) {
-            winningUser.balance = Number((Number(winningUser.balance || 0) + totalPot).toFixed(2));
-            winningUser.total_earned = Number((Number(winningUser.total_earned || 0) + totalPot).toFixed(2));
-            writeJson(appDataPath, state);
-        }
-        db.prepare('INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)').run(winnerUserId, 'casevs_win', totalPot, `Won Case Vs room #${room.id}`);
-        room.summary = {
-            wins: { [playerA.user_id]: winsA, [playerB.user_id]: winsB },
-            best_pull: bestPull,
-            pot_amount: totalPot,
-            loser_user_id: loserUserId
-        };
-
-        notifyUser(playerA.user_id, 'casevs_joined', 'Case Vs started', `${joiner.username} joined your room for ${room.case_name}.`, '/casevs', { roomId: room.id });
-        notifyUser(playerA.user_id, 'casevs_finished', 'Case Vs finished', `${room.winner_username} won room #${room.id}${winnerUserId === Number(playerA.user_id) ? ` and banked $${formatAmount(totalPot)}.` : '.'}`, '/casevs', { roomId: room.id, pot_amount: totalPot });
-        notifyUser(playerB.user_id, 'casevs_finished', 'Case Vs finished', `${room.winner_username} won room #${room.id}${winnerUserId === Number(playerB.user_id) ? ` and banked $${formatAmount(totalPot)}.` : '.'}`, '/casevs', { roomId: room.id, pot_amount: totalPot });
-
+        notifyUser(room.players[0].user_id, 'casevs_joined', 'Case Vs started', `${joiner.username} joined your room for ${room.case_name}.`, '/casevs', { roomId: room.id });
         writeCaseVsStore(store);
+        scheduleCaseVsRoomPlayback(room.id);
         res.json({ success: true, room: serializeCaseVsRoom(room) });
     } catch (error) {
         console.error('Case Vs join error:', error);
@@ -2493,7 +3034,7 @@ router.get('/community/chat', optionalAuth, (req, res) => {
             activeRain: getRainPublic(store.activeRain, req.user ? req.user.id : null),
             rainHistory: store.rainHistory.slice(0, 8),
             ownerUserId: getOwnerUserId(),
-            viewerIsAdmin: Boolean(req.user && isAdminUserId(req.user.id)),
+            viewerIsAdmin: Boolean(req.user && hasAdminAccess(req.user)),
             finalizedRain: finalized ? { id: finalized.id, title: finalized.title, entrant_count: finalized.entrant_count, distributed_amount: finalized.distributed_amount } : null,
             onlineCount: presence.online_count,
             typingUsers: presence.typing,
@@ -2538,7 +3079,7 @@ router.post('/community/chat', isAuthenticated, (req, res) => {
             user_id: req.user.id,
             username: req.user.username,
             display_name: getUserDisplayName(liveUser),
-            is_admin: isAdminUserId(req.user.id),
+            is_admin: hasAdminAccess(req.user),
             avatar_url: liveUser.avatar_url || null,
             region: liveUser.region || '',
             pronouns: liveUser.pronouns || '',
@@ -2564,7 +3105,7 @@ router.delete('/community/chat/:id', isAuthenticated, (req, res) => {
             return res.status(404).json({ error: 'Message not found' });
         }
         const message = store.messages[index];
-        const isOwner = Boolean(req.user && isAdminUserId(req.user.id));
+        const isOwner = Boolean(req.user && hasAdminAccess(req.user));
         const isAuthor = Boolean(req.user && Number(message.user_id) === Number(req.user.id));
         const recentEnough = Date.now() - new Date(message.created_at || 0).getTime() < 5 * 60 * 1000;
         if (!(isOwner || (isAuthor && recentEnough))) {
@@ -2625,6 +3166,9 @@ router.post('/community/rain/enter', isAuthenticated, (req, res) => {
 router.get('/claims/:code', optionalAuth, (req, res) => {
     try {
         const code = String(req.params.code || '').trim();
+        if (wantsHtmlResponse(req) || String(req.query.view || '').toLowerCase() === 'page') {
+            return res.sendFile(claimPagePath);
+        }
         const store = readCommunityStore();
         const claim = safeArray(store.claimDrops).find((entry) => entry.code === code && entry.status === 'active');
         if (!claim) return res.status(404).json({ error: 'Claim link not found' });
@@ -2744,16 +3288,25 @@ router.post('/admin/gist-backup/config', isAuthenticated, requireAdmin, async (r
         const current = loadGistBackupConfig();
         const next = {
             ...current,
-            token: normalizeText(req.body.token || current.token || '').slice(0, 300),
-            gistId: normalizeText(req.body.gistId || current.gistId || '').slice(0, 200),
             description: normalizeText(req.body.description || current.description || 'KatsuCases site data backup').slice(0, 200) || 'KatsuCases site data backup',
-            isPublic: Boolean(req.body.isPublic)
+            isPublic: req.body.isPublic === undefined ? Boolean(current.isPublic) : Boolean(req.body.isPublic),
+            autoSaveMinutes: req.body.autoSaveMinutes === undefined ? Number(current.autoSaveMinutes || 0) : Math.max(0, parseInt(req.body.autoSaveMinutes, 10) || 0),
+            maxVersions: req.body.maxVersions === undefined ? Number(current.maxVersions || 8) : Math.max(1, parseInt(req.body.maxVersions, 10) || 8)
         };
         saveGistBackupConfig(next);
-        res.json({ success: true, status: await getGistBackupStatus(next) });
+        res.json({ success: true, status: await getGistBackupStatus(loadGistBackupConfig()) });
     } catch (error) {
         console.error('Gist backup config error:', error);
         res.status(500).json({ error: error.message || 'Failed to save Gist backup config' });
+    }
+});
+
+router.get('/admin/gist-backup/versions', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+        res.json(await listGistBackupVersions(loadGistBackupConfig()));
+    } catch (error) {
+        console.error('Gist backup versions error:', error);
+        res.status(500).json({ error: error.message || 'Failed to load Gist backup versions' });
     }
 });
 
@@ -2761,10 +3314,9 @@ router.post('/admin/gist-backup/backup', isAuthenticated, requireAdmin, async (r
     try {
         const current = loadGistBackupConfig();
         const overrides = {
-            token: normalizeText(req.body.token || current.token || '').slice(0, 300),
-            gistId: normalizeText(req.body.gistId || current.gistId || '').slice(0, 200),
             description: normalizeText(req.body.description || current.description || 'KatsuCases site data backup').slice(0, 200) || 'KatsuCases site data backup',
-            isPublic: req.body.isPublic === undefined ? Boolean(current.isPublic) : Boolean(req.body.isPublic)
+            isPublic: req.body.isPublic === undefined ? Boolean(current.isPublic) : Boolean(req.body.isPublic),
+            maxVersions: req.body.maxVersions === undefined ? Number(current.maxVersions || 8) : Math.max(1, parseInt(req.body.maxVersions, 10) || 8)
         };
         const result = await runGistBackupNow(overrides);
         if (typeof db.reload === 'function') db.reload();
@@ -2777,10 +3329,8 @@ router.post('/admin/gist-backup/backup', isAuthenticated, requireAdmin, async (r
 
 router.post('/admin/gist-backup/restore', isAuthenticated, requireAdmin, async (req, res) => {
     try {
-        const ref = normalizeText(req.body.ref || req.body.gistId || '');
-        const result = await runGistRestoreNow(ref || '', {
-            token: normalizeText(req.body.token || loadGistBackupConfig().token || '').slice(0, 300)
-        });
+        const ref = normalizeText(req.body.ref || req.body.snapshotFile || '');
+        const result = await runGistRestoreNow(ref || '');
         if (typeof db.reload === 'function') db.reload();
         res.json({ success: true, result, status: await getGistBackupStatus(loadGistBackupConfig()) });
     } catch (error) {
@@ -2816,7 +3366,9 @@ router.get('/admin/summary', isAuthenticated, requireAdmin, (req, res) => {
             email: user.email,
             balance: Number(user.balance || 0),
             created_at: user.created_at,
-            is_admin: isAdminUserId(user.id)
+            is_admin: hasAdminAccess(user),
+            site_role: getUserSiteRole(user),
+            is_owner: isOwnerUserId(user.id)
         }));
 
         const recentTrades = trades.slice(0, 8).map((trade) => {
@@ -2904,6 +3456,218 @@ router.get('/admin/summary', isAuthenticated, requireAdmin, (req, res) => {
     }
 });
 
+
+router.get('/support/tickets', isAuthenticated, (req, res) => {
+    try {
+        const state = readAppState();
+        state.tables.support_tickets = safeArray(state.tables.support_tickets);
+        const tickets = state.tables.support_tickets
+            .filter((ticket) => Number(ticket.user_id) === Number(req.user.id))
+            .slice()
+            .sort((a, b) => String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || '')))
+            .map((ticket) => ({
+                ...ticket,
+                replies: safeArray(ticket.replies).filter((reply) => !reply.internal)
+            }));
+        res.json({ tickets });
+    } catch (error) {
+        console.error('Support tickets load error:', error);
+        res.status(500).json({ error: 'Failed to load support tickets' });
+    }
+});
+
+router.post('/support/tickets', isAuthenticated, (req, res) => {
+    try {
+        const subject = normalizeText(req.body.subject || '').slice(0, 120);
+        const category = normalizeText(req.body.category || 'general').slice(0, 40) || 'general';
+        const message = normalizeText(req.body.message || '').slice(0, 2000);
+        const priority = normalizeText(req.body.priority || 'normal').toLowerCase();
+        if (!subject || !message) {
+            return res.status(400).json({ error: 'Subject and message are required' });
+        }
+        const state = readAppState();
+        ensureStateMeta(state);
+        state.tables.support_tickets = safeArray(state.tables.support_tickets);
+        const ticket = {
+            id: nextStateId(state, 'support_tickets'),
+            user_id: Number(req.user.id),
+            username: req.user.username,
+            subject,
+            category,
+            priority,
+            status: 'open',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            replies: [buildSupportReply('user', req.user, message)]
+        };
+        state.tables.support_tickets.unshift(ticket);
+        writeJson(appDataPath, state);
+        res.json({ success: true, ticket });
+    } catch (error) {
+        console.error('Support ticket create error:', error);
+        res.status(500).json({ error: 'Failed to create support ticket' });
+    }
+});
+
+router.post('/support/tickets/:id/reply', isAuthenticated, (req, res) => {
+    try {
+        const ticketId = Number(req.params.id);
+        const message = normalizeText(req.body.message || '').slice(0, 2000);
+        if (!message) return res.status(400).json({ error: 'Reply message is required' });
+        const state = readAppState();
+        state.tables.support_tickets = safeArray(state.tables.support_tickets);
+        const ticket = state.tables.support_tickets.find((row) => Number(row.id) === ticketId && Number(row.user_id) === Number(req.user.id));
+        if (!ticket) return res.status(404).json({ error: 'Support ticket not found' });
+        ticket.replies = safeArray(ticket.replies);
+        ticket.replies.push(buildSupportReply('user', req.user, message));
+        ticket.status = ticket.status === 'closed' ? 'customer-replied' : ticket.status;
+        ticket.updated_at = new Date().toISOString();
+        writeJson(appDataPath, state);
+        res.json({ success: true, ticket: { ...ticket, replies: safeArray(ticket.replies).filter((reply) => !reply.internal) } });
+    } catch (error) {
+        console.error('Support ticket reply error:', error);
+        res.status(500).json({ error: 'Failed to reply to support ticket' });
+    }
+});
+
+router.get('/admin/support/tickets', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const status = normalizeText(req.query.status || '').toLowerCase();
+        const query = normalizeText(req.query.query || req.query.q || '').toLowerCase();
+        const tickets = safeArray(getTable('support_tickets'))
+            .filter((ticket) => !status || String(ticket.status || '').toLowerCase() === status)
+            .filter((ticket) => !query || [ticket.subject, ticket.username, ticket.category].some((value) => String(value || '').toLowerCase().includes(query)))
+            .slice()
+            .sort((a, b) => String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || '')));
+        res.json({ tickets });
+    } catch (error) {
+        console.error('Admin support tickets load error:', error);
+        res.status(500).json({ error: 'Failed to load support tickets' });
+    }
+});
+
+router.post('/admin/support/tickets/:id/reply', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const ticketId = Number(req.params.id);
+        const message = normalizeText(req.body.message || '').slice(0, 2000);
+        const internal = Boolean(req.body.internal);
+        if (!message) return res.status(400).json({ error: 'Reply message is required' });
+        const state = readAppState();
+        state.tables.support_tickets = safeArray(state.tables.support_tickets);
+        const ticket = state.tables.support_tickets.find((row) => Number(row.id) === ticketId);
+        if (!ticket) return res.status(404).json({ error: 'Support ticket not found' });
+        ticket.replies = safeArray(ticket.replies);
+        ticket.replies.push(buildSupportReply('admin', req.user, message, internal));
+        ticket.status = internal ? ticket.status : 'awaiting-user';
+        ticket.updated_at = new Date().toISOString();
+        writeJson(appDataPath, state);
+        if (!internal) notifyUser(ticket.user_id, 'support_reply', 'Support replied', `Support replied to ticket #${ticket.id}: ${ticket.subject}`, '/support');
+        res.json({ success: true, ticket });
+    } catch (error) {
+        console.error('Admin support reply error:', error);
+        res.status(500).json({ error: 'Failed to reply to support ticket' });
+    }
+});
+
+router.post('/admin/support/tickets/:id/status', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const ticketId = Number(req.params.id);
+        const status = normalizeText(req.body.status || '').toLowerCase();
+        if (!['open', 'pending', 'awaiting-user', 'resolved', 'closed', 'customer-replied'].includes(status)) {
+            return res.status(400).json({ error: 'Invalid support ticket status' });
+        }
+        const state = readAppState();
+        state.tables.support_tickets = safeArray(state.tables.support_tickets);
+        const ticket = state.tables.support_tickets.find((row) => Number(row.id) === ticketId);
+        if (!ticket) return res.status(404).json({ error: 'Support ticket not found' });
+        ticket.status = status;
+        ticket.updated_at = new Date().toISOString();
+        writeJson(appDataPath, state);
+        notifyUser(ticket.user_id, 'support_status', 'Support ticket updated', `Your support ticket #${ticket.id} is now marked ${status}.`, '/support');
+        res.json({ success: true, ticket });
+    } catch (error) {
+        console.error('Admin support status error:', error);
+        res.status(500).json({ error: 'Failed to update support ticket status' });
+    }
+});
+
+router.get('/admin/platform/config', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const state = readAppState();
+        const config = ensureStateMeta(state);
+        writeJson(appDataPath, state);
+        res.json({ config });
+    } catch (error) {
+        console.error('Admin platform config load error:', error);
+        res.status(500).json({ error: 'Failed to load platform config' });
+    }
+});
+
+router.post('/admin/platform/config', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const state = readAppState();
+        const config = ensureStateMeta(state);
+        if (req.body.offline_roll_interval_minutes !== undefined) {
+            config.offline_roll_interval_minutes = Math.max(15, parseInt(req.body.offline_roll_interval_minutes, 10) || OFFLINE_ROLL_DEFAULTS.interval_minutes);
+        }
+        if (req.body.offline_roll_cap !== undefined) {
+            config.offline_roll_cap = Math.max(1, parseInt(req.body.offline_roll_cap, 10) || OFFLINE_ROLL_DEFAULTS.cap);
+        }
+        if (req.body.gist_backup_max_versions !== undefined) {
+            config.gist_backup_max_versions = Math.max(1, parseInt(req.body.gist_backup_max_versions, 10) || 8);
+        }
+        writeJson(appDataPath, state);
+        res.json({ success: true, config });
+    } catch (error) {
+        console.error('Admin platform config save error:', error);
+        res.status(500).json({ error: 'Failed to save platform config' });
+    }
+});
+
+router.get('/admin/users/:id/snapshots', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const targetId = Number(req.params.id);
+        res.json({ snapshots: summarizeAccountSnapshots(targetId, 30) });
+    } catch (error) {
+        console.error('Admin user snapshots error:', error);
+        res.status(500).json({ error: 'Failed to load account snapshots' });
+    }
+});
+
+router.post('/admin/users/:id/snapshots', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const targetId = Number(req.params.id);
+        const state = readAppState();
+        const snapshot = buildUserAccountSnapshot(state, targetId, {
+            actorId: req.user.id,
+            reason: normalizeText(req.body.reason || 'Manual admin snapshot').slice(0, 160),
+            label: normalizeText(req.body.label || 'Manual snapshot').slice(0, 80)
+        });
+        if (!snapshot) return res.status(404).json({ error: 'User not found' });
+        writeJson(appDataPath, state);
+        res.json({ success: true, snapshot: { id: snapshot.id, created_at: snapshot.created_at, reason: snapshot.reason, label: snapshot.label } });
+    } catch (error) {
+        console.error('Admin snapshot create error:', error);
+        res.status(500).json({ error: 'Failed to create account snapshot' });
+    }
+});
+
+router.post('/admin/users/:id/rollback/:snapshotId', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const targetId = Number(req.params.id);
+        const snapshotId = Number(req.params.snapshotId);
+        const state = readAppState();
+        const restored = restoreUserAccountSnapshot(state, targetId, snapshotId);
+        if (!restored) return res.status(404).json({ error: 'Snapshot not found' });
+        writeJson(appDataPath, state);
+        notifyUser(targetId, 'account_rollback', 'Account restored', 'Your account was restored to a previous backup version by the site owner.', '/profile');
+        res.json({ success: true, restored: { id: restored.id, created_at: restored.created_at, reason: restored.reason, label: restored.label } });
+    } catch (error) {
+        console.error('Admin rollback error:', error);
+        res.status(500).json({ error: 'Failed to restore account snapshot' });
+    }
+});
+
 router.get('/admin/users/search', isAuthenticated, requireAdmin, (req, res) => {
     try {
         const query = String(req.query.query ?? req.query.q ?? '').trim();
@@ -2912,6 +3676,16 @@ router.get('/admin/users/search', isAuthenticated, requireAdmin, (req, res) => {
     } catch (error) {
         console.error('Admin user search error:', error);
         res.status(500).json({ error: 'Failed to search users' });
+    }
+});
+
+router.get('/admin/security/ban-evasion', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const state = readAppState();
+        res.json({ flags: listBanEvasionFlags(state, 40) });
+    } catch (error) {
+        console.error('Ban evasion flags error:', error);
+        res.status(500).json({ error: 'Failed to load ban evasion flags' });
     }
 });
 
@@ -2946,6 +3720,7 @@ router.post('/admin/users/:id/balance', isAuthenticated, requireAdmin, (req, res
         if (!targetRow) {
             return res.status(404).json({ error: 'User not found' });
         }
+        buildUserAccountSnapshot(state, targetId, { actorId: req.user.id, reason: reason, label: 'Balance adjustment' });
         targetRow.balance = newBalance;
         writeJson(appDataPath, state);
         notifyUser(targetId, 'admin_balance', 'Balance updated', `Your balance was ${mode === 'set' ? 'set' : 'adjusted'} by the site owner.`, '/', { amount: changeAmount, mode, reason });
@@ -2965,6 +3740,20 @@ router.post('/admin/users/:id/roles', isAuthenticated, requireAdmin, (req, res) 
         if (!userRow) return res.status(404).json({ error: 'User not found' });
         const badge = normalizeBadgeKey(req.body.badge || '');
         const customRole = normalizeText(req.body.custom_role || req.body.customRole || '').slice(0, 32);
+        const requestedSiteRoleRaw = req.body.site_role !== undefined ? req.body.site_role : req.body.siteRole;
+        const requestedSiteRole = requestedSiteRoleRaw === undefined ? null : normalizeSiteRole(requestedSiteRoleRaw);
+        const isRequesterOwner = isOwnerUserId(req.user.id);
+        const targetSiteRole = getUserSiteRole(userRow);
+        if (requestedSiteRole !== null && !isRequesterOwner) {
+            return res.status(403).json({ error: 'Only the site owner can change admin access levels' });
+        }
+        if (Number(targetId) === Number(getOwnerUserId()) && requestedSiteRole !== null) {
+            return res.status(400).json({ error: 'The site owner role is locked and cannot be changed' });
+        }
+        if (!isRequesterOwner && (targetSiteRole === 'admin' || targetSiteRole === 'co_owner' || targetSiteRole === 'owner')) {
+            return res.status(403).json({ error: 'Only the site owner can change elevated staff accounts' });
+        }
+        buildUserAccountSnapshot(state, targetId, { actorId: req.user.id, reason: 'Admin user meta update', label: 'User role update' });
         const region = normalizeText(req.body.region || '').slice(0, 40);
         const freeRolls = req.body.free_rolls === undefined ? null : Math.max(0, parseInt(req.body.free_rolls, 10) || 0);
         const mode = normalizeText(req.body.mode || 'add').toLowerCase();
@@ -2982,9 +3771,10 @@ router.post('/admin/users/:id/roles', isAuthenticated, requireAdmin, (req, res) 
         if (region) userRow.region = region;
         if (req.body.clear_region) userRow.region = '';
         if (freeRolls !== null) userRow.free_rolls = freeRolls;
+        if (requestedSiteRole !== null) userRow.site_role = requestedSiteRole;
         writeJson(appDataPath, state);
-        notifyUser(targetId, 'admin_role', 'Profile role updated', 'Your account badges, role, or bonus rolls were updated by the site owner.', '/profile', { badge, customRole, region, freeRolls });
-        res.json({ success: true, user: { ...userRow, pity: getPitySummaryForUser(userRow) } });
+        notifyUser(targetId, 'admin_role', 'Profile role updated', 'Your account badges, role, or admin access were updated by the site owner.', '/profile', { badge, customRole, region, freeRolls, siteRole: getUserSiteRole(userRow) });
+        res.json({ success: true, user: { ...userRow, site_role: getUserSiteRole(userRow), is_owner: isOwnerUserId(userRow.id), is_admin: hasAdminAccess(userRow), pity: getPitySummaryForUser(userRow) } });
     } catch (error) {
         console.error('Admin role update error:', error);
         res.status(500).json({ error: 'Failed to update user badges or role' });
@@ -3007,6 +3797,352 @@ router.post('/admin/users/:id/pity/reset', isAuthenticated, requireAdmin, (req, 
     }
 });
 
+
+router.post('/admin/users/:id/status', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const targetId = Number(req.params.id);
+        const status = normalizeText(req.body.status || 'active').toLowerCase();
+        const reason = normalizeText(req.body.reason || 'Owner account status update').slice(0, 160) || 'Owner account status update';
+        const requestedByOwner = isOwnerUserId(req.user.id);
+        if (!['active', 'suspended'].includes(status)) {
+            return res.status(400).json({ error: 'Invalid account status' });
+        }
+        if (Number(targetId) === Number(getOwnerUserId())) {
+            return res.status(400).json({ error: 'The site owner cannot suspend or ban their own account' });
+        }
+        const state = readAppState();
+        const userRow = safeArray(state.tables?.users).find((row) => Number(row.id) === targetId);
+        if (!userRow) return res.status(404).json({ error: 'User not found' });
+        const targetRole = getUserSiteRole(userRow);
+        if (!requestedByOwner && (targetRole === 'admin' || targetRole === 'co_owner' || targetRole === 'owner')) {
+            return res.status(403).json({ error: 'Only the site owner can moderate elevated staff accounts' });
+        }
+        buildUserAccountSnapshot(state, targetId, { actorId: req.user.id, reason, label: 'Account status change' });
+        ensureUserAccountDefaults(userRow);
+        const wasElevated = ['admin', 'co_owner', 'owner'].includes(targetRole);
+        let demotedToPlayer = false;
+        userRow.account_status = status;
+        userRow.force_logout_at = new Date().toISOString();
+        userRow.force_logout_reason = status === 'suspended' ? 'staff_ban' : 'staff_session_reset';
+        if (status === 'suspended' && requestedByOwner && wasElevated && !isOwnerUserId(userRow.id)) {
+            userRow.site_role = 'player';
+            demotedToPlayer = true;
+        }
+        writeJson(appDataPath, state);
+        if (status === 'suspended') {
+            notifyUser(targetId, 'account_status', 'Account suspended', demotedToPlayer ? 'Your account was suspended and demoted back to player access by the site owner.' : 'Your account was suspended by the site owner.', '/support', { reason, demoted_to_player: demotedToPlayer });
+        } else {
+            notifyUser(targetId, 'account_status', 'Account reactivated', 'Your account is active again.', '/profile', { reason });
+        }
+        res.json({ success: true, demoted_to_player: demotedToPlayer, user: { id: userRow.id, username: userRow.username, account_status: userRow.account_status, site_role: getUserSiteRole(userRow) } });
+    } catch (error) {
+        console.error('Admin account status error:', error);
+        res.status(500).json({ error: 'Failed to update account status' });
+    }
+});
+
+router.get('/admin/trades', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const status = normalizeText(req.query.status || '').toLowerCase();
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 24, 1), 60);
+        const trades = getTable('trades')
+            .filter((trade) => !status || String(trade.status || '').toLowerCase() === status)
+            .slice()
+            .sort((a, b) => String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || '')))
+            .slice(0, limit)
+            .map((trade) => {
+                const items = getTable('trade_items').filter((item) => Number(item.trade_id) === Number(trade.id));
+                const offeredItems = items.filter((item) => Number(item.from_user) === Number(trade.sender_id));
+                const requestedItems = items.filter((item) => Number(item.from_user) === Number(trade.receiver_id));
+                const fairness = computeTradeSummaryFromItems(
+                    offeredItems.map((item) => enrichInventoryLikeItem(item, { odds: item.odds })),
+                    requestedItems.map((item) => enrichInventoryLikeItem(item, { odds: item.odds }))
+                );
+                return {
+                    ...trade,
+                    offeredItems,
+                    requestedItems,
+                    offer_count: offeredItems.length,
+                    request_count: requestedItems.length,
+                    fairness
+                };
+            });
+        res.json({ trades });
+    } catch (error) {
+        console.error('Admin trades load error:', error);
+        res.status(500).json({ error: 'Failed to load trades' });
+    }
+});
+
+router.post('/admin/trades/:id/cancel', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const tradeId = Number(req.params.id);
+        const reason = normalizeText(req.body.reason || 'Cancelled by site owner').slice(0, 160) || 'Cancelled by site owner';
+        const trade = db.prepare('SELECT * FROM trades WHERE id = ?').get(tradeId);
+        if (!trade) return res.status(404).json({ error: 'Trade not found' });
+        if (String(trade.status || '').toLowerCase() !== 'pending') {
+            return res.status(400).json({ error: 'Only pending trades can be cancelled' });
+        }
+        const state = readAppState();
+        const row = safeArray(state.tables?.trades).find((entry) => Number(entry.id) === tradeId);
+        if (!row) return res.status(404).json({ error: 'Trade not found' });
+        row.status = 'cancelled';
+        row.updated_at = new Date().toISOString();
+        writeJson(appDataPath, state);
+        notifyUser(trade.sender_id, 'trade_cancelled', 'Trade cancelled', `Trade #${tradeId} was cancelled by the site owner.`, '/trading', { tradeId, reason });
+        notifyUser(trade.receiver_id, 'trade_cancelled', 'Trade cancelled', `Trade #${tradeId} was cancelled by the site owner.`, '/trading', { tradeId, reason });
+        res.json({ success: true, trade: row });
+    } catch (error) {
+        console.error('Admin trade cancel error:', error);
+        res.status(500).json({ error: 'Failed to cancel trade' });
+    }
+});
+
+router.post('/admin/users/:id/password-reset', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+        const targetId = Number(req.params.id);
+        const state = readAppState();
+        ensureStateMeta(state);
+        if (!Array.isArray(state.meta.password_reset_tokens)) state.meta.password_reset_tokens = [];
+        const userRow = safeArray(state.tables?.users).find((row) => Number(row.id) === targetId);
+        if (!userRow) return res.status(404).json({ error: 'User not found' });
+        const otp = crypto.randomBytes(4).toString('hex').toUpperCase();
+        const token = crypto.randomBytes(24).toString('hex');
+        const entry = {
+            token,
+            otp,
+            user_id: targetId,
+            actor: 'admin',
+            kind: 'owner-otp-reset',
+            created_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+            used_at: null
+        };
+        state.meta.password_reset_tokens = safeArray(state.meta.password_reset_tokens).filter((existing) => Number(existing.user_id) !== targetId || existing.used_at);
+        state.meta.password_reset_tokens.push(entry);
+        writeJson(appDataPath, state);
+        notifyUser(targetId, 'password_reset', 'Password reset issued', 'A temporary password reset code was issued for your account by the site owner.', '/reset-password');
+        res.json({
+            success: true,
+            otp,
+            token,
+            reset_url: `/reset-password?token=${encodeURIComponent(token)}`,
+            expires_at: entry.expires_at,
+            user: { id: userRow.id, username: userRow.username, email: userRow.email }
+        });
+    } catch (error) {
+        console.error('Admin password reset error:', error);
+        res.status(500).json({ error: 'Failed to create password reset OTP' });
+    }
+});
+
+
+router.get('/admin/cases/manage', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const cases = getTable('cases')
+            .slice()
+            .sort((a, b) => Number(b.is_featured || 0) - Number(a.is_featured || 0) || String(a.name || '').localeCompare(String(b.name || '')))
+            .map((caseRow) => ({
+                ...caseRow,
+                total_items: dedupeCaseContents(getTable('case_contents').filter((entry) => Number(entry.case_id) === Number(caseRow.id))).length,
+                is_live: isCaseLive(caseRow)
+            }));
+        res.json({ cases });
+    } catch (error) {
+        console.error('Admin case manager load error:', error);
+        res.status(500).json({ error: 'Failed to load admin case manager' });
+    }
+});
+
+router.post('/admin/cases/:id/update', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const caseId = Number(req.params.id);
+        const state = readAppState();
+        const caseRow = safeArray(state.tables?.cases).find((row) => Number(row.id) === caseId);
+        if (!caseRow) return res.status(404).json({ error: 'Case not found' });
+
+        const name = normalizeText(req.body.name).slice(0, 80);
+        const description = normalizeText(req.body.description).slice(0, 180);
+        const category = normalizeText(req.body.category).slice(0, 40);
+        const priceValue = req.body.price === undefined || req.body.price === null || req.body.price === '' ? null : Number(req.body.price);
+        const launchAtRaw = normalizeText(req.body.launch_at || req.body.launchAt || '');
+        const imageColor = normalizeText(req.body.image_color || req.body.imageColor || '').slice(0, 20);
+        const rotationName = normalizeText(req.body.rotation_name || req.body.rotationName || '').slice(0, 40);
+        const rotationStartsAt = normalizeText(req.body.rotation_starts_at || req.body.rotationStartsAt || '');
+        const rotationEndsAt = normalizeText(req.body.rotation_ends_at || req.body.rotationEndsAt || '');
+
+        if (name) caseRow.name = name;
+        if (description) caseRow.description = description;
+        if (category) caseRow.category = category;
+        if (priceValue !== null) {
+            if (!(priceValue > 0)) return res.status(400).json({ error: 'Case price must be greater than 0' });
+            caseRow.price = Number(priceValue.toFixed(2));
+        }
+        if (launchAtRaw || req.body.clear_launch_at) {
+            caseRow.launch_at = req.body.clear_launch_at ? null : launchAtRaw;
+        }
+        if (imageColor) caseRow.image_color = imageColor;
+        if (rotationName || req.body.clear_rotation_name) caseRow.rotation_name = req.body.clear_rotation_name ? '' : rotationName;
+        if (rotationStartsAt || req.body.clear_rotation_starts_at) caseRow.rotation_starts_at = req.body.clear_rotation_starts_at ? null : rotationStartsAt;
+        if (rotationEndsAt || req.body.clear_rotation_ends_at) caseRow.rotation_ends_at = req.body.clear_rotation_ends_at ? null : rotationEndsAt;
+        if (req.body.is_featured !== undefined) caseRow.is_featured = Number(req.body.is_featured ? 1 : 0);
+        if (req.body.is_hidden !== undefined) caseRow.is_hidden = Number(req.body.is_hidden ? 1 : 0);
+
+        writeJson(appDataPath, state);
+        res.json({ success: true, case: { ...caseRow, is_live: isCaseLive(caseRow) } });
+    } catch (error) {
+        console.error('Admin case update error:', error);
+        res.status(500).json({ error: error.message || 'Failed to update case' });
+    }
+});
+
+
+router.post('/admin/cases/:id/clone', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const caseId = Number(req.params.id);
+        const state = readAppState();
+        ensureStateMeta(state);
+        const sourceCase = safeArray(state.tables?.cases).find((row) => Number(row.id) === caseId);
+        if (!sourceCase) return res.status(404).json({ error: 'Case not found' });
+        const sourceContents = dedupeCaseContents(safeArray(state.tables?.case_contents).filter((row) => Number(row.case_id) === caseId));
+        const newCaseId = nextStateId(state, 'cases');
+        const cloneName = normalizeText(req.body.name || `${sourceCase.name} Clone`).slice(0, 80) || `${sourceCase.name} Clone`;
+        const clonedCase = {
+            ...JSON.parse(JSON.stringify(sourceCase)),
+            id: newCaseId,
+            name: cloneName,
+            times_opened: 0,
+            created_at: new Date().toISOString(),
+            launch_at: null,
+            is_hidden: 1,
+            is_featured: 0
+        };
+        state.tables.cases = safeArray(state.tables.cases);
+        state.tables.case_contents = safeArray(state.tables.case_contents);
+        state.tables.cases.push(clonedCase);
+        sourceContents.forEach((item) => {
+            state.tables.case_contents.push({
+                ...JSON.parse(JSON.stringify(item)),
+                id: nextStateId(state, 'case_contents'),
+                case_id: newCaseId
+            });
+        });
+        writeJson(appDataPath, state);
+        res.json({ success: true, case: clonedCase });
+    } catch (error) {
+        console.error('Admin case clone error:', error);
+        res.status(500).json({ error: 'Failed to clone case' });
+    }
+});
+
+router.post('/admin/cases/:id/dedupe', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const caseId = Number(req.params.id);
+        const state = readAppState();
+        const contents = safeArray(state.tables?.case_contents).filter((row) => Number(row.case_id) === caseId);
+        const deduped = dedupeCaseContents(contents);
+        if (!deduped.length) return res.status(404).json({ error: 'Case not found or no case contents available' });
+        const removed = contents.length - deduped.length;
+        state.tables.case_contents = safeArray(state.tables.case_contents).filter((row) => Number(row.case_id) !== caseId).concat(deduped);
+        writeJson(appDataPath, state);
+        res.json({ success: true, removed_duplicates: Math.max(0, removed), total_items: deduped.length });
+    } catch (error) {
+        console.error('Admin case dedupe error:', error);
+        res.status(500).json({ error: 'Failed to dedupe case contents' });
+    }
+});
+
+router.post('/admin/cases/:id/delete', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const caseId = Number(req.params.id);
+        const state = readAppState();
+        const caseRow = safeArray(state.tables?.cases).find((row) => Number(row.id) === caseId);
+        if (!caseRow) return res.status(404).json({ error: 'Case not found' });
+        state.tables.cases = safeArray(state.tables.cases).filter((row) => Number(row.id) !== caseId);
+        state.tables.case_contents = safeArray(state.tables.case_contents).filter((row) => Number(row.case_id) !== caseId);
+        writeJson(appDataPath, state);
+        res.json({ success: true, deleted_case_id: caseId });
+    } catch (error) {
+        console.error('Admin case delete error:', error);
+        res.status(500).json({ error: 'Failed to delete case' });
+    }
+});
+
+router.post('/admin/users/:id/grant-item', isAuthenticated, requireAdmin, (req, res) => {
+    try {
+        const targetId = Number(req.params.id);
+        const state = readAppState();
+        const userRow = safeArray(state.tables?.users).find((row) => Number(row.id) === targetId);
+        if (!userRow) return res.status(404).json({ error: 'User not found' });
+        buildUserAccountSnapshot(state, targetId, { actorId: req.user.id, reason: 'Admin item grant', label: 'Item grant' });
+
+        const pokemonName = normalizeText(req.body.pokemon_name || req.body.pokemonName).slice(0, 60);
+        const pokemonForm = normalizeText(req.body.pokemon_form || req.body.pokemonForm || '').slice(0, 40) || null;
+        const rarity = normalizeText(req.body.rarity || 'rare').toLowerCase();
+        const odds = Math.max(1, Number(req.body.odds || 100));
+        const isShiny = Number(req.body.is_shiny || req.body.isShiny || 0) ? 1 : 0;
+        const sourceLabel = normalizeText(req.body.source_label || req.body.sourceLabel || 'Admin grant').slice(0, 80) || 'Admin grant';
+        const spriteUrl = buildSpriteUrl(pokemonName, req.body.sprite_url || req.body.spriteUrl || '');
+
+        if (!pokemonName) return res.status(400).json({ error: 'Pokémon name is required' });
+
+        if (!state.meta) state.meta = { nextIds: {} };
+        if (!state.meta.nextIds) state.meta.nextIds = {};
+        state.tables.inventory = safeArray(state.tables.inventory);
+        state.tables.openings = safeArray(state.tables.openings);
+
+        const inventoryId = Number(state.meta.nextIds.inventory || 1);
+        state.meta.nextIds.inventory = inventoryId + 1;
+        const openingId = Number(state.meta.nextIds.openings || 1);
+        state.meta.nextIds.openings = openingId + 1;
+        const acquiredAt = new Date().toISOString();
+        const value = computeEstimatedValue({ odds, rarity, is_shiny: isShiny, casePrice: 6.99 });
+
+        state.tables.inventory.push({
+            id: inventoryId,
+            user_id: targetId,
+            case_id: 0,
+            pokemon_name: pokemonName,
+            pokemon_form: pokemonForm,
+            rarity,
+            sprite_url: spriteUrl,
+            is_shiny: isShiny,
+            is_listed: 0,
+            listed_price: null,
+            acquired_at: acquiredAt,
+            estimated_value: value,
+            original_owner_id: targetId,
+            original_owner_username: userRow.username,
+            odds
+        });
+
+        state.tables.openings.push({
+            id: openingId,
+            user_id: targetId,
+            username: userRow.username,
+            case_id: 0,
+            case_name: sourceLabel,
+            item_id: inventoryId,
+            pokemon_name: pokemonName,
+            pokemon_form: pokemonForm,
+            rarity,
+            sprite_url: spriteUrl,
+            is_shiny: isShiny,
+            amount_paid: 0,
+            is_public: 1,
+            opened_at: acquiredAt,
+            seed: `admin-${Date.now()}-${inventoryId}`
+        });
+
+        writeJson(appDataPath, state);
+        notifyUser(targetId, 'admin_grant', 'Pokémon added', `${pokemonName}${pokemonForm ? ` (${pokemonForm})` : ''} was added to your inventory by the site owner.`, '/inventory', { rarity, isShiny, sourceLabel });
+        res.json({ success: true, item: enrichInventoryLikeItem(state.tables.inventory.find((entry) => Number(entry.id) === inventoryId), { odds, case_id: 0 }) });
+    } catch (error) {
+        console.error('Admin grant item error:', error);
+        res.status(500).json({ error: error.message || 'Failed to grant Pokémon item' });
+    }
+});
+
 router.post('/admin/cases', isAuthenticated, requireAdmin, (req, res) => {
     try {
         const name = normalizeText(req.body.name).slice(0, 60);
@@ -3015,6 +4151,9 @@ router.post('/admin/cases', isAuthenticated, requireAdmin, (req, res) => {
         const imageColor = normalizeText(req.body.image_color || req.body.imageColor || '#8b5cf6') || '#8b5cf6';
         const price = Number(req.body.price || 0);
         const launchAt = normalizeText(req.body.launch_at || req.body.launchAt || '');
+        const rotationName = normalizeText(req.body.rotation_name || req.body.rotationName || '').slice(0, 40);
+        const rotationStartsAt = normalizeText(req.body.rotation_starts_at || req.body.rotationStartsAt || '');
+        const rotationEndsAt = normalizeText(req.body.rotation_ends_at || req.body.rotationEndsAt || '');
         const itemsText = String(req.body.items_text || req.body.itemsText || '').trim();
         if (!name || !(price > 0)) {
             return res.status(400).json({ error: 'Case name and positive price are required' });
@@ -3023,16 +4162,22 @@ router.post('/admin/cases', isAuthenticated, requireAdmin, (req, res) => {
         if (lines.length < 3) {
             return res.status(400).json({ error: 'Add at least 3 case item lines using Name|rarity|odds|shiny(optional)|form(optional)' });
         }
-        const parsedItems = lines.map((line) => {
+        const parsedItems = dedupeCaseContents(lines.map((line) => {
             const parts = line.split('|').map((part) => part.trim());
-            const pokemonName = parts[0];
+            const pokemon_name = parts[0];
             const rarity = (parts[1] || 'rare').toLowerCase();
             const odds = Math.max(Number(parts[2] || 100), 1);
-            const shiny = /^(1|true|yes|shiny)$/i.test(parts[3] || '') ? 1 : 0;
-            const form = parts[4] || null;
-            if (!pokemonName) throw new Error('Every line needs a Pokémon name');
-            return { pokemonName, rarity, odds, shiny, form };
-        });
+            const is_shiny = /^(1|true|yes|shiny)$/i.test(parts[3] || '') ? 1 : 0;
+            const pokemon_form = parts[4] || null;
+            if (!pokemon_name) throw new Error('Every line needs a Pokémon name');
+            return { pokemon_name, rarity, odds, is_shiny, pokemon_form };
+        })).map((item) => ({
+            pokemonName: item.pokemon_name,
+            rarity: item.rarity,
+            odds: item.odds,
+            shiny: item.is_shiny,
+            form: item.pokemon_form
+        }));
         const state = readAppState();
         if (!state.meta) state.meta = { nextIds: {} };
         if (!state.meta.nextIds) state.meta.nextIds = {};
@@ -3055,6 +4200,9 @@ router.post('/admin/cases', isAuthenticated, requireAdmin, (req, res) => {
             times_opened: 0,
             created_at: new Date().toISOString(),
             launch_at: launchAt || null,
+            rotation_name: rotationName || '',
+            rotation_starts_at: rotationStartsAt || null,
+            rotation_ends_at: rotationEndsAt || null,
             is_hidden: 0
         };
         state.tables.cases.push(caseRow);
@@ -3131,7 +4279,7 @@ router.post('/admin/claims', isAuthenticated, requireAdmin, (req, res) => {
             meta: { code, type }
         });
         writeCommunityStore(store);
-        res.json({ success: true, claim, url: `/api/claims/${code}` });
+        res.json({ success: true, claim, url: `/claims/${code}`, api_url: `/api/claims/${code}` });
     } catch (error) {
         console.error('Admin claim create error:', error);
         res.status(500).json({ error: 'Failed to create claim link' });

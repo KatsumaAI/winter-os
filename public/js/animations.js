@@ -77,9 +77,9 @@ function shouldUsePerformanceMode() {
 
 function getRollProfile() {
     if (shouldUsePerformanceMode()) {
-        return { slots: 40, intro: 140, lead: 3000, tension: 560, near: 190, settle: 320, revealPause: 140, epicParticles: 8, legendaryParticles: 12, mythicalParticles: 16, streaks: 8 };
+        return { slots: 28, intro: 90, lead: 1680, tension: 320, near: 120, settle: 180, revealPause: 90, epicParticles: 6, legendaryParticles: 9, mythicalParticles: 12, streaks: 6 };
     }
-    return { slots: 46, intro: 180, lead: 3580, tension: 720, near: 240, settle: 420, revealPause: 180, epicParticles: 12, legendaryParticles: 18, mythicalParticles: 24, streaks: 12 };
+    return { slots: 34, intro: 120, lead: 2200, tension: 430, near: 150, settle: 240, revealPause: 120, epicParticles: 10, legendaryParticles: 14, mythicalParticles: 18, streaks: 9 };
 }
 
 function readTranslateX(element) {
@@ -185,6 +185,67 @@ function buildReplayTrack(pool, winner, slots = getRollProfile().slots) {
     return track;
 }
 
+function buildDetailedSlotMarkup(result, rarity, isJackpot, isChase) {
+    const rarityLabel = String(rarity).toUpperCase();
+    const auraLabel = result?.is_shiny
+        ? '<i class="ri-sparkling-2-fill"></i><span>Shiny Aura</span>'
+        : isJackpot
+            ? '<i class="ri-vip-diamond-fill"></i><span>Jackpot Aura</span>'
+            : isChase
+                ? '<i class="ri-flashlight-fill"></i><span>Chase Aura</span>'
+                : '<i class="ri-radio-button-line"></i><span>Standard Aura</span>';
+    const signalLabel = isJackpot
+        ? '<i class="ri-vip-crown-2-fill"></i><span>Destiny Lock</span>'
+        : isChase
+            ? '<i class="ri-meteor-fill"></i><span>Surge Hit</span>'
+            : '<i class="ri-focus-3-line"></i><span>Lane Stable</span>';
+    return `
+        <span class="roller-slot-frame"></span>
+        <span class="roller-slot-corner corner-a"></span>
+        <span class="roller-slot-corner corner-b"></span>
+        <span class="roller-slot-corner corner-c"></span>
+        <span class="roller-slot-corner corner-d"></span>
+        <span class="roller-slot-orb"></span>
+        <div class="roller-slot-topbar">
+            <span class="roller-slot-tier tier-${rarity}">${rarityLabel}</span>
+            <span class="roller-slot-tier-meta">${auraLabel}</span>
+        </div>
+        <div class="roller-slot-sprite-wrap ${result?.is_shiny ? 'shiny' : ''}">
+            <span class="roller-slot-sprite-ring ring-a"></span>
+            <span class="roller-slot-sprite-ring ring-b"></span>
+            ${result?.is_shiny ? '<span class="roller-slot-shiny-flare"></span>' : ''}
+            ${KatsuCases.buildSpriteImg({ pokemonName: result?.pokemon_name, isShiny: result?.is_shiny, spriteUrl: result?.sprite_url, alt: result?.pokemon_name })}
+        </div>
+        <span class="roller-slot-name">${result?.pokemon_name || 'Unknown Pull'}</span>
+        <div class="roller-slot-footer">
+            <span class="roller-slot-value">${KatsuCases.formatCurrency(result?.estimated_value || 0)}</span>
+            ${result?.odds ? `<span class="roller-slot-odds">1 in ${KatsuCases.formatNumber(result.odds)}</span>` : ''}
+        </div>
+        <div class="roller-slot-signal-row">
+            <span class="roller-slot-signal">${signalLabel}</span>
+        </div>
+        <span class="roller-slot-lane"></span>
+    `;
+}
+
+function buildMysterySlotMarkup() {
+    return `
+        <span class="roller-slot-frame"></span>
+        <span class="roller-slot-corner corner-a"></span>
+        <span class="roller-slot-corner corner-b"></span>
+        <span class="roller-slot-corner corner-c"></span>
+        <span class="roller-slot-corner corner-d"></span>
+        <span class="roller-slot-orb"></span>
+        <div class="roller-slot-mask">
+            <span class="roller-slot-mask-badge">Mystery Drop</span>
+            <div class="roller-slot-mask-icon"><i class="ri-question-line"></i></div>
+            <div class="roller-slot-mask-copy">Hidden until lock</div>
+            <div class="roller-slot-mask-sub">Provably fair sealed result</div>
+        </div>
+        <span class="roller-slot-lane"></span>
+    `;
+}
+
 function createSlotElement(result, isPlaceholder = false, isWinner = false) {
     const slot = document.createElement('div');
     const rarity = result?.rarity || 'common';
@@ -200,57 +261,32 @@ function createSlotElement(result, isPlaceholder = false, isWinner = false) {
         mythical: { accent: '#f472b6', accentSoft: 'rgba(236,72,153,0.18)', accentGlow: 'rgba(236,72,153,0.38)' }
     };
     const palette = accentMap[rarity] || accentMap.common;
-    slot.className = `roller-slot rarity-glow-${rarity}${isPlaceholder ? ' roller-slot-placeholder' : ''}${isWinner ? ' winner' : ''}${result?.is_shiny ? ' is-shiny' : ''}${isJackpot ? ' is-jackpot' : ''}${isChase ? ' is-chase' : ''}`;
+    slot.className = `roller-slot rarity-glow-${rarity}${isPlaceholder ? ' roller-slot-placeholder' : ''}${isWinner ? ' winner' : ''}${result?.is_shiny ? ' is-shiny' : ''}${isJackpot ? ' is-jackpot' : ''}${isChase ? ' is-chase' : ''} is-masked`;
     slot.style.setProperty('--slot-accent', palette.accent);
     slot.style.setProperty('--slot-accent-soft', palette.accentSoft);
     slot.style.setProperty('--slot-accent-glow', palette.accentGlow);
     slot.dataset.rarity = rarity;
-
-    if (isPlaceholder) {
-        slot.innerHTML = '<span class="roller-slot-placeholder">?</span>';
-    } else if (result) {
-        const rarityLabel = String(rarity).toUpperCase();
-        const auraLabel = result.is_shiny
-            ? '<i class="ri-sparkling-2-fill"></i><span>Shiny Aura</span>'
-            : isJackpot
-                ? '<i class="ri-vip-diamond-fill"></i><span>Jackpot Aura</span>'
-                : isChase
-                    ? '<i class="ri-flashlight-fill"></i><span>Chase Aura</span>'
-                    : '<i class="ri-radio-button-line"></i><span>Standard Aura</span>';
-        const signalLabel = isJackpot
-            ? '<i class="ri-vip-crown-2-fill"></i><span>Destiny Lock</span>'
-            : isChase
-                ? '<i class="ri-meteor-fill"></i><span>Surge Hit</span>'
-                : '<i class="ri-focus-3-line"></i><span>Lane Stable</span>';
-        slot.innerHTML = `
-            <span class="roller-slot-frame"></span>
-            <span class="roller-slot-corner corner-a"></span>
-            <span class="roller-slot-corner corner-b"></span>
-            <span class="roller-slot-corner corner-c"></span>
-            <span class="roller-slot-corner corner-d"></span>
-            <span class="roller-slot-orb"></span>
-            <div class="roller-slot-topbar">
-                <span class="roller-slot-tier tier-${rarity}">${rarityLabel}</span>
-                <span class="roller-slot-tier-meta">${auraLabel}</span>
-            </div>
-            <div class="roller-slot-sprite-wrap ${result.is_shiny ? 'shiny' : ''}">
-                <span class="roller-slot-sprite-ring ring-a"></span>
-                <span class="roller-slot-sprite-ring ring-b"></span>
-                ${result.is_shiny ? '<span class="roller-slot-shiny-flare"></span>' : ''}
-                ${KatsuCases.buildSpriteImg({ pokemonName: result.pokemon_name, isShiny: result.is_shiny, spriteUrl: result.sprite_url, alt: result.pokemon_name })}
-            </div>
-            <span class="roller-slot-name">${result.pokemon_name}</span>
-            <div class="roller-slot-footer">
-                <span class="roller-slot-value">${KatsuCases.formatCurrency(result.estimated_value || 0)}</span>
-                ${result.odds ? `<span class="roller-slot-odds">1 in ${KatsuCases.formatNumber(result.odds)}</span>` : ''}
-            </div>
-            <div class="roller-slot-signal-row">
-                <span class="roller-slot-signal">${signalLabel}</span>
-            </div>
-            <span class="roller-slot-lane"></span>
-        `;
-    }
+    slot.innerHTML = isPlaceholder ? '<span class="roller-slot-placeholder">?</span>' : buildMysterySlotMarkup();
     return slot;
+}
+
+async function revealWinningSlot(slot, result) {
+    if (!slot || !result) return;
+    const rarity = result?.rarity || 'common';
+    const rarityLabel = String(rarity || 'Result').toUpperCase();
+    slot.classList.add('revealing');
+    await playAnimation({ targets: slot, scale: [1, 1.02, 1], duration: 280, easing: 'easeOutQuad' }).finished;
+    const badge = slot.querySelector('.roller-slot-mask-badge');
+    const icon = slot.querySelector('.roller-slot-mask-icon i');
+    const copy = slot.querySelector('.roller-slot-mask-copy');
+    const sub = slot.querySelector('.roller-slot-mask-sub');
+    if (badge) badge.textContent = `${rarityLabel} locked`;
+    if (icon) icon.className = 'ri-lock-2-line';
+    if (copy) copy.textContent = 'Result confirmed';
+    if (sub) sub.textContent = 'Full details revealed above the reel';
+    slot.classList.add('winner-locked');
+    await playAnimation({ targets: slot, scale: [1, 1.045, 1], duration: 320, easing: 'easeOutBack' }).finished;
+    slot.classList.remove('revealing');
 }
 
 function getWinnerIndex(trackLength) {
@@ -299,8 +335,8 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
         openingModal.classList.remove('rarity-epic', 'rarity-legendary', 'rarity-mythical', 'rarity-rare', 'rarity-uncommon', 'rarity-common');
         openingModal.classList.toggle('perf-mode', shouldUsePerformanceMode());
     }
-    setOpeningShellBadge('Aura Chamber');
-    setOpeningHint('Calibrating the aura lane and staging the final pull…');
+    setOpeningShellBadge('Mystery Reel Armed');
+    setOpeningHint('Sealing the cards and staging the hidden pull…');
 
     const winner = results[results.length - 1];
     const trackData = Array.isArray(winner?.track) && winner.track.length
@@ -357,8 +393,8 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
         easing: 'cubicBezier(.1,.76,.16,1)',
         update: updateClosestSlot,
         begin() {
-            setOpeningShellBadge('Aura Feed Live');
-            setOpeningHint('Rolling through the aura lane… watch the center lock.');
+            setOpeningShellBadge('Mystery Reel Live');
+            setOpeningHint('Rolling sealed cards through the center lock…');
         }
     }).add({
         targets: track,
@@ -368,8 +404,8 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
         update: updateClosestSlot,
         begin() {
             setLockTension(true);
-            setOpeningShellBadge('Destiny Tension');
-            setOpeningHint('The lane is tightening. Final result is approaching the lock point.');
+            setOpeningShellBadge('Lock Tension');
+            setOpeningHint('The reel is tightening. The hidden result is approaching the lock point.');
         },
         complete() {
             markNearMissSlots(slots, winnerIndex);
@@ -382,7 +418,7 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
         update: updateClosestSlot,
         begin() {
             setOpeningShellBadge('Near Miss');
-            setOpeningHint('A near miss clipped the lock. Final snap is lining up now.');
+            setOpeningHint('A sealed card clipped the lock. Final snap is lining up now.');
         }
     }).add({
         targets: track,
@@ -391,8 +427,8 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
         easing: 'easeOutExpo',
         update: updateClosestSlot,
         begin() {
-            setOpeningShellBadge('Destiny Lock');
-            setOpeningHint('Center lock engaged. Securing the final pull.');
+            setOpeningShellBadge('Center Lock');
+            setOpeningHint('Center lock engaged. Revealing the sealed pull next.');
         },
         complete() {
             setLockTension(false);
@@ -409,7 +445,7 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
     const winnerSlot = slots[winnerIndex];
     setLockTension(false);
     setOpeningShellBadge('Result Locked');
-    setOpeningHint('Locking the result and revealing the pull…');
+    setOpeningHint('Lock engaged. Revealing the hidden pull…');
     triggerOpeningImpact(winner?.rarity);
     if (openingModal && winner?.rarity) openingModal.classList.add(`rarity-${winner.rarity}`);
     if (winnerSlot) {
@@ -427,6 +463,7 @@ async function animateCaseOpen(results, rollerElement, revealElement) {
             duration: 260,
             easing: 'easeOutExpo'
         }).finished;
+        await revealWinningSlot(winnerSlot, winner);
     }
 
     if (winner && ['epic', 'legendary', 'mythical'].includes(winner.rarity)) {
@@ -621,48 +658,49 @@ function updateRevealContent(revealElement, results) {
     const rarityClass = `badge-${finalResult.rarity}`;
     const totalValue = Number(results.reduce((sum, item) => sum + Number(item.estimated_value || 0), 0).toFixed(2));
     const isMulti = results.length > 1;
-    const headingMap = { common: 'Drop Secured', uncommon: 'Clean Pull', rare: 'Rare Pull', epic: 'Aura Surge', legendary: 'Destiny Lock', mythical: 'Sovereign Roll' };
+    const headingMap = { common: 'Result', uncommon: 'Result', rare: 'Rare Pull', epic: 'Featured Pull', legendary: 'Jackpot Pull', mythical: 'Sovereign Pull' };
     const amount = Math.max(1, Number(window.currentOpeningAmount || results.length || 1));
     revealElement.dataset.rarity = finalResult.rarity || 'common';
 
     revealElement.innerHTML = `
         <div class="reward-panel reward-panel-${finalResult.rarity}">
             <div class="reward-heading-wrap">
-                <div class="reward-heading-kicker">${headingMap[finalResult.rarity] || 'Drop Secured'}</div>
+                <div class="reward-heading-kicker">${headingMap[finalResult.rarity] || 'Result'}</div>
                 <div class="reward-rarity-banner">${finalResult.rarity.toUpperCase()}${finalResult.is_shiny ? ' · SHINY' : ''}</div>
-                <div class="reward-heading-sub">Provably fair result locked to inventory-ready output.</div>
+                <div class="reward-heading-sub">Locked to inventory and revealed above the reel.</div>
             </div>
-            <div class="reward-sprite ${finalResult.rarity === 'legendary' || finalResult.rarity === 'mythical' || finalResult.rarity === 'epic' ? finalResult.rarity : ''}">
-                ${KatsuCases.buildSpriteImg({ pokemonName: finalResult.pokemon_name, isShiny: finalResult.is_shiny, spriteUrl: finalResult.sprite_url, alt: finalResult.pokemon_name })}
-            </div>
-            <div>
-                <div class="reward-name">${finalResult.pokemon_name}${finalResult.pokemon_form ? ` (${finalResult.pokemon_form})` : ''}</div>
-                <div class="reward-meta-row">
-                    <span class="badge ${rarityClass}">${finalResult.rarity.toUpperCase()}${finalResult.is_shiny ? ' SHINY' : ''}</span>
-                    ${finalResult.odds ? `<span class="badge badge-uncommon">1 IN ${KatsuCases.formatNumber(finalResult.odds)}</span>` : ''}
-                    ${finalResult.estimated_value ? `<span class="badge badge-epic">${KatsuCases.formatCurrency(finalResult.estimated_value)}</span>` : ''}
-                    ${finalResult.seed ? `<span class="badge badge-common">SEED ${finalResult.seed}</span>` : ''}
-                    ${finalResult.pity?.triggered ? `<span class="badge badge-legendary">${KatsuCases.escapeHtml(finalResult.pity.trigger_label)} PITY</span>` : ''}
-                    ${isMulti ? `<span class="badge badge-legendary">${results.length} ROLLS · ${KatsuCases.formatCurrency(totalValue)}</span>` : ''}
+            <div class="reward-primary-row">
+                <div class="reward-sprite ${finalResult.rarity === 'legendary' || finalResult.rarity === 'mythical' || finalResult.rarity === 'epic' ? finalResult.rarity : ''}">
+                    ${KatsuCases.buildSpriteImg({ pokemonName: finalResult.pokemon_name, isShiny: finalResult.is_shiny, spriteUrl: finalResult.sprite_url, alt: finalResult.pokemon_name })}
                 </div>
-                ${finalResult.seed ? `<div class="opening-seed">Replay seed: ${finalResult.seed}</div>` : ''}
-                ${finalResult.pity?.soft_active && !finalResult.pity?.triggered ? `<div class="opening-seed">Soft pity active: ${KatsuCases.escapeHtml(finalResult.pity.soft_label)} boosted ${Number(finalResult.pity.soft_multiplier || 1).toFixed(2)}×</div>` : ''}
-                ${isMulti ? `
-                    <div class="multi-roll-summary">
-                        ${results.map((item, index) => `
-                            <div class="multi-roll-chip rarity-glow-${item.rarity}">
-                                <div class="multi-roll-chip-order">#${index + 1}</div>
-                                ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:56px; height:56px;' })}
-                                <div class="multi-roll-chip-meta">
-                                    <div class="multi-roll-chip-name">${item.pokemon_name}</div>
-                                    <div class="multi-roll-chip-value">${KatsuCases.formatCurrency(item.estimated_value || 0)} · 1 in ${KatsuCases.formatNumber(item.odds || 0)}${item.pity?.triggered ? ` · ${KatsuCases.escapeHtml(item.pity.trigger_label)} pity` : ''}</div>
-                                    ${item.seed ? `<div class="opening-seed">${item.seed}</div>` : ''}
-                                </div>
-                            </div>
-                        `).join('')}
+                <div class="reward-copy-block">
+                    <div class="reward-name">${finalResult.pokemon_name}${finalResult.pokemon_form ? ` (${finalResult.pokemon_form})` : ''}</div>
+                    <div class="reward-meta-row">
+                        <span class="badge ${rarityClass}">${finalResult.rarity.toUpperCase()}${finalResult.is_shiny ? ' SHINY' : ''}</span>
+                        ${finalResult.odds ? `<span class="badge badge-uncommon">1 IN ${KatsuCases.formatNumber(finalResult.odds)}</span>` : ''}
+                        ${finalResult.estimated_value ? `<span class="badge badge-epic">${KatsuCases.formatCurrency(finalResult.estimated_value)}</span>` : ''}
+                        ${finalResult.pity?.triggered ? `<span class="badge badge-legendary">${KatsuCases.escapeHtml(finalResult.pity.trigger_label)} PITY</span>` : ''}
+                        ${isMulti ? `<span class="badge badge-legendary">${results.length} ROLLS · ${KatsuCases.formatCurrency(totalValue)}</span>` : ''}
                     </div>
-                ` : ''}
+                    ${finalResult.seed ? `<div class="opening-seed">Replay seed: ${finalResult.seed}</div>` : ''}
+                    ${finalResult.pity?.soft_active && !finalResult.pity?.triggered ? `<div class="opening-seed">Soft pity active: ${KatsuCases.escapeHtml(finalResult.pity.soft_label)} boosted ${Number(finalResult.pity.soft_multiplier || 1).toFixed(2)}×</div>` : ''}
+                </div>
             </div>
+            ${isMulti ? `
+                <div class="multi-roll-summary">
+                    ${results.map((item, index) => `
+                        <div class="multi-roll-chip rarity-glow-${item.rarity}">
+                            <div class="multi-roll-chip-order">#${index + 1}</div>
+                            ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:56px; height:56px;' })}
+                            <div class="multi-roll-chip-meta">
+                                <div class="multi-roll-chip-name">${item.pokemon_name}</div>
+                                <div class="multi-roll-chip-value">${KatsuCases.formatCurrency(item.estimated_value || 0)} · 1 in ${KatsuCases.formatNumber(item.odds || 0)}${item.pity?.triggered ? ` · ${KatsuCases.escapeHtml(item.pity.trigger_label)} pity` : ''}</div>
+                                ${item.seed ? `<div class="opening-seed">${item.seed}</div>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
             <div class="reward-actions">
                 <button class="btn btn-ghost" onclick="KatsuCases.closeModal('opening-modal'); KatsuCases.showToast('Added to inventory', 'success');">
                     <i class="ri-check-line"></i> Done

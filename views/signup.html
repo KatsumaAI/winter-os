@@ -66,6 +66,7 @@
                                 <input type="text" class="form-input auth-input" id="username" placeholder="Choose a username" autocomplete="username" required minlength="3" maxlength="20">
                             </div>
                             <span class="form-hint">3–20 characters. Letters, numbers, and underscores only.</span>
+                            <div id="usernameAvailability" class="form-hint" style="margin-top:8px;">We will check availability while you type.</div>
                         </div>
 
                         <div class="form-group">
@@ -125,6 +126,27 @@
     <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
     <script src="/js/main.js"></script>
     <script>
+        const usernameInput = document.getElementById('username');
+        const usernameAvailability = document.getElementById('usernameAvailability');
+        const checkUsernameAvailability = KatsuCases.debounce(async (value) => {
+            const username = String(value || '').trim();
+            if (!username) {
+                usernameAvailability.textContent = 'We will check availability while you type.';
+                usernameAvailability.style.color = 'var(--text-muted)';
+                return;
+            }
+            try {
+                const result = await KatsuCases.api.get(`/api/auth/availability/username?username=${encodeURIComponent(username)}`);
+                usernameAvailability.textContent = result.message || (result.available ? 'Username is available' : 'That username is already taken');
+                usernameAvailability.style.color = result.available ? 'var(--success)' : 'var(--warning)';
+            } catch (error) {
+                usernameAvailability.textContent = 'Could not check username right now.';
+                usernameAvailability.style.color = 'var(--warning)';
+            }
+        }, 240);
+
+        usernameInput.addEventListener('input', (event) => checkUsernameAvailability(event.target.value));
+
         document.querySelectorAll('[data-toggle-password]').forEach((button) => {
             button.addEventListener('click', () => {
                 const input = document.querySelector(button.getAttribute('data-toggle-password'));
@@ -155,6 +177,11 @@
                 return;
             }
 
+            const availability = await KatsuCases.api.get(`/api/auth/availability/username?username=${encodeURIComponent(username)}`);
+            if (!availability.available) {
+                KatsuCases.showToast(availability.message || 'That username is already taken', 'error');
+                return;
+            }
             KatsuCases.setLoading(true, button);
             try {
                 const data = await KatsuCases.api.post('/api/auth/register', { username, email, password });

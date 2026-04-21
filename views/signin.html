@@ -70,18 +70,24 @@
                     </div>
 
                     <form id="signinForm" class="auth-form auth-form--enhanced">
+                        <div class="auth-login-method-toggle" id="loginMethodToggle" role="tablist" aria-label="Sign-in method">
+                            <button type="button" class="auth-login-method-btn active" data-login-method="email">Email</button>
+                            <button type="button" class="auth-login-method-btn" data-login-method="username">Username</button>
+                        </div>
+
                         <div class="form-group">
-                            <label class="form-label" for="email">Email Address</label>
+                            <label class="form-label" for="loginIdentifier" id="loginIdentifierLabel">Email Address</label>
                             <div class="auth-input-wrap">
-                                <i class="ri-mail-line auth-input-icon"></i>
-                                <input type="email" class="form-input auth-input" id="email" placeholder="you@example.com" autocomplete="email" required>
+                                <i class="ri-mail-line auth-input-icon" id="loginIdentifierIcon"></i>
+                                <input type="email" class="form-input auth-input" id="loginIdentifier" placeholder="you@example.com" autocomplete="email" required>
                             </div>
+                            <span class="form-hint" id="loginIdentifierHint">Use the email attached to your KatsuCases account.</span>
                         </div>
 
                         <div class="form-group">
                             <div class="auth-label-row">
                                 <label class="form-label" for="password">Password</label>
-                                <a href="/guide" class="auth-inline-link">Need help?</a>
+                                <a href="/forgot-password" class="auth-inline-link">Forgot password?</a>
                             </div>
                             <div class="auth-input-wrap">
                                 <i class="ri-lock-2-line auth-input-icon"></i>
@@ -129,14 +135,49 @@
             });
         });
 
+        const loginMethodButtons = Array.from(document.querySelectorAll('[data-login-method]'));
+        const loginIdentifierInput = document.getElementById('loginIdentifier');
+        const loginIdentifierLabel = document.getElementById('loginIdentifierLabel');
+        const loginIdentifierHint = document.getElementById('loginIdentifierHint');
+        const loginIdentifierIcon = document.getElementById('loginIdentifierIcon');
+        let currentLoginMethod = 'email';
+
+        function setLoginMethod(method) {
+            currentLoginMethod = method === 'username' ? 'username' : 'email';
+            loginMethodButtons.forEach((button) => {
+                button.classList.toggle('active', button.dataset.loginMethod === currentLoginMethod);
+            });
+            const emailMode = currentLoginMethod === 'email';
+            loginIdentifierLabel.textContent = emailMode ? 'Email Address' : 'Username';
+            loginIdentifierHint.textContent = emailMode
+                ? 'Use the email attached to your KatsuCases account.'
+                : 'Use your KatsuCases username instead of your email.';
+            loginIdentifierIcon.className = emailMode ? 'ri-mail-line auth-input-icon' : 'ri-at-line auth-input-icon';
+            loginIdentifierInput.type = emailMode ? 'email' : 'text';
+            loginIdentifierInput.placeholder = emailMode ? 'you@example.com' : 'your_username';
+            loginIdentifierInput.autocomplete = emailMode ? 'email' : 'username';
+            loginIdentifierInput.value = '';
+            loginIdentifierInput.focus();
+        }
+
+        loginMethodButtons.forEach((button) => {
+            button.addEventListener('click', () => setLoginMethod(button.dataset.loginMethod));
+        });
+
         document.getElementById('signinForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
+            const identifier = loginIdentifierInput.value.trim();
             const password = document.getElementById('password').value;
             const button = e.target.querySelector('button[type="submit"]');
             KatsuCases.setLoading(true, button);
             try {
-                const data = await KatsuCases.api.post('/api/auth/login', { email, password });
+                const data = await KatsuCases.api.post('/api/auth/login', {
+                    loginMethod: currentLoginMethod,
+                    identifier,
+                    email: currentLoginMethod === 'email' ? identifier : '',
+                    username: currentLoginMethod === 'username' ? identifier : '',
+                    password
+                });
                 KatsuCases.showToast('Welcome back!', 'success');
                 KatsuCases.updateUserUI(data.user);
                 const redirect = new URLSearchParams(window.location.search).get('redirect') || '/';

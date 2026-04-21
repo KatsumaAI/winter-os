@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Rollbacks - KatsuCases</title>
+    <meta name="description" content="Create account snapshots, restore older account states, and manage user status on KatsuCases.">
+    <meta name="theme-color" content="#0a0e1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body>
+<div class="page-wrapper">
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo"><span>KatsuCases</span></a>
+        <nav class="nav">
+            <a href="/admin" class="nav-link">Admin Home</a>
+            <a href="/admin/support" class="nav-link">Support</a>
+            <a href="/admin/rollbacks" class="nav-link">Rollbacks</a>
+            <a href="/cases" class="nav-link">Cases</a>
+        </nav>
+        <div class="header-actions">
+            <div class="balance-display"><i class="ri-wallet-3-line"></i><span class="balance-value">$0.00</span></div>
+            <div class="user-area" style="display:flex; align-items:center; gap:16px;">
+                <div class="user-menu">
+                    <div class="user-menu-trigger"><div class="user-avatar"><span class="user-initial">U</span></div><span class="user-name">Username</span></div>
+                    <div class="user-menu-dropdown">
+                        <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                        <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+            <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><i class="ri-menu-line"></i></button>
+        </div>
+    </div>
+</header>
+<main class="main-content">
+    <section class="section-sm">
+        <div class="container" style="max-width:1240px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; margin-bottom:24px;">
+                <div>
+                    <div class="section-kicker">ACCOUNT RECOVERY</div>
+                    <h1 style="margin:8px 0 10px;">User snapshots, rollback, and status control</h1>
+                    <p style="color:var(--text-secondary); max-width:780px;">Search for a player, create manual snapshots before risky changes, suspend or reactivate the account, and restore a previous account state when needed.</p>
+                </div>
+                <a href="/admin/support" class="btn btn-secondary"><i class="ri-lifebuoy-line"></i> Support Desk</a>
+            </div>
+
+            <div style="display:grid; grid-template-columns:minmax(300px,.75fr) minmax(0,1.25fr); gap:24px; align-items:start;">
+                <section class="profile-section">
+                    <div class="panel-head"><div><h3>Find user</h3><p>Search by username, display name, or email.</p></div></div>
+                    <div style="display:flex; gap:10px; margin-bottom:16px;">
+                        <input id="userSearchInput" class="input" placeholder="Search user">
+                        <button id="userSearchBtn" class="btn btn-primary"><i class="ri-search-line"></i></button>
+                    </div>
+                    <div id="userSearchResults" style="display:grid; gap:12px;"></div>
+                </section>
+
+                <section class="profile-section">
+                    <div id="selectedUserPanel" class="profile-account-note">Select a user to manage snapshots and rollback versions.</div>
+                </section>
+            </div>
+        </div>
+    </section>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+<script src="/js/main.js"></script>
+<script>
+let selectedUser = null;
+
+function userResultCard(user) {
+    return `<button class="btn btn-secondary rollback-user-card" data-user-id="${user.id}" style="display:flex; justify-content:space-between; align-items:center; gap:12px; text-align:left; width:100%;">
+        <span>
+            <strong style="display:block;">${KatsuCases.escapeHtml(user.display_name || user.username)}</strong>
+            <small style="display:block; color:var(--text-secondary);">@${KatsuCases.escapeHtml(user.username)} · ${KatsuCases.escapeHtml(user.email || '')}</small>
+        </span>
+        <span class="badge ${user.account_status === 'suspended' ? 'badge-mythical' : 'badge-uncommon'}">${KatsuCases.escapeHtml(user.account_status || 'active')}</span>
+    </button>`;
+}
+
+function snapshotCard(snapshot, userId) {
+    return `<article class="profile-summary-card" style="padding:16px;">
+        <strong style="display:block; margin-bottom:8px;">${KatsuCases.escapeHtml(snapshot.label || 'Snapshot')}</strong>
+        <div style="color:var(--text-secondary); font-size:13px; margin-bottom:8px;">${new Date(snapshot.created_at).toLocaleString()}</div>
+        <div style="white-space:pre-wrap; color:var(--text-secondary); line-height:1.6; margin-bottom:12px;">${KatsuCases.escapeHtml(snapshot.reason || '')}</div>
+        <button class="btn btn-secondary rollback-restore-btn" data-user-id="${userId}" data-snapshot-id="${snapshot.id}"><i class="ri-history-line"></i> Restore This Version</button>
+    </article>`;
+}
+
+async function loadSnapshots(userId) {
+    const data = await KatsuCases.api.get(`/api/admin/users/${userId}/snapshots`);
+    return Array.isArray(data.snapshots) ? data.snapshots : [];
+}
+
+async function renderSelectedUser(user) {
+    selectedUser = user;
+    const snapshots = await loadSnapshots(user.id);
+    document.getElementById('selectedUserPanel').innerHTML = `
+        <div style="display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px;">
+            <div>
+                <h3 style="margin:0 0 6px;">${KatsuCases.escapeHtml(user.display_name || user.username)}</h3>
+                <div style="color:var(--text-secondary);">@${KatsuCases.escapeHtml(user.username)} · ${KatsuCases.escapeHtml(user.email || '')}</div>
+                <div style="color:var(--text-secondary); margin-top:6px;">Balance ${KatsuCases.formatCurrency(user.balance || 0)} · ${KatsuCases.escapeHtml(user.account_status || 'active')}</div>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button id="createSnapshotBtn" class="btn btn-primary"><i class="ri-camera-line"></i> Create Snapshot</button>
+                <button id="toggleStatusBtn" class="btn btn-secondary"><i class="ri-shield-user-line"></i> ${user.account_status === 'suspended' ? 'Reactivate' : 'Suspend'}</button>
+            </div>
+        </div>
+        <div style="display:grid; gap:14px; margin-bottom:18px;">
+            <input id="snapshotLabel" class="input" placeholder="Snapshot label" value="Manual snapshot">
+            <textarea id="snapshotReason" class="textarea" rows="3" placeholder="Why are you taking this snapshot or restoring this account?"></textarea>
+        </div>
+        <div class="panel-head"><div><h3>Stored versions</h3><p>Restore a previous account state when needed.</p></div></div>
+        <div id="snapshotList" style="display:grid; gap:14px; margin-top:14px;">${snapshots.length ? snapshots.map((snapshot) => snapshotCard(snapshot, user.id)).join('') : '<div class="profile-account-note">No snapshots yet for this user.</div>'}</div>
+    `;
+
+    document.getElementById('createSnapshotBtn').addEventListener('click', async () => {
+        const label = document.getElementById('snapshotLabel').value.trim() || 'Manual snapshot';
+        const reason = document.getElementById('snapshotReason').value.trim() || 'Manual admin snapshot';
+        const button = document.getElementById('createSnapshotBtn');
+        KatsuCases.setLoading(true, button);
+        try {
+            await KatsuCases.api.post(`/api/admin/users/${user.id}/snapshots`, { label, reason });
+            KatsuCases.showToast('Snapshot created', 'success');
+            await renderSelectedUser(user);
+        } catch (error) {
+            KatsuCases.showToast(error.message || 'Failed to create snapshot', 'error');
+        } finally {
+            KatsuCases.setLoading(false, button);
+        }
+    });
+
+    document.getElementById('toggleStatusBtn').addEventListener('click', async () => {
+        const nextStatus = user.account_status === 'suspended' ? 'active' : 'suspended';
+        const reason = document.getElementById('snapshotReason').value.trim() || `Account ${nextStatus}`;
+        const button = document.getElementById('toggleStatusBtn');
+        KatsuCases.setLoading(true, button);
+        try {
+            await KatsuCases.api.post(`/api/admin/users/${user.id}/status`, { status: nextStatus, reason });
+            user.account_status = nextStatus;
+            KatsuCases.showToast(`Account ${nextStatus === 'active' ? 'reactivated' : 'suspended'}`, 'success');
+            await renderSelectedUser(user);
+            await searchUsers();
+        } catch (error) {
+            KatsuCases.showToast(error.message || 'Failed to update account status', 'error');
+        } finally {
+            KatsuCases.setLoading(false, button);
+        }
+    });
+
+    document.querySelectorAll('.rollback-restore-btn').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const snapshotId = button.dataset.snapshotId;
+            const label = document.getElementById('snapshotLabel').value.trim() || 'Rollback';
+            const reason = document.getElementById('snapshotReason').value.trim() || 'Admin rollback restore';
+            if (!confirm(`Restore snapshot #${snapshotId} for @${user.username}?`)) return;
+            KatsuCases.setLoading(true, button);
+            try {
+                await KatsuCases.api.post(`/api/admin/users/${user.id}/rollback/${snapshotId}`, { label, reason });
+                KatsuCases.showToast('Account restored from snapshot', 'success');
+                await renderSelectedUser(user);
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to restore snapshot', 'error');
+            } finally {
+                KatsuCases.setLoading(false, button);
+            }
+        });
+    });
+}
+
+async function searchUsers() {
+    const query = document.getElementById('userSearchInput').value.trim();
+    const data = await KatsuCases.api.get(`/api/admin/users/search?query=${encodeURIComponent(query)}`);
+    const users = Array.isArray(data.users) ? data.users : [];
+    const wrap = document.getElementById('userSearchResults');
+    if (!users.length) {
+        wrap.innerHTML = '<div class="profile-account-note">No users matched your search.</div>';
+        return;
+    }
+    wrap.innerHTML = users.map(userResultCard).join('');
+    wrap.querySelectorAll('.rollback-user-card').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const user = users.find((entry) => Number(entry.id) === Number(button.dataset.userId));
+            if (user) await renderSelectedUser(user);
+        });
+    });
+}
+
+document.getElementById('userSearchBtn').addEventListener('click', searchUsers);
+document.getElementById('userSearchInput').addEventListener('keydown', (event) => { if (event.key === 'Enter') searchUsers(); });
+
+document.addEventListener('DOMContentLoaded', async () => {
+    KatsuCases.init();
+    try {
+        const auth = await KatsuCases.api.get('/api/auth/me');
+        if (!auth.user?.is_admin) {
+            window.location.href = '/';
+            return;
+        }
+        await searchUsers();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to load rollback tools', 'error');
+    }
+});
+</script>
+</body>
+</html>

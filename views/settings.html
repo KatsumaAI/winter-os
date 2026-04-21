@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - KatsuCases</title>
+    <meta name="description" content="Manage your KatsuCases account settings, profile identity, privacy controls, and offline roll preferences.">
+    <meta name="theme-color" content="#0a0e1a">
+    <meta property="og:title" content="Settings - KatsuCases">
+    <meta property="og:description" content="Manage account settings, privacy, and offline rolls on KatsuCases.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body>
+<div class="page-wrapper">
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo"><span>KatsuCases</span></a>
+            <nav class="nav">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/cases" class="nav-link">Cases</a>
+                <a href="/inventory" class="nav-link">Inventory</a>
+                <a href="/support" class="nav-link">Support</a>
+            </nav>
+            <div class="header-actions">
+                <div class="balance-display"><i class="ri-wallet-3-line"></i><span class="balance-value">$0.00</span></div>
+                <div class="user-area" style="display:flex; align-items:center; gap:16px;">
+                    <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
+                    <div class="user-menu">
+                        <div class="user-menu-trigger"><div class="user-avatar"><span class="user-initial">U</span></div><span class="user-name">Username</span></div>
+                        <div class="user-menu-dropdown">
+                            <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                            <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                            <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><i class="ri-menu-line"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="section-sm">
+            <div class="container" style="max-width:1180px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; margin-bottom:24px;">
+                    <div>
+                        <div class="section-kicker">ACCOUNT SETTINGS</div>
+                        <h1 style="margin:8px 0 10px;">Identity, privacy, and offline rolls</h1>
+                        <p style="color:var(--text-secondary); max-width:760px;">Your profile settings now live on this dedicated page. Update your public identity, hide inventory if needed, and toggle offline rolls so your account can build free spins while you are away.</p>
+                    </div>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                        <a href="/profile" class="btn btn-secondary"><i class="ri-user-line"></i> Profile</a>
+                        <a href="/support" class="btn btn-ghost"><i class="ri-customer-service-2-line"></i> Support</a>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:minmax(0, 1.2fr) minmax(300px, .8fr); gap:24px; align-items:start;">
+                    <section class="profile-section">
+                        <div class="panel-head"><div><h3>Profile settings</h3><p>Control how your account appears across the site.</p></div></div>
+                        <form id="settingsForm" class="profile-settings-form" style="display:grid; gap:14px;">
+                            <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px;">
+                                <input id="settingsUsername" class="input" placeholder="Username">
+                                <input id="settingsDisplayName" class="input" placeholder="Display name">
+                            </div>
+                            <input id="settingsAvatarUrl" class="input" placeholder="Profile picture URL">
+                            <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px;">
+                                <input id="settingsPronouns" class="input" placeholder="Pronouns">
+                                <input id="settingsRegion" class="input" placeholder="Region">
+                            </div>
+                            <label class="profile-checkbox-row">
+                                <input id="settingsHideInventory" type="checkbox"> Hide my inventory on my public profile
+                            </label>
+                            <label class="profile-checkbox-row">
+                                <input id="settingsOfflineRollEnabled" type="checkbox"> Enable offline rolls
+                            </label>
+                            <div class="form-group">
+                                <label for="themeMode" class="form-label">Appearance</label>
+                                <select id="themeMode" class="input">
+                                    <option value="dark">Dark mode</option>
+                                    <option value="light">Light mode</option>
+                                </select>
+                                <span class="form-hint">Applies instantly across the site on this browser.</span>
+                            </div>
+                            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:6px;">
+                                <button class="btn btn-primary" type="submit"><i class="ri-save-line"></i> Save Settings</button>
+                                <a href="/cases" class="btn btn-ghost"><i class="ri-gamepad-line"></i> Open Cases</a>
+                            </div>
+                        </form>
+                    </section>
+
+                    <div style="display:grid; gap:24px;">
+                        <section class="profile-section">
+                            <div class="panel-head"><div><h3>Offline roll status</h3><p>Earn free rolls over time when enabled.</p></div></div>
+                            <div class="profile-summary-stack">
+                                <article class="profile-summary-card"><span>Stored Free Rolls</span><strong id="offlineStored">0</strong><p id="offlineCapText">Cap information will load here.</p></article>
+                                <article class="profile-summary-card"><span>Next Roll</span><strong id="offlineNext">—</strong><p id="offlineLast">Waiting for settings.</p></article>
+                                <article class="profile-summary-card"><span>Total Earned Offline</span><strong id="offlineTotal">0</strong><p>Lifetime free rolls granted by the offline system.</p></article>
+                            </div>
+                        </section>
+                        <section class="profile-section">
+                            <div class="panel-head"><div><h3>Quick links</h3><p>Jump to the pages you will use most often.</p></div></div>
+                            <div style="display:grid; gap:10px;">
+                                <a href="/inventory" class="btn btn-secondary" style="justify-content:flex-start;"><i class="ri-archive-line"></i> Inventory</a>
+                                <a href="/support" class="btn btn-secondary" style="justify-content:flex-start;"><i class="ri-lifebuoy-line"></i> Open Support</a>
+                                <a href="/profile" class="btn btn-secondary" style="justify-content:flex-start;"><i class="ri-user-line"></i> View Public Profile</a>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+<script src="/js/main.js"></script>
+<script>
+async function loadSettings() {
+    const data = await KatsuCases.api.get('/api/settings');
+    const profile = data.profile || {};
+    const prefs = data.preferences || {};
+    const offline = data.offline_roll || {};
+    const platform = data.platform || {};
+
+    document.getElementById('settingsUsername').value = profile.username || '';
+    document.getElementById('settingsDisplayName').value = profile.display_name || '';
+    document.getElementById('settingsAvatarUrl').value = profile.avatar_url || '';
+    document.getElementById('settingsPronouns').value = profile.pronouns || '';
+    document.getElementById('settingsRegion').value = profile.region || '';
+    document.getElementById('settingsHideInventory').checked = Boolean(profile.hide_inventory);
+    document.getElementById('settingsOfflineRollEnabled').checked = Boolean(prefs.offline_roll_enabled);
+    document.getElementById('themeMode').value = prefs.theme_mode || window.localStorage.getItem('katsucases.theme') || 'dark';
+    KatsuCases.applyTheme(document.getElementById('themeMode').value);
+
+    document.getElementById('offlineStored').textContent = String(offline.free_rolls || 0);
+    document.getElementById('offlineCapText').textContent = `Cap ${platform.offline_roll_cap || offline.cap || 0} · ${platform.offline_roll_interval_minutes || offline.interval_minutes || 0} min per roll`;
+    document.getElementById('offlineNext').textContent = offline.enabled ? `${offline.next_roll_in_minutes || 0} min` : 'Disabled';
+    document.getElementById('offlineLast').textContent = offline.last_tick_at ? `Last tick ${new Date(offline.last_tick_at).toLocaleString()}` : 'Offline rolls will start after you enable them.';
+    document.getElementById('offlineTotal').textContent = String(offline.total_earned || 0);
+}
+
+document.getElementById('themeMode').addEventListener('change', (event) => {
+    KatsuCases.applyTheme(event.target.value);
+});
+
+document.getElementById('settingsForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = event.target.querySelector('button[type="submit"]');
+    KatsuCases.setLoading(true, button);
+    try {
+        await KatsuCases.api.put('/api/settings', {
+            username: document.getElementById('settingsUsername').value,
+            display_name: document.getElementById('settingsDisplayName').value,
+            avatar_url: document.getElementById('settingsAvatarUrl').value,
+            pronouns: document.getElementById('settingsPronouns').value,
+            region: document.getElementById('settingsRegion').value,
+            hide_inventory: document.getElementById('settingsHideInventory').checked,
+            offline_roll_enabled: document.getElementById('settingsOfflineRollEnabled').checked,
+            theme_mode: document.getElementById('themeMode').value
+        });
+        KatsuCases.applyTheme(document.getElementById('themeMode').value);
+        KatsuCases.showToast('Settings updated', 'success');
+        await loadSettings();
+        const auth = await KatsuCases.api.get('/api/auth/me');
+        if (auth.user) KatsuCases.updateUserUI(auth.user);
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to save settings', 'error');
+    } finally {
+        KatsuCases.setLoading(false, button);
+    }
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+    KatsuCases.init();
+    try {
+        await loadSettings();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to load settings', 'error');
+    }
+});
+</script>
+</body>
+</html>

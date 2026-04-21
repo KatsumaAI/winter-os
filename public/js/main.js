@@ -126,6 +126,34 @@ function formatCurrency(amount) {
     }).format(Number(amount || 0));
 }
 
+function formatCompactCurrencyParts(amount) {
+    const value = Math.max(0, Number(amount || 0));
+    const cents = Math.round((value % 1) * 100);
+    const integer = Math.floor(value);
+    let short = '';
+    if (integer >= 1000000000) short = (integer / 1000000000).toFixed(integer >= 10000000000 ? 0 : 1) + 'B';
+    else if (integer >= 1000000) short = (integer / 1000000).toFixed(integer >= 10000000 ? 0 : 1) + 'M';
+    else if (integer >= 1000) short = (integer / 1000).toFixed(integer >= 10000 ? 0 : 1) + 'K';
+    else short = String(integer);
+    return { short: short.replace(/\.0(?=[A-Z]$)/, ''), cents: String(cents).padStart(2, '0') };
+}
+
+function formatCompactCurrency(amount) {
+    const parts = formatCompactCurrencyParts(amount);
+    return `$${parts.short}.${parts.cents}`;
+}
+
+function formatCompactCurrencyHtml(amount) {
+    const parts = formatCompactCurrencyParts(amount);
+    return `<span class="compact-balance-main">$${escapeHtml(parts.short)}</span><span class="compact-balance-cents">.${escapeHtml(parts.cents)}</span>`;
+}
+
+function applyBalanceValue(target, amount) {
+    if (!target) return;
+    target.classList.add('compact-balance');
+    target.innerHTML = formatCompactCurrencyHtml(amount);
+}
+
 // Format relative time
 function formatRelativeTime(dateString) {
     const date = new Date(dateString);
@@ -153,13 +181,23 @@ function getRarityColor(rarity) {
 }
 
 function slugPokemonName(pokemonName) {
-    return String(pokemonName || 'pokemon').toLowerCase().replace(/[^a-z0-9]/g, '');
+    return String(pokemonName || 'pokemon')
+        .toLowerCase()
+        .replace(/['’.]/g, '')
+        .replace(/♀/g, 'f')
+        .replace(/♂/g, 'm')
+        .replace(/[^a-z0-9]/g, '');
+}
+
+function getBasePokemonSlug(pokemonName) {
+    return String(pokemonName || 'pokemon').toLowerCase().split('-')[0].replace(/[^a-z0-9]/g, '') || 'pokemon';
 }
 
 // Always use the regular showdown sprite. Shiny visuals are handled with CSS.
 function getSpriteUrl(pokemonName) {
     const name = slugPokemonName(pokemonName);
-    return `https://play.pokemonshowdown.com/sprites/ani/${name}.gif`;
+    const base = getBasePokemonSlug(pokemonName);
+    return `https://play.pokemonshowdown.com/sprites/ani/${name}.gif#fallback=${base}`;
 }
 
 function inferShinyState({ isShiny = false, spriteUrl = '', form = '' } = {}) {
@@ -182,7 +220,7 @@ function resolveSpriteUrl(spriteUrl, pokemonName) {
 function buildSpriteImg({ pokemonName, isShiny = false, spriteUrl = '', form = '', alt = '', className = '', style = '', attrs = '' }) {
     const shinyState = inferShinyState({ isShiny, spriteUrl, form });
     const classes = ['pokemon-sprite', className, shinyState ? 'sprite-shiny' : ''].filter(Boolean).join(' ');
-    return `<img class="${classes}" src="${resolveSpriteUrl(spriteUrl, pokemonName)}" alt="${escapeHtml(alt || pokemonName || 'Pokemon')}" data-pokemon="${escapeHtml(pokemonName || 'pokemon')}" style="${style}" onerror="this.onerror=null;this.src='https://play.pokemonshowdown.com/sprites/ani/pokemon.gif'" ${attrs}>`;
+    return `<img class="${classes}" src="${resolveSpriteUrl(spriteUrl, pokemonName)}" alt="${escapeHtml(alt || pokemonName || 'Pokemon')}" data-pokemon="${escapeHtml(pokemonName || 'pokemon')}" data-base-pokemon="${escapeHtml(getBasePokemonSlug(pokemonName || 'pokemon'))}" style="${style}" onerror="window.KatsuCases && KatsuCases.handleSpriteFallback ? KatsuCases.handleSpriteFallback(this) : (this.onerror=null,this.src='https://play.pokemonshowdown.com/sprites/ani/pokemon.gif')" ${attrs}>`;
 }
 
 function applySpriteState(img, isShiny, spriteUrl = '', form = '') {
@@ -192,6 +230,65 @@ function applySpriteState(img, isShiny, spriteUrl = '', form = '') {
     if (!img.dataset.pokemon && img.alt) {
         img.dataset.pokemon = img.alt;
     }
+}
+
+function handleSpriteFallback(img) {
+    if (!img) return;
+    const base = img.dataset.basePokemon || getBasePokemonSlug(img.dataset.pokemon || img.alt || 'pokemon');
+    if (!img.dataset.fallbackTried && base) {
+        img.dataset.fallbackTried = '1';
+        img.onerror = () => {
+            img.onerror = null;
+            img.src = 'https://play.pokemonshowdown.com/sprites/ani/pokemon.gif';
+        };
+        img.src = `https://play.pokemonshowdown.com/sprites/ani/${base}.gif`;
+        return;
+    }
+    img.onerror = null;
+    img.src = 'https://play.pokemonshowdown.com/sprites/ani/pokemon.gif';
+}
+
+
+function applyTheme(theme = 'dark') {
+    const nextTheme = String(theme || 'dark').toLowerCase() === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', nextTheme);
+    document.body.dataset.theme = nextTheme;
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+        meta.setAttribute('content', nextTheme === 'light' ? '#eef3ff' : '#0a0e1a');
+    });
+    try {
+        window.localStorage.setItem('katsucases.theme', nextTheme);
+    } catch (error) {
+        console.debug('Theme save skipped', error);
+    }
+    const select = document.getElementById('themeMode');
+    if (select) select.value = nextTheme;
+    document.querySelectorAll('[data-theme-toggle-icon]').forEach((icon) => {
+        icon.className = nextTheme === 'light' ? 'ri-sun-line' : 'ri-moon-line';
+    });
+    return nextTheme;
+}
+
+function loadThemePreference() {
+    try {
+        return window.localStorage.getItem('katsucases.theme') || 'dark';
+    } catch (error) {
+        return 'dark';
+    }
+}
+
+function ensureThemeToggle() {
+    const actions = document.querySelector('.header-actions');
+    if (!actions || actions.querySelector('.theme-toggle-btn')) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-icon btn-ghost theme-toggle-btn';
+    button.setAttribute('aria-label', 'Toggle light and dark mode');
+    button.innerHTML = `<i data-theme-toggle-icon class="${loadThemePreference() === 'light' ? 'ri-sun-line' : 'ri-moon-line'}"></i>`;
+    button.addEventListener('click', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'));
+    const mobileToggle = actions.querySelector('.mobile-menu-toggle');
+    if (mobileToggle) actions.insertBefore(button, mobileToggle);
+    else actions.appendChild(button);
 }
 
 function applyBranding() {
@@ -434,7 +531,7 @@ function startSiteStatePolling() {
                 console.error('Auth refresh failed', error);
             }
         }
-    }, 15000);
+    }, 5000);
 }
 
 
@@ -466,11 +563,12 @@ function updateUserUI(user) {
                 }
             });
         }
-        if (balanceDisplay) balanceDisplay.textContent = formatCurrency(user.balance);
+        if (balanceDisplay) applyBalanceValue(balanceDisplay, user.balance);
         ensureNotificationUI();
     } else {
         if (authButtons) authButtons.style.display = 'flex';
         if (userArea) userArea.style.display = 'none';
+        if (balanceDisplay) applyBalanceValue(balanceDisplay, 0);
         teardownNotifications();
     }
 
@@ -703,23 +801,29 @@ function ensureAdminUI() {
 
     const userMenu = document.querySelector('.user-menu-dropdown');
     if (userMenu) {
-        let menuItem = userMenu.querySelector('.user-menu-item-admin');
-        if (state.user && state.user.is_admin) {
-            if (!menuItem) {
-                menuItem = document.createElement('a');
-                menuItem.href = '/admin';
-                menuItem.className = 'user-menu-item user-menu-item-admin';
-                menuItem.innerHTML = '<i class="ri-shield-star-line"></i> Admin';
-                const logoutItem = Array.from(userMenu.querySelectorAll('.user-menu-item')).find((node) => /logout/i.test(node.textContent || ''));
-                if (logoutItem) {
-                    userMenu.insertBefore(menuItem, logoutItem);
-                } else {
-                    userMenu.appendChild(menuItem);
-                }
+        const logoutItem = Array.from(userMenu.querySelectorAll('.user-menu-item')).find((node) => /logout/i.test(node.textContent || ''));
+        const ensureMenuLink = (className, href, icon, label, requireAdmin = false) => {
+            let item = userMenu.querySelector(`.${className}`);
+            const shouldShow = Boolean(state.user) && (!requireAdmin || state.user.is_admin);
+            if (!shouldShow) {
+                if (item) item.remove();
+                return;
             }
-        } else if (menuItem) {
-            menuItem.remove();
-        }
+            if (!item) {
+                item = document.createElement('a');
+                item.href = href;
+                item.className = `user-menu-item ${className}`;
+                item.innerHTML = `<i class="${icon}"></i> ${label}`;
+                if (logoutItem) userMenu.insertBefore(item, logoutItem);
+                else userMenu.appendChild(item);
+            }
+        };
+
+        ensureMenuLink('user-menu-item-settings', '/settings', 'ri-settings-3-line', 'Settings');
+        ensureMenuLink('user-menu-item-support', '/support', 'ri-customer-service-2-line', 'Support');
+        ensureMenuLink('user-menu-item-admin', '/admin', 'ri-shield-star-line', 'Admin', true);
+        ensureMenuLink('user-menu-item-admin-support', '/admin/support', 'ri-lifebuoy-line', 'Admin Support', true);
+        ensureMenuLink('user-menu-item-admin-rollbacks', '/admin/rollbacks', 'ri-history-line', 'Rollbacks', true);
     }
 
     const shortcut = document.querySelector('.community-admin-shortcut');
@@ -742,13 +846,11 @@ function getRainCountdown(endAt) {
 
 function ensureCommunityUI() {
     let sidebar = document.querySelector('.community-sidebar');
+    let launcher = document.querySelector('.community-sidebar-launcher');
     if (!sidebar) {
         sidebar = document.createElement('aside');
         sidebar.className = 'community-sidebar';
         sidebar.innerHTML = `
-            <button class="community-sidebar-toggle" type="button" aria-label="Toggle community chat">
-                <i class="ri-discuss-line"></i>
-            </button>
             <div class="community-sidebar-inner">
                 <div class="community-sidebar-header">
                     <div>
@@ -777,34 +879,49 @@ function ensureCommunityUI() {
         `;
         document.body.appendChild(sidebar);
         document.body.classList.add('has-community-sidebar');
+    }
 
-        const toggleSidebar = (nextState = !state.communityOpen) => {
-            state.communityOpen = Boolean(nextState);
-            sidebar.classList.toggle('closed', !state.communityOpen);
-            const toggle = sidebar.querySelector('.community-sidebar-toggle');
-            if (toggle) toggle.setAttribute('aria-expanded', state.communityOpen ? 'true' : 'false');
-            try { window.localStorage.setItem('katsucases.community.open', state.communityOpen ? '1' : '0'); } catch (error) {}
-        };
+    if (!launcher) {
+        launcher = document.createElement('button');
+        launcher.type = 'button';
+        launcher.className = 'community-sidebar-launcher';
+        launcher.setAttribute('aria-label', 'Show community chat');
+        launcher.innerHTML = '<i class="ri-discuss-line"></i><span>Community</span>';
+        document.body.appendChild(launcher);
+    }
 
-        const toggle = sidebar.querySelector('.community-sidebar-toggle');
-        if (toggle) toggle.addEventListener('click', () => toggleSidebar());
-        const closeButton = sidebar.querySelector('.community-sidebar-close');
-        if (closeButton) closeButton.addEventListener('click', () => toggleSidebar(false));
+    const toggleSidebar = (nextState = !state.communityOpen) => {
+        state.communityOpen = Boolean(nextState);
+        sidebar.classList.toggle('closed', !state.communityOpen);
+        sidebar.setAttribute('aria-hidden', state.communityOpen ? 'false' : 'true');
+        launcher.classList.toggle('visible', !state.communityOpen);
+        launcher.setAttribute('aria-hidden', state.communityOpen ? 'true' : 'false');
+        try { window.localStorage.setItem('katsucases.community.open', state.communityOpen ? '1' : '0'); } catch (error) {}
+    };
 
-        window.addEventListener('resize', () => {
-            if (window.innerWidth < 900 && state.communityOpen) {
-                toggleSidebar(false);
-            }
-        });
+    launcher.onclick = () => toggleSidebar(true);
+    const closeButton = sidebar.querySelector('.community-sidebar-close');
+    if (closeButton && !closeButton.dataset.bound) {
+        closeButton.dataset.bound = '1';
+        closeButton.addEventListener('click', () => toggleSidebar(false));
+    }
 
-        document.addEventListener('click', (event) => {
-            if (!sidebar.contains(event.target) && window.innerWidth < 900 && state.communityOpen) {
-                toggleSidebar(false);
-            }
-        });
+    window.addEventListener('resize', () => {
+        if (window.innerWidth < 900 && state.communityOpen) {
+            toggleSidebar(false);
+        }
+    });
 
-        const form = sidebar.querySelector('.community-chat-form');
-        const input = sidebar.querySelector('.community-chat-input');
+    document.addEventListener('click', (event) => {
+        if (!sidebar.contains(event.target) && !launcher.contains(event.target) && window.innerWidth < 900 && state.communityOpen) {
+            toggleSidebar(false);
+        }
+    });
+
+    const form = sidebar.querySelector('.community-chat-form');
+    const input = sidebar.querySelector('.community-chat-input');
+    if (form && !form.dataset.bound) {
+        form.dataset.bound = '1';
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             const message = String(input.value || '').trim();
@@ -829,9 +946,7 @@ function ensureCommunityUI() {
     }
 
     state.communityUiReady = true;
-    sidebar.classList.toggle('closed', !state.communityOpen);
-    const toggle = sidebar.querySelector('.community-sidebar-toggle');
-    if (toggle) toggle.setAttribute('aria-expanded', state.communityOpen ? 'true' : 'false');
+    toggleSidebar(state.communityOpen);
     ensureAdminUI();
     startCommunityPolling();
 }
@@ -1059,6 +1174,12 @@ function startAuthRefreshPolling() {
             const data = await api.get('/api/auth/me');
             updateUserUI(data.user);
         } catch (error) {
+            if (/suspended|ended by staff/i.test(String(error.message || ''))) {
+                showToast(error.message || 'Your session has ended', 'error');
+                updateUserUI(null);
+                window.location.href = '/signin?session=ended';
+                return;
+            }
             updateUserUI(null);
         }
     }, 15000);
@@ -1072,6 +1193,12 @@ async function checkAuth() {
         await loadSiteState(true);
         return data.user;
     } catch (error) {
+        if (/suspended|ended by staff/i.test(String(error.message || '')) && window.location.pathname !== '/signin') {
+            showToast(error.message || 'Your session has ended', 'error');
+            updateUserUI(null);
+            window.location.href = '/signin?session=ended';
+            return null;
+        }
         updateUserUI(null);
         return null;
     }
@@ -1255,8 +1382,10 @@ function setLoading(isLoading, element) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    applyTheme(loadThemePreference());
     applyBranding();
     ensureMobileNavigation();
+    ensureThemeToggle();
     ensureSiteAnnouncementUI();
     ensureCommunityUI();
     await checkAuth();
@@ -1283,6 +1412,8 @@ window.KatsuCases = {
     state,
     showToast,
     formatCurrency,
+    formatCompactCurrency,
+    formatCompactCurrencyHtml,
     formatRelativeTime,
     getRarityColor,
     getSpriteUrl,
@@ -1290,6 +1421,8 @@ window.KatsuCases = {
     buildSpriteImg,
     applySpriteState,
     inferShinyState,
+    handleSpriteFallback,
+    applyTheme,
     updateUserUI,
     checkAuth,
     loadNotifications,

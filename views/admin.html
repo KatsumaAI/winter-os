@@ -105,6 +105,7 @@
                                 <a class="admin-discord-link active" href="#adminSectionRain"><i class="ri-drop-line"></i><span>Rain</span></a>
                                 <a class="admin-discord-link" href="#adminSectionAnnouncements"><i class="ri-megaphone-line"></i><span>Announcements</span></a>
                                 <a class="admin-discord-link" href="#adminSectionUsers"><i class="ri-user-search-line"></i><span>Users</span></a>
+                                <a class="admin-discord-link" href="/admin/security"><i class="ri-lock-star-line"></i><span>Security</span></a>
                                 <a class="admin-discord-link" href="#adminSectionRoles"><i class="ri-vip-crown-line"></i><span>Roles</span></a>
                                 <a class="admin-discord-link" href="#adminSectionCases"><i class="ri-box-3-line"></i><span>Cases</span></a>
                                 <a class="admin-discord-link" href="#adminSectionRewards"><i class="ri-links-line"></i><span>Rewards</span></a>
@@ -187,7 +188,7 @@
                             <div class="panel-head">
                                 <div>
                                     <h3>User Balance Tools</h3>
-                                    <p>Search any player and add credits or set their balance directly.</p>
+                                    <p>Search any player, then tune credits with a cleaner balance tool or jump into the dedicated security page for bans, OTP resets, and trade moderation.</p>
                                 </div>
                             </div>
                             <form id="adminBalanceForm" class="stack-form">
@@ -238,11 +239,23 @@
                                             <option value="beta">Beta Tester</option>
                                             <option value="partner">Partner</option>
                                             <option value="staff">Staff</option>
+                                            <option value="verified">Verified</option>
+                                            <option value="helper">Helper</option>
+                                            <option value="artist">Artist</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
                                         <label for="adminCustomRole">Custom Role</label>
                                         <input id="adminCustomRole" class="input" maxlength="30" placeholder="Creator Club">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="adminSiteRole">Site Access</label>
+                                        <select id="adminSiteRole" class="input">
+                                            <option value="player">Player</option>
+                                            <option value="admin">Admin</option>
+                                            <option value="co_owner">Co-Owner</option>
+                                            <option value="owner" disabled>Owner</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="form-grid two-col">
@@ -256,6 +269,113 @@
                                     </div>
                                 </div>
                                 <button class="btn btn-primary" type="submit"><i class="ri-vip-crown-line"></i> Save User Role Data</button>
+                            </form>
+                        </section>
+
+                        <section class="panel admin-panel" id="adminSectionGrantItem">
+                            <div class="panel-head">
+                                <div>
+                                    <h3>Direct Pokémon Grant</h3>
+                                    <p>Give the selected user a Pokémon directly into inventory without opening a case.</p>
+                                </div>
+                            </div>
+                            <form id="adminGrantItemForm" class="stack-form">
+                                <div class="form-group">
+                                    <label for="grantPokemonSearch">Search Pokémon</label>
+                                    <input id="grantPokemonSearch" class="input" maxlength="40" placeholder="Search Pokémon from PokeAPI">
+                                    <div id="grantPokemonSearchResults" class="admin-pokemon-search-results"></div>
+                                </div>
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="grantItemRarity">Rarity</label>
+                                        <select id="grantItemRarity" class="input">
+                                            <option value="common">Common</option>
+                                            <option value="uncommon">Uncommon</option>
+                                            <option value="rare" selected>Rare</option>
+                                            <option value="epic">Epic</option>
+                                            <option value="legendary">Legendary</option>
+                                            <option value="mythical">Mythical</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="grantItemOdds">Odds</label>
+                                        <input id="grantItemOdds" class="input" type="number" min="1" step="1" value="5000">
+                                    </div>
+                                </div>
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="grantItemShiny">Variant</label>
+                                        <select id="grantItemShiny" class="input">
+                                            <option value="0">Regular</option>
+                                            <option value="1">Shiny Effect</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="grantItemSourceLabel">Source Label</label>
+                                        <input id="grantItemSourceLabel" class="input" maxlength="80" placeholder="Admin reward drop">
+                                    </div>
+                                </div>
+                                <div id="selectedGrantPokemon" class="admin-rain-card empty">Pick a Pokémon to grant it to the selected user.</div>
+                                <button class="btn btn-primary" type="submit"><i class="ri-gift-line"></i> Grant Pokémon To Selected User</button>
+                            </form>
+                        </section>
+
+                        <section class="panel admin-panel" id="adminSectionCaseManager">
+                            <div class="panel-head">
+                                <div>
+                                    <h3>Manage Existing Cases</h3>
+                                    <p>Edit featured state, visibility, pricing, and launch timing for any current case.</p>
+                                </div>
+                            </div>
+                            <form id="adminManageCaseForm" class="stack-form">
+                                <div class="form-group">
+                                    <label for="manageCaseSelect">Select Case</label>
+                                    <select id="manageCaseSelect" class="input"></select>
+                                </div>
+                                <div id="manageCaseStatusCard" class="admin-rain-card empty">Choose a case to manage it.</div>
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="manageCaseName">Case Name</label>
+                                        <input id="manageCaseName" class="input" maxlength="80" placeholder="Case name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="manageCasePrice">Case Price</label>
+                                        <input id="manageCasePrice" class="input" type="number" min="1" step="0.01">
+                                    </div>
+                                </div>
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="manageCaseCategory">Category</label>
+                                        <input id="manageCaseCategory" class="input" maxlength="40" placeholder="featured">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="manageCaseLaunchAt">Launch Time</label>
+                                        <input id="manageCaseLaunchAt" class="input" type="datetime-local">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="manageCaseDescription">Description</label>
+                                    <input id="manageCaseDescription" class="input" maxlength="180" placeholder="Case description">
+                                </div>
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="manageCaseRotationName">Rotation Label</label>
+                                        <input id="manageCaseRotationName" class="input" maxlength="40" placeholder="Spring Rotation">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="manageCaseRotationStartsAt">Rotation Starts</label>
+                                        <input id="manageCaseRotationStartsAt" class="input" type="datetime-local">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="manageCaseRotationEndsAt">Rotation Ends</label>
+                                    <input id="manageCaseRotationEndsAt" class="input" type="datetime-local">
+                                </div>
+                                <div class="auth-action-row admin-inline-checks">
+                                    <label class="form-checkbox auth-checkbox"><input type="checkbox" id="manageCaseFeatured"><span>Feature this case</span></label>
+                                    <label class="form-checkbox auth-checkbox"><input type="checkbox" id="manageCaseHidden"><span>Hide from players</span></label>
+                                </div>
+                                <div style="display:flex; gap:10px; flex-wrap:wrap;"><button class="btn btn-primary" type="submit"><i class="ri-settings-4-line"></i> Save Case Changes</button><button class="btn btn-secondary" type="button" id="cloneManagedCaseBtn"><i class="ri-file-copy-2-line"></i> Clone Case</button><button class="btn btn-secondary" type="button" id="dedupeManagedCaseBtn"><i class="ri-shield-check-line"></i> Dedupe Contents</button><button class="btn btn-ghost" type="button" id="deleteManagedCaseBtn"><i class="ri-delete-bin-6-line"></i> Delete Case</button></div>
                             </form>
                         </section>
 
@@ -290,6 +410,20 @@
                                 <div class="form-group">
                                     <label for="caseDescription">Description</label>
                                     <input id="caseDescription" class="input" maxlength="180" placeholder="High-value night drop with tease-heavy odds.">
+                                </div>
+                                <div class="form-grid two-col">
+                                    <div class="form-group">
+                                        <label for="caseRotationName">Rotation Label</label>
+                                        <input id="caseRotationName" class="input" maxlength="40" placeholder="Featured Rotation">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="caseRotationStartsAt">Rotation Starts</label>
+                                        <input id="caseRotationStartsAt" class="input" type="datetime-local">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="caseRotationEndsAt">Rotation Ends</label>
+                                    <input id="caseRotationEndsAt" class="input" type="datetime-local">
                                 </div>
                                 <div class="form-group">
                                     <label>Case Builder</label>
@@ -392,6 +526,9 @@ Mewtwo|legendary|1000000"></textarea>
                                             <option value="beta">Beta Tester</option>
                                             <option value="partner">Partner</option>
                                             <option value="staff">Staff</option>
+                                            <option value="verified">Verified</option>
+                                            <option value="helper">Helper</option>
+                                            <option value="artist">Artist</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
@@ -433,31 +570,31 @@ Mewtwo|legendary|1000000"></textarea>
     <form id="gitBackupConfigForm" class="stack-form">
         <div class="form-grid two-col">
             <div class="form-group">
-                <label for="gitRemoteUrl">GitHub token</label>
-                <input id="gitRemoteUrl" class="input" type="password" placeholder="ghp_... or github_pat_...">
-            </div>
-            <div class="form-group">
-                <label for="gitRepoPath">Gist ID or URL (optional on first backup)</label>
-                <input id="gitRepoPath" class="input" type="text" placeholder="https://gist.github.com/... or 0123abcd...">
-            </div>
-        </div>
-        <div class="form-grid two-col">
-            <div class="form-group">
                 <label for="gitBranch">Backup description</label>
                 <input id="gitBranch" class="input" type="text" value="KatsuCases site data backup">
             </div>
             <div class="form-group">
                 <label for="gitRestoreRef">Restore Gist ID or URL</label>
-                <input id="gitRestoreRef" class="input" type="text" placeholder="Leave blank to use the saved Gist">
+                <input id="gitRestoreRef" class="input" type="text" placeholder="Leave blank to use GIST_BACKUP_ID from .env">
+            </div>
+        </div>
+        <div class="form-grid two-col">
+            <div class="form-group">
+                <label for="gitAutoSaveMinutes">Auto save minutes</label>
+                <input id="gitAutoSaveMinutes" class="input" type="number" min="0" step="1" placeholder="30">
+            </div>
+            <div class="form-group">
+                <label for="gitMaxVersions">Stored backup versions</label>
+                <input id="gitMaxVersions" class="input" type="number" min="1" step="1" placeholder="12">
             </div>
         </div>
         <label style="display:flex; gap:10px; align-items:center; font-size:13px; color:var(--text-secondary);">
             <input id="gitPushOnBackup" type="checkbox"> Create a public Gist instead of a secret one
         </label>
-        <div class="rain-meta" style="margin-top:-2px;">Need setup help? Open <code>GIST_BACKUP_HOWTO.md</code> in the project root after install.</div>
+        <div class="rain-meta" style="margin-top:-2px;">Token and primary Gist ID now load from <code>.env</code>. Use <code>.env.example</code> and <code>GIST_BACKUP_HOWTO.md</code> for setup.</div>
         <div id="gitBackupStatusCard" class="admin-rain-card empty">Gist backup has not been configured yet.</div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn btn-secondary" type="submit"><i class="ri-settings-3-line"></i> Save Gist Config</button>
+            <button class="btn btn-secondary" type="submit"><i class="ri-settings-3-line"></i> Save Backup Settings</button>
             <button class="btn btn-primary" id="runGitBackupBtn" type="button"><i class="ri-upload-cloud-2-line"></i> Backup Now</button>
         </div>
     </form>
@@ -542,8 +679,11 @@ Mewtwo|legendary|1000000"></textarea>
         let adminSummary = null;
         let selectedAdminUser = null;
         let adminCaseItems = [];
+        let adminManageCases = [];
         let selectedCasePokemon = null;
+        let selectedGrantPokemon = null;
         let pokemonSearchTimer = null;
+        let grantPokemonSearchTimer = null;
 
         function countdownLabel(endAt) {
             if (!endAt) return 'No timer';
@@ -843,6 +983,128 @@ Mewtwo|legendary|1000000"></textarea>
             document.getElementById('selectedCasePokemon').innerHTML = 'Pick a Pokémon to add it to the case.';
         }
 
+
+        function renderGrantPokemonResults(entries = []) {
+            const results = document.getElementById('grantPokemonSearchResults');
+            if (!results) return;
+            if (!entries.length) {
+                results.innerHTML = '<div class="admin-feed-empty">No Pokémon found.</div>';
+                return;
+            }
+            results.innerHTML = entries.map((entry) => `
+                <button class="trade-select-item" type="button" onclick='selectPokemonForGrant(${JSON.stringify(entry.name)}, ${JSON.stringify(entry.label)}, ${JSON.stringify(entry.sprite_url || '')})'>
+                    ${KatsuCases.buildSpriteImg({ pokemonName: entry.name, spriteUrl: entry.sprite_url, alt: entry.label, style: 'width:36px; height:36px;' })}
+                    <div style="text-align:left;">
+                        <div style="font-weight:600; font-size:13px;">${KatsuCases.escapeHtml(entry.label)}</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">${KatsuCases.escapeHtml(entry.name)}</div>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function selectPokemonForGrant(name, label, spriteUrl) {
+            selectedGrantPokemon = { name, label, sprite_url: spriteUrl };
+            const panel = document.getElementById('selectedGrantPokemon');
+            if (panel) {
+                panel.className = 'admin-rain-card';
+                panel.innerHTML = `<div style="display:flex; align-items:center; gap:12px;">${KatsuCases.buildSpriteImg({ pokemonName: name, spriteUrl: spriteUrl, alt: label, style: 'width:48px; height:48px;' })}<div><strong>${KatsuCases.escapeHtml(label)}</strong><div class="rain-meta">${KatsuCases.escapeHtml(name)}</div></div></div>`;
+            }
+            const results = document.getElementById('grantPokemonSearchResults');
+            if (results) results.innerHTML = '';
+            const input = document.getElementById('grantPokemonSearch');
+            if (input) input.value = label;
+        }
+
+        async function runGrantPokemonSearch(query = '') {
+            const results = document.getElementById('grantPokemonSearchResults');
+            if (!results) return;
+            if (!query.trim()) {
+                results.innerHTML = '';
+                return;
+            }
+            try {
+                const data = await KatsuCases.api.get(`/api/pokemon/search?limit=10&query=${encodeURIComponent(query)}`);
+                renderGrantPokemonResults(Array.isArray(data.pokemon) ? data.pokemon : []);
+            } catch (error) {
+                results.innerHTML = '<div class="admin-feed-empty">Pokémon search is unavailable right now.</div>';
+            }
+        }
+
+        async function cancelAdminTrade(tradeId) {
+            try {
+                await KatsuCases.api.post(`/api/admin/trades/${tradeId}/cancel`, { reason: 'Cancelled from owner console' });
+                KatsuCases.showToast('Trade cancelled', 'success');
+                await loadAdminSummary();
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to cancel trade', 'error');
+            }
+        }
+
+        function renderManagedCaseCard(caseRow = null) {
+            const card = document.getElementById('manageCaseStatusCard');
+            if (!card) return;
+            if (!caseRow) {
+                card.className = 'admin-rain-card empty';
+                card.textContent = 'Choose a case to manage it.';
+                return;
+            }
+            card.className = 'admin-rain-card';
+            card.innerHTML = `
+                <div class="admin-case-manage-card">
+                    <div>
+                        <strong>${KatsuCases.escapeHtml(caseRow.name)}</strong>
+                        <div class="rain-meta">${KatsuCases.escapeHtml(caseRow.category || 'uncategorized')} · ${KatsuCases.formatCurrency(caseRow.price || 0)} · ${Number(caseRow.total_items || 0)} unique drops</div>
+                    </div>
+                    <div class="admin-case-manage-flags">
+                        <span class="badge ${caseRow.is_live ? 'badge-uncommon' : 'badge-common'}">${caseRow.is_live ? 'LIVE' : 'SCHEDULED'}</span>
+                        <span class="badge ${Number(caseRow.is_hidden) ? 'badge-legendary' : 'badge-rare'}">${Number(caseRow.is_hidden) ? 'HIDDEN' : 'VISIBLE'}</span>
+                        ${Number(caseRow.is_featured) ? '<span class="badge badge-epic">FEATURED</span>' : ''}
+                        ${caseRow.rotation_name ? `<span class="badge badge-verified">${KatsuCases.escapeHtml(caseRow.rotation_name)}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function applyManagedCaseToForm(caseRow = null) {
+            if (!caseRow) return renderManagedCaseCard(null);
+            document.getElementById('manageCaseName').value = caseRow.name || '';
+            document.getElementById('manageCasePrice').value = Number(caseRow.price || 0) || '';
+            document.getElementById('manageCaseCategory').value = caseRow.category || '';
+            document.getElementById('manageCaseDescription').value = caseRow.description || '';
+            document.getElementById('manageCaseRotationName').value = caseRow.rotation_name || '';
+            document.getElementById('manageCaseRotationStartsAt').value = caseRow.rotation_starts_at ? new Date(caseRow.rotation_starts_at).toISOString().slice(0, 16) : '';
+            document.getElementById('manageCaseRotationEndsAt').value = caseRow.rotation_ends_at ? new Date(caseRow.rotation_ends_at).toISOString().slice(0, 16) : '';
+            document.getElementById('manageCaseFeatured').checked = Boolean(caseRow.is_featured);
+            document.getElementById('manageCaseHidden').checked = Boolean(caseRow.is_hidden);
+            document.getElementById('manageCaseLaunchAt').value = caseRow.launch_at ? new Date(caseRow.launch_at).toISOString().slice(0, 16) : '';
+            renderManagedCaseCard(caseRow);
+        }
+
+        function refreshManageCaseSelect(selectedId = null) {
+            const select = document.getElementById('manageCaseSelect');
+            if (!select) return;
+            if (!adminManageCases.length) {
+                select.innerHTML = '<option value="">No cases found</option>';
+                renderManagedCaseCard(null);
+                return;
+            }
+            const targetId = Number(selectedId || select.value || adminManageCases[0]?.id || 0);
+            select.innerHTML = adminManageCases.map((caseRow) => `<option value="${caseRow.id}">${KatsuCases.escapeHtml(caseRow.name)} · ${KatsuCases.formatCurrency(caseRow.price || 0)} · ${KatsuCases.escapeHtml(caseRow.category || 'case')}</option>`).join('');
+            const chosen = adminManageCases.find((caseRow) => Number(caseRow.id) === targetId) || adminManageCases[0];
+            if (chosen) {
+                select.value = String(chosen.id);
+                applyManagedCaseToForm(chosen);
+            } else {
+                renderManagedCaseCard(null);
+            }
+        }
+
+        async function loadAdminCaseManager(selectedId = null) {
+            const data = await KatsuCases.api.get('/api/admin/cases/manage');
+            adminManageCases = Array.isArray(data.cases) ? data.cases : [];
+            refreshManageCaseSelect(selectedId);
+        }
+
         async function loadAdminSummary() {
             const data = await KatsuCases.api.get('/api/admin/summary');
             adminSummary = data;
@@ -864,13 +1126,17 @@ Mewtwo|legendary|1000000"></textarea>
 async function loadGistBackupStatus() {
     try {
         const data = await KatsuCases.api.get('/api/admin/gist-backup/status');
-        document.getElementById('gitRepoPath').value = data.config?.gistId || '';
         document.getElementById('gitBranch').value = data.config?.description || 'KatsuCases site data backup';
-        document.getElementById('gitRemoteUrl').value = data.config?.token || '';
+        document.getElementById('gitAutoSaveMinutes').value = Number(data.config?.autoSaveMinutes || 0) || '';
+        document.getElementById('gitMaxVersions').value = Number(data.config?.maxVersions || 8) || 8;
         document.getElementById('gitPushOnBackup').checked = Boolean(data.config?.isPublic);
+        const sourceSummary = [
+            `Token · ${data.config?.source?.token === 'env' ? 'Loaded from .env' : 'Missing from .env'}`,
+            `Primary Gist · ${data.config?.source?.gistId === 'env' ? 'Loaded from .env' : 'Set GIST_BACKUP_ID in .env or use the restore field'}`
+        ].join('<br>');
         const card = document.getElementById('gitBackupStatusCard');
         card.className = 'admin-rain-card';
-        card.innerHTML = `<div><strong>${data.gistExists ? 'Gist backup ready' : 'Gist backup not initialized yet'}</strong><div class="rain-meta">Gist · ${data.gistUrl ? `<a href="${KatsuCases.escapeHtml(data.gistUrl)}" target="_blank" rel="noreferrer">${KatsuCases.escapeHtml(data.gistId || 'Open Gist')}</a>` : KatsuCases.escapeHtml(data.gistId || 'Not created yet')}<br>Visibility · ${data.gistPublic ? 'Public' : 'Secret'}<br>Owner · ${KatsuCases.escapeHtml(data.owner || 'Unknown')}<br>Last backup · ${KatsuCases.escapeHtml(data.config?.lastBackupAt || 'Never')}<br>Last restore · ${KatsuCases.escapeHtml(data.config?.lastRestoreAt || 'Never')}</div></div>`;
+        card.innerHTML = `<div><strong>${data.gistExists ? 'Gist backup ready' : 'Gist backup not initialized yet'}</strong><div class="rain-meta">Gist · ${data.gistUrl ? `<a href="${KatsuCases.escapeHtml(data.gistUrl)}" target="_blank" rel="noreferrer">${KatsuCases.escapeHtml(data.gistId || 'Open Gist')}</a>` : KatsuCases.escapeHtml(data.gistId || 'Not created yet')}<br>Visibility · ${data.gistPublic ? 'Public' : 'Secret'}<br>Owner · ${KatsuCases.escapeHtml(data.owner || 'Unknown')}<br>${sourceSummary}<br>Auto save · ${Number(data.autoSaveMinutes || 0) > 0 ? `${KatsuCases.escapeHtml(String(data.autoSaveMinutes))} min` : 'Off'}<br>Stored versions · ${KatsuCases.escapeHtml(String(data.versionCount || 0))}<br>Last backup · ${KatsuCases.escapeHtml(data.config?.lastBackupAt || 'Never')}<br>Last restore · ${KatsuCases.escapeHtml(data.config?.lastRestoreAt || 'Never')}</div></div>`;
     } catch (error) {
         document.getElementById('gitBackupStatusCard').className = 'admin-rain-card';
         document.getElementById('gitBackupStatusCard').innerHTML = `<div><strong>Gist backup error</strong><div class="rain-meta">${KatsuCases.escapeHtml(error.message || 'Could not load Gist backup status')}</div></div>`;
@@ -886,7 +1152,7 @@ async function loadGistBackupStatus() {
                 return;
             }
             container.innerHTML = users.map((user) => `
-                <button class="trade-select-item ${selectedAdminUser?.id === user.id ? 'selected' : ''}" type="button" onclick='selectAdminUser(${user.id}, ${JSON.stringify(String(user.username))}, ${JSON.stringify(String(user.email || ""))}, ${Number(user.balance || 0)}, ${JSON.stringify(String(user.display_name || user.username))}, ${JSON.stringify(String(user.custom_role || ""))}, ${JSON.stringify(String(user.region || ""))}, ${JSON.stringify(user.pity || {})} )'>
+                <button class="trade-select-item ${selectedAdminUser?.id === user.id ? 'selected' : ''}" type="button" onclick='selectAdminUser(${user.id}, ${JSON.stringify(String(user.username))}, ${JSON.stringify(String(user.email || ""))}, ${Number(user.balance || 0)}, ${JSON.stringify(String(user.display_name || user.username))}, ${JSON.stringify(String(user.custom_role || ""))}, ${JSON.stringify(String(user.region || ""))}, ${JSON.stringify(user.pity || {})}, ${JSON.stringify(String(user.site_role || 'player'))}, ${Boolean(user.is_owner)} )'>
                     <i class="ri-user-line"></i>
                     <div style="text-align:left;">
                         <div style="font-weight:600; font-size:13px;">${KatsuCases.escapeHtml(user.display_name || user.username)}</div>
@@ -896,17 +1162,17 @@ async function loadGistBackupStatus() {
             `).join('');
         }
 
-        function selectAdminUser(id, username, email, balance, displayName = '', customRole = '', region = '', pity = {}) {
-            selectedAdminUser = { id, username, email, balance, display_name: displayName || username, custom_role: customRole || '', region: region || '', pity: pity || {} };
+        function selectAdminUser(id, username, email, balance, displayName = '', customRole = '', region = '', pity = {}, siteRole = 'player', isOwner = false) {
+            selectedAdminUser = { id, username, email, balance, display_name: displayName || username, custom_role: customRole || '', region: region || '', pity: pity || {}, site_role: siteRole || 'player', is_owner: Boolean(isOwner) };
             const pityMeters = Array.isArray(pity?.meters) ? pity.meters : [];
             document.getElementById('selectedAdminUser').className = 'admin-rain-card admin-user-card';
             document.getElementById('selectedAdminUser').innerHTML = `
                 <div class="admin-user-card-head">
                     <div>
                         <strong>${KatsuCases.escapeHtml(displayName || username)}</strong>
-                        <div class="rain-meta">@${KatsuCases.escapeHtml(username)} · ${KatsuCases.escapeHtml(email || '')}${region ? ' · ' + KatsuCases.escapeHtml(region) : ''} · Current balance ${KatsuCases.formatCurrency(balance || 0)}</div>
+                        <div class="rain-meta">@${KatsuCases.escapeHtml(username)} · ${KatsuCases.escapeHtml(email || '')}${region ? ' · ' + KatsuCases.escapeHtml(region) : ''} · Current balance ${KatsuCases.formatCompactCurrency(balance || 0)}</div>
                     </div>
-                    <span class="badge badge-rare">Player</span>
+                    <span class="badge ${isOwner ? 'badge-mythical' : (siteRole === 'co_owner' ? 'badge-legendary' : (siteRole === 'admin' ? 'badge-epic' : 'badge-rare'))}">${KatsuCases.escapeHtml(isOwner ? 'Owner' : (siteRole === 'co_owner' ? 'Co-Owner' : (siteRole === 'admin' ? 'Admin' : 'Player')))}</span>
                 </div>
                 <div class="admin-user-pity-grid">
                     ${pityMeters.length ? pityMeters.map((meter) => `
@@ -919,12 +1185,15 @@ async function loadGistBackupStatus() {
             `;
             document.getElementById('adminCustomRole').value = customRole || '';
             document.getElementById('adminRegion').value = region || '';
+            document.getElementById('adminSiteRole').value = isOwner ? 'owner' : (siteRole || 'player');
+            document.getElementById('adminSiteRole').disabled = Boolean(isOwner) || !Boolean(window.__adminAuthUser?.is_owner);
             searchAdminUsers(document.getElementById('adminUserSearch').value || '');
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
             KatsuCases.applyBranding();
             const user = await KatsuCases.checkAuth();
+            window.__adminAuthUser = user;
             if (!user) {
                 window.location.href = '/signin';
                 return;
@@ -938,6 +1207,7 @@ async function loadGistBackupStatus() {
 
             try {
                 await loadAdminSummary();
+                await loadAdminCaseManager();
                 await loadGistBackupStatus();
             } catch (error) {
                 KatsuCases.showToast(error.message || 'Failed to load owner console', 'error');
@@ -985,12 +1255,12 @@ document.getElementById('gitBackupConfigForm').addEventListener('submit', async 
     event.preventDefault();
     try {
         await KatsuCases.api.post('/api/admin/gist-backup/config', {
-            gistId: document.getElementById('gitRepoPath').value,
             description: document.getElementById('gitBranch').value,
-            token: document.getElementById('gitRemoteUrl').value,
-            isPublic: document.getElementById('gitPushOnBackup').checked
+            isPublic: document.getElementById('gitPushOnBackup').checked,
+            autoSaveMinutes: Number(document.getElementById('gitAutoSaveMinutes').value || 0),
+            maxVersions: Number(document.getElementById('gitMaxVersions').value || 8)
         });
-        KatsuCases.showToast('Gist backup config saved', 'success');
+        KatsuCases.showToast('Backup settings saved', 'success');
         await loadGistBackupStatus();
     } catch (error) {
         KatsuCases.showToast(error.message || 'Failed to save Gist backup config', 'error');
@@ -1000,10 +1270,9 @@ document.getElementById('gitBackupConfigForm').addEventListener('submit', async 
 document.getElementById('runGitBackupBtn').addEventListener('click', async () => {
     try {
         await KatsuCases.api.post('/api/admin/gist-backup/backup', {
-            gistId: document.getElementById('gitRepoPath').value,
             description: document.getElementById('gitBranch').value,
-            token: document.getElementById('gitRemoteUrl').value,
-            isPublic: document.getElementById('gitPushOnBackup').checked
+            isPublic: document.getElementById('gitPushOnBackup').checked,
+            maxVersions: Number(document.getElementById('gitMaxVersions').value || 8)
         });
         KatsuCases.showToast('Gist backup completed', 'success');
         await loadGistBackupStatus();
@@ -1016,8 +1285,7 @@ document.getElementById('gitRestoreForm').addEventListener('submit', async (even
     event.preventDefault();
     try {
         await KatsuCases.api.post('/api/admin/gist-backup/restore', {
-            gistId: document.getElementById('gitRestoreRef').value || document.getElementById('gitRepoPath').value,
-            token: document.getElementById('gitRemoteUrl').value
+            ref: document.getElementById('gitRestoreRef').value
         });
         KatsuCases.showToast('Gist restore completed', 'success');
         await loadGistBackupStatus();
@@ -1054,7 +1322,7 @@ document.getElementById('adminUserSearch').addEventListener('input', KatsuCases.
                         reason: document.getElementById('balanceReason').value
                     });
                     selectedAdminUser.balance = result.user.balance;
-                    selectAdminUser(selectedAdminUser.id, selectedAdminUser.username, selectedAdminUser.email, selectedAdminUser.balance, selectedAdminUser.display_name, selectedAdminUser.custom_role, selectedAdminUser.region, selectedAdminUser.pity);
+                    selectAdminUser(selectedAdminUser.id, selectedAdminUser.username, selectedAdminUser.email, selectedAdminUser.balance, selectedAdminUser.display_name, selectedAdminUser.custom_role, selectedAdminUser.region, selectedAdminUser.pity, selectedAdminUser.site_role, selectedAdminUser.is_owner);
                     document.getElementById('balanceAmount').value = '';
                     document.getElementById('balanceReason').value = '';
                     KatsuCases.showToast('Balance updated', 'success');
@@ -1076,12 +1344,13 @@ document.getElementById('adminUserSearch').addEventListener('input', KatsuCases.
                         badge: document.getElementById('adminBadgeKey').value,
                         custom_role: document.getElementById('adminCustomRole').value,
                         region: document.getElementById('adminRegion').value,
+                        site_role: document.getElementById('adminSiteRole').value,
                         free_rolls: Number(document.getElementById('adminFreeRolls').value || 0)
                     });
                     selectedAdminUser.custom_role = result.user?.custom_role || document.getElementById('adminCustomRole').value || '';
                     selectedAdminUser.region = result.user?.region || document.getElementById('adminRegion').value || '';
                     if (result.user?.pity) selectedAdminUser.pity = result.user.pity;
-                    selectAdminUser(selectedAdminUser.id, selectedAdminUser.username, selectedAdminUser.email, selectedAdminUser.balance, selectedAdminUser.display_name, selectedAdminUser.custom_role, selectedAdminUser.region, selectedAdminUser.pity);
+                    selectAdminUser(selectedAdminUser.id, selectedAdminUser.username, selectedAdminUser.email, selectedAdminUser.balance, selectedAdminUser.display_name, selectedAdminUser.custom_role, selectedAdminUser.region, selectedAdminUser.pity, selectedAdminUser.site_role, selectedAdminUser.is_owner);
                     KatsuCases.showToast('User role data updated', 'success');
                     document.getElementById('adminBadgeKey').value = '';
                     document.getElementById('adminFreeRolls').value = 0;
@@ -1100,6 +1369,9 @@ document.getElementById('adminUserSearch').addEventListener('input', KatsuCases.
                         category: document.getElementById('caseCategory').value,
                         description: document.getElementById('caseDescription').value,
                         launch_at: document.getElementById('caseLaunchAt').value ? new Date(document.getElementById('caseLaunchAt').value).toISOString() : null,
+                        rotation_name: document.getElementById('caseRotationName').value,
+                        rotation_starts_at: document.getElementById('caseRotationStartsAt').value ? new Date(document.getElementById('caseRotationStartsAt').value).toISOString() : null,
+                        rotation_ends_at: document.getElementById('caseRotationEndsAt').value ? new Date(document.getElementById('caseRotationEndsAt').value).toISOString() : null,
                         items_text: document.getElementById('caseItemsText').value
                     });
                     KatsuCases.showToast(`Case ${data.case?.launch_at ? 'scheduled' : 'created'}`, 'success');
@@ -1110,6 +1382,7 @@ document.getElementById('adminUserSearch').addEventListener('input', KatsuCases.
                     document.getElementById('selectedCasePokemon').innerHTML = 'Pick a Pokémon to add it to the case.';
                     syncCaseItemsText();
                     await loadAdminSummary();
+                    await loadAdminCaseManager(data.case?.id);
                     await KatsuCases.loadSiteState(true);
                 } catch (error) {
                     KatsuCases.showToast(error.message || 'Failed to create case', 'error');
@@ -1136,7 +1409,7 @@ document.getElementById('adminUserSearch').addEventListener('input', KatsuCases.
                         odds: claimType === 'pokemon' ? amountValue : undefined
                     });
                     document.getElementById('claimCreateResult').className = 'admin-rain-card';
-                    document.getElementById('claimCreateResult').innerHTML = `<div><strong>${KatsuCases.escapeHtml(data.claim.title)}</strong><div class="rain-meta">Code ${KatsuCases.escapeHtml(data.claim.code)} · ${KatsuCases.escapeHtml(data.url)}</div></div>`;
+                    document.getElementById('claimCreateResult').innerHTML = `<div><strong>${KatsuCases.escapeHtml(data.claim.title)}</strong><div class="rain-meta">Code ${KatsuCases.escapeHtml(data.claim.code)} · expires ${new Date(data.claim.expires_at).toLocaleString()}</div><div class="rain-meta" style="margin-top:8px;"><a href="${KatsuCases.escapeHtml(data.url)}" target="_blank" rel="noopener">${KatsuCases.escapeHtml(window.location.origin + data.url)}</a></div><div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;"><button class="btn btn-ghost" type="button" onclick="navigator.clipboard.writeText(window.location.origin + '${KatsuCases.escapeHtml(data.url)}').then(() => KatsuCases.showToast('Reward link copied', 'success')).catch(() => KatsuCases.showToast('Copy failed', 'error'))"><i class="ri-file-copy-line"></i> Copy Link</button><a class="btn btn-secondary" href="${KatsuCases.escapeHtml(data.url)}" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> Open Link</a></div></div>`;
                     KatsuCases.showToast('Claim link created', 'success');
                     await loadAdminSummary();
                     await KatsuCases.loadCommunityChat(true);
@@ -1153,10 +1426,127 @@ document.getElementById('adminUserSearch').addEventListener('input', KatsuCases.
                 try {
                     const result = await KatsuCases.api.post(`/api/admin/users/${selectedAdminUser.id}/pity/reset`, {});
                     selectedAdminUser.pity = result.user?.pity || {};
-                    selectAdminUser(selectedAdminUser.id, selectedAdminUser.username, selectedAdminUser.email, selectedAdminUser.balance, selectedAdminUser.display_name, selectedAdminUser.custom_role, selectedAdminUser.region, selectedAdminUser.pity);
+                    selectAdminUser(selectedAdminUser.id, selectedAdminUser.username, selectedAdminUser.email, selectedAdminUser.balance, selectedAdminUser.display_name, selectedAdminUser.custom_role, selectedAdminUser.region, selectedAdminUser.pity, selectedAdminUser.site_role, selectedAdminUser.is_owner);
                     KatsuCases.showToast('Selected user pity reset', 'success');
                 } catch (error) {
                     KatsuCases.showToast(error.message || 'Failed to reset pity', 'error');
+                }
+            });
+
+
+            document.getElementById('grantPokemonSearch').addEventListener('input', (event) => {
+                window.clearTimeout(grantPokemonSearchTimer);
+                grantPokemonSearchTimer = window.setTimeout(() => {
+                    runGrantPokemonSearch(event.target.value).catch(() => undefined);
+                }, 220);
+            });
+
+            document.getElementById('adminGrantItemForm').addEventListener('submit', async (event) => {
+                event.preventDefault();
+                if (!selectedAdminUser) {
+                    KatsuCases.showToast('Select a user first', 'error');
+                    return;
+                }
+                if (!selectedGrantPokemon) {
+                    KatsuCases.showToast('Pick a Pokémon first', 'error');
+                    return;
+                }
+                try {
+                    await KatsuCases.api.post(`/api/admin/users/${selectedAdminUser.id}/grant-item`, {
+                        pokemon_name: selectedGrantPokemon.name,
+                        sprite_url: selectedGrantPokemon.sprite_url,
+                        rarity: document.getElementById('grantItemRarity').value,
+                        odds: Number(document.getElementById('grantItemOdds').value || 1),
+                        is_shiny: Number(document.getElementById('grantItemShiny').value || 0),
+                        source_label: document.getElementById('grantItemSourceLabel').value || 'Admin reward drop'
+                    });
+                    KatsuCases.showToast('Pokémon granted to selected user', 'success');
+                    document.getElementById('grantPokemonSearch').value = '';
+                    document.getElementById('grantPokemonSearchResults').innerHTML = '';
+                    document.getElementById('grantItemSourceLabel').value = '';
+                    selectedGrantPokemon = null;
+                    document.getElementById('selectedGrantPokemon').className = 'admin-rain-card empty';
+                    document.getElementById('selectedGrantPokemon').innerHTML = 'Pick a Pokémon to grant it to the selected user.';
+                    await loadAdminSummary();
+                } catch (error) {
+                    KatsuCases.showToast(error.message || 'Failed to grant Pokémon', 'error');
+                }
+            });
+
+            document.getElementById('manageCaseSelect').addEventListener('change', (event) => {
+                const caseRow = adminManageCases.find((entry) => Number(entry.id) === Number(event.target.value));
+                applyManagedCaseToForm(caseRow || null);
+            });
+
+            document.getElementById('adminManageCaseForm').addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const caseId = Number(document.getElementById('manageCaseSelect').value || 0);
+                if (!caseId) {
+                    KatsuCases.showToast('Choose a case first', 'error');
+                    return;
+                }
+                try {
+                    const result = await KatsuCases.api.post(`/api/admin/cases/${caseId}/update`, {
+                        name: document.getElementById('manageCaseName').value,
+                        price: Number(document.getElementById('manageCasePrice').value || 0),
+                        category: document.getElementById('manageCaseCategory').value,
+                        description: document.getElementById('manageCaseDescription').value,
+                        launch_at: document.getElementById('manageCaseLaunchAt').value ? new Date(document.getElementById('manageCaseLaunchAt').value).toISOString() : null,
+                        clear_launch_at: !document.getElementById('manageCaseLaunchAt').value,
+                        rotation_name: document.getElementById('manageCaseRotationName').value,
+                        rotation_starts_at: document.getElementById('manageCaseRotationStartsAt').value ? new Date(document.getElementById('manageCaseRotationStartsAt').value).toISOString() : null,
+                        rotation_ends_at: document.getElementById('manageCaseRotationEndsAt').value ? new Date(document.getElementById('manageCaseRotationEndsAt').value).toISOString() : null,
+                        clear_rotation_name: !document.getElementById('manageCaseRotationName').value,
+                        clear_rotation_starts_at: !document.getElementById('manageCaseRotationStartsAt').value,
+                        clear_rotation_ends_at: !document.getElementById('manageCaseRotationEndsAt').value,
+                        is_featured: document.getElementById('manageCaseFeatured').checked,
+                        is_hidden: document.getElementById('manageCaseHidden').checked
+                    });
+                    KatsuCases.showToast('Case updated', 'success');
+                    await loadAdminCaseManager(result.case?.id || caseId);
+                    await loadAdminSummary();
+                    await KatsuCases.loadSiteState(true);
+                } catch (error) {
+                    KatsuCases.showToast(error.message || 'Failed to update case', 'error');
+                }
+            });
+
+            document.getElementById('cloneManagedCaseBtn').addEventListener('click', async () => {
+                const caseId = Number(document.getElementById('manageCaseSelect').value || 0);
+                if (!caseId) return KatsuCases.showToast('Choose a case first', 'error');
+                try {
+                    const result = await KatsuCases.api.post(`/api/admin/cases/${caseId}/clone`, { name: `${document.getElementById('manageCaseName').value} Clone` });
+                    KatsuCases.showToast('Case cloned', 'success');
+                    await loadAdminCaseManager(result.case?.id || null);
+                    await loadAdminSummary();
+                } catch (error) {
+                    KatsuCases.showToast(error.message || 'Failed to clone case', 'error');
+                }
+            });
+
+            document.getElementById('dedupeManagedCaseBtn').addEventListener('click', async () => {
+                const caseId = Number(document.getElementById('manageCaseSelect').value || 0);
+                if (!caseId) return KatsuCases.showToast('Choose a case first', 'error');
+                try {
+                    const result = await KatsuCases.api.post(`/api/admin/cases/${caseId}/dedupe`, {});
+                    KatsuCases.showToast(`Removed ${result.removed_duplicates || 0} duplicate entries`, 'success');
+                    await loadAdminCaseManager(caseId);
+                } catch (error) {
+                    KatsuCases.showToast(error.message || 'Failed to dedupe case contents', 'error');
+                }
+            });
+
+            document.getElementById('deleteManagedCaseBtn').addEventListener('click', async () => {
+                const caseId = Number(document.getElementById('manageCaseSelect').value || 0);
+                if (!caseId) return KatsuCases.showToast('Choose a case first', 'error');
+                if (!confirm('Delete this case and all of its content entries?')) return;
+                try {
+                    await KatsuCases.api.post(`/api/admin/cases/${caseId}/delete`, {});
+                    KatsuCases.showToast('Case deleted', 'success');
+                    await loadAdminCaseManager();
+                    await loadAdminSummary();
+                } catch (error) {
+                    KatsuCases.showToast(error.message || 'Failed to delete case', 'error');
                 }
             });
 
