@@ -1,46 +1,12 @@
 {
-  "nextMessageId": 2,
+  "nextMessageId": 1,
   "nextRainId": 1,
   "nextAnnouncementId": 1,
   "nextClaimId": 1,
-  "messages": [
-    {
-      "id": 1,
-      "created_at": "2026-04-21T01:42:37.206Z",
-      "type": "system",
-      "user_id": null,
-      "username": "KatsuCases",
-      "display_name": "System",
-      "is_admin": false,
-      "avatar_url": "https://i.pinimg.com/736x/80/6c/2b/806c2b66dcd1c9a559a40083ef301fa6.jpg",
-      "region": "",
-      "pronouns": "",
-      "badges": [],
-      "custom_role": "",
-      "message": "Community chat is live. Trade, talk pulls, and watch for rain drops from the owner.",
-      "meta": null
-    }
-  ],
+  "messages": [],
   "activeRain": null,
   "rainHistory": [],
   "announcements": [],
-  "presence": {
-    "1": {
-      "user_id": 1,
-      "username": "Admin",
-      "display_name": "Admin",
-      "avatar_url": null,
-      "region": "",
-      "badges": [
-        {
-          "key": "owner",
-          "label": "OWNER",
-          "className": "badge-legendary badge-animated-glow"
-        }
-      ],
-      "last_seen": 1776736042264,
-      "typing_at": 0
-    }
-  },
+  "presence": {},
   "claimDrops": []
 }

@@ -54,6 +54,36 @@ function markSessionAuthenticated(req) {
     req.session.auth_issued_at = nowIso();
 }
 
+function ensureAccountStatusDefaults(user) {
+    if (!user) return user;
+    if (user.account_status === undefined) user.account_status = 'active';
+    if (user.account_status_reason === undefined) user.account_status_reason = '';
+    if (user.account_status_expires_at === undefined) user.account_status_expires_at = null;
+    if (user.account_status_set_at === undefined) user.account_status_set_at = null;
+    if (user.account_status_set_by === undefined) user.account_status_set_by = null;
+    return user;
+}
+
+function clearAccountStatus(user) {
+    ensureAccountStatusDefaults(user);
+    user.account_status = 'active';
+    user.account_status_reason = '';
+    user.account_status_expires_at = null;
+    user.account_status_set_at = null;
+    user.account_status_set_by = null;
+    return user;
+}
+
+function refreshExpiredAccountStatus(user) {
+    ensureAccountStatusDefaults(user);
+    if (String(user.account_status || 'active').toLowerCase() !== 'suspended') return false;
+    if (!user.account_status_expires_at) return false;
+    const expiresAt = new Date(user.account_status_expires_at).getTime();
+    if (!Number.isFinite(expiresAt) || expiresAt > Date.now()) return false;
+    clearAccountStatus(user);
+    return true;
+}
+
 function createSecurityFlag(state, payload = {}) {
     const meta = ensureAuthMeta(state);
     pruneAuthMeta(meta);
@@ -82,6 +112,8 @@ function detectBanEvasion(state, user, req, context = 'login') {
     const users = safeArray(state.tables?.users);
     const matches = users.filter((entry) => {
         if (Number(entry.id) === Number(user.id)) return false;
+        ensureAccountStatusDefaults(entry);
+        refreshExpiredAccountStatus(entry);
         if (String(entry.account_status || 'active').toLowerCase() !== 'suspended') return false;
         const ips = new Set([
             entry.signup_ip,
@@ -200,6 +232,8 @@ function buildUserPayload(user = {}) {
         offline_roll_last_at: user.offline_roll_last_at || null,
         offline_roll_total_earned: Number(user.offline_roll_total_earned || 0),
         account_status: user.account_status || 'active',
+        account_status_reason: user.account_status_reason || '',
+        account_status_expires_at: user.account_status_expires_at || null,
         signup_ip: user.signup_ip || null,
         site_role: getUserSiteRole(user),
         is_owner: isOwnerUserId(user.id),
@@ -388,8 +422,15 @@ router.post('/login', async (req, res) => {
         if (!user) {
             return res.status(401).json({ error: `Invalid ${loginMethod === 'username' ? 'username' : 'email'} or password` });
         }
+
+        const state = readState();
+        const userRow = safeArray(state.tables?.users).find((row) => Number(row.id) === Number(user.id));
+        if (userRow && refreshExpiredAccountStatus(userRow)) {
+            writeState(state);
+            user = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id) || user;
+        }
         if (String(user.account_status || 'active').toLowerCase() === 'suspended') {
-            return res.status(403).json({ error: 'This account is suspended' });
+            return res.status(403).json({ error: 'This account is suspended', reason: user.account_status_reason || '', expires_at: user.account_status_expires_at || null });
         }
 
         const validPassword = await verifyPassword(password, user.password_hash);
@@ -399,12 +440,12 @@ router.post('/login', async (req, res) => {
 
         req.session.userId = user.id;
         markSessionAuthenticated(req);
-        const state = readState();
-        const userRow = safeArray(state.tables?.users).find((row) => Number(row.id) === Number(user.id));
-        if (userRow) {
-            attachUserSecurityMeta(userRow, req);
-            detectBanEvasion(state, userRow, req, 'login');
-            writeState(state);
+        const loginState = readState();
+        const loginUserRow = safeArray(loginState.tables?.users).find((row) => Number(row.id) === Number(user.id));
+        if (loginUserRow) {
+            attachUserSecurityMeta(loginUserRow, req);
+            detectBanEvasion(loginState, loginUserRow, req, 'login');
+            writeState(loginState);
             user = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id) || user;
         }
         res.json({ success: true, user: buildUserPayload(user) });
@@ -525,9 +566,16 @@ router.get('/me', (req, res) => {
         return res.json({ user: null });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.userId);
+    let user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.userId);
     if (!user) {
         return res.json({ user: null });
+    }
+
+    const state = readState();
+    const liveUser = safeArray(state.tables?.users).find((row) => Number(row.id) === Number(user.id));
+    if (liveUser && refreshExpiredAccountStatus(liveUser)) {
+        writeState(state);
+        user = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id) || user;
     }
 
     const accountStatus = String(user.account_status || 'active').toLowerCase();
@@ -540,7 +588,8 @@ router.get('/me', (req, res) => {
             res.clearCookie('connect.sid');
             res.status(403).json({
                 error: accountStatus === 'suspended' ? 'This account is suspended' : 'Your session was ended by staff',
-                reason: accountStatus === 'suspended' ? 'suspended' : 'forced_logout'
+                reason: accountStatus === 'suspended' ? (user.account_status_reason || 'suspended') : 'forced_logout',
+                expires_at: accountStatus === 'suspended' ? (user.account_status_expires_at || null) : null
             });
         });
     }

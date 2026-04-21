@@ -75,6 +75,20 @@
 <script>
 let selectedUser = null;
 
+function toDatetimeLocalValue(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const pad = (num) => String(num).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function formatStatusUntil(value) {
+    if (!value) return 'Permanent';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Permanent' : date.toLocaleString();
+}
+
 function userResultCard(user) {
     return `<button class="btn btn-secondary rollback-user-card" data-user-id="${user.id}" style="display:flex; justify-content:space-between; align-items:center; gap:12px; text-align:left; width:100%;">
         <span>
@@ -107,7 +121,8 @@ async function renderSelectedUser(user) {
             <div>
                 <h3 style="margin:0 0 6px;">${KatsuCases.escapeHtml(user.display_name || user.username)}</h3>
                 <div style="color:var(--text-secondary);">@${KatsuCases.escapeHtml(user.username)} · ${KatsuCases.escapeHtml(user.email || '')}</div>
-                <div style="color:var(--text-secondary); margin-top:6px;">Balance ${KatsuCases.formatCurrency(user.balance || 0)} · ${KatsuCases.escapeHtml(user.account_status || 'active')}</div>
+                <div style="color:var(--text-secondary); margin-top:6px;">Balance ${KatsuCases.formatCurrency(user.balance || 0)} · ${KatsuCases.escapeHtml(user.account_status || 'active')}${user.account_status === 'suspended' ? ` · Until ${KatsuCases.escapeHtml(formatStatusUntil(user.account_status_expires_at))}` : ''}</div>
+                ${user.account_status === 'suspended' && user.account_status_reason ? `<div style="color:var(--text-secondary); margin-top:6px;">Reason: ${KatsuCases.escapeHtml(user.account_status_reason)}</div>` : ''}
             </div>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <button id="createSnapshotBtn" class="btn btn-primary"><i class="ri-camera-line"></i> Create Snapshot</button>
@@ -117,6 +132,17 @@ async function renderSelectedUser(user) {
         <div style="display:grid; gap:14px; margin-bottom:18px;">
             <input id="snapshotLabel" class="input" placeholder="Snapshot label" value="Manual snapshot">
             <textarea id="snapshotReason" class="textarea" rows="3" placeholder="Why are you taking this snapshot or restoring this account?"></textarea>
+        </div>
+        <div class="field-grid" style="margin-bottom:18px;">
+            <div>
+                <label class="form-label" for="statusReason">Status reason</label>
+                <textarea id="statusReason" class="textarea" rows="3" placeholder="Add the reason for the ban, suspension, or reactivation.">${KatsuCases.escapeHtml(user.account_status_reason || '')}</textarea>
+            </div>
+            <div>
+                <label class="form-label" for="statusExpiresAt">Status ends at</label>
+                <input id="statusExpiresAt" class="input" type="datetime-local" value="${KatsuCases.escapeHtml(toDatetimeLocalValue(user.account_status_expires_at))}">
+                <div class="form-hint">Leave blank to keep the suspension permanent.</div>
+            </div>
         </div>
         <div class="panel-head"><div><h3>Stored versions</h3><p>Restore a previous account state when needed.</p></div></div>
         <div id="snapshotList" style="display:grid; gap:14px; margin-top:14px;">${snapshots.length ? snapshots.map((snapshot) => snapshotCard(snapshot, user.id)).join('') : '<div class="profile-account-note">No snapshots yet for this user.</div>'}</div>
@@ -140,12 +166,15 @@ async function renderSelectedUser(user) {
 
     document.getElementById('toggleStatusBtn').addEventListener('click', async () => {
         const nextStatus = user.account_status === 'suspended' ? 'active' : 'suspended';
-        const reason = document.getElementById('snapshotReason').value.trim() || `Account ${nextStatus}`;
+        const reason = document.getElementById('statusReason').value.trim() || `Account ${nextStatus}`;
+        const expiresAt = document.getElementById('statusExpiresAt').value;
         const button = document.getElementById('toggleStatusBtn');
         KatsuCases.setLoading(true, button);
         try {
-            await KatsuCases.api.post(`/api/admin/users/${user.id}/status`, { status: nextStatus, reason });
+            const result = await KatsuCases.api.post(`/api/admin/users/${user.id}/status`, { status: nextStatus, reason, expires_at: nextStatus === 'suspended' ? (expiresAt || null) : null });
             user.account_status = nextStatus;
+            user.account_status_reason = result.user?.account_status_reason || (nextStatus === 'suspended' ? reason : '');
+            user.account_status_expires_at = result.user?.account_status_expires_at || null;
             KatsuCases.showToast(`Account ${nextStatus === 'active' ? 'reactivated' : 'suspended'}`, 'success');
             await renderSelectedUser(user);
             await searchUsers();

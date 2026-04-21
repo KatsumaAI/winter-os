@@ -148,6 +148,10 @@ function loadState() {
         if (user.offline_roll_last_at === undefined) { user.offline_roll_last_at = null; mutated = true; }
         if (user.offline_roll_total_earned === undefined) { user.offline_roll_total_earned = 0; mutated = true; }
         if (user.account_status === undefined) { user.account_status = 'active'; mutated = true; }
+        if (user.account_status_reason === undefined) { user.account_status_reason = ''; mutated = true; }
+        if (user.account_status_expires_at === undefined) { user.account_status_expires_at = null; mutated = true; }
+        if (user.account_status_set_at === undefined) { user.account_status_set_at = null; mutated = true; }
+        if (user.account_status_set_by === undefined) { user.account_status_set_by = null; mutated = true; }
         if (user.theme_mode === undefined) { user.theme_mode = 'dark'; mutated = true; }
         if (!Array.isArray(user.known_ips)) { user.known_ips = []; mutated = true; }
         if (user.signup_ip === undefined) { user.signup_ip = null; mutated = true; }

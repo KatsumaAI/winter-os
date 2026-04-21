@@ -81,6 +81,17 @@
                                     </div>
                                     <div id="securityUserSearchResults" class="admin-feed-list"></div>
                                     <div id="securitySelectedUser" class="admin-rain-card empty">Select a user to unlock moderation actions.</div>
+                                    <div class="field-grid">
+                                        <div>
+                                            <label class="form-label" for="securityActionReason">Reason</label>
+                                            <textarea id="securityActionReason" class="textarea" rows="3" placeholder="Add the moderation reason players and staff should see."></textarea>
+                                        </div>
+                                        <div>
+                                            <label class="form-label" for="securityActionExpiresAt">Ends at</label>
+                                            <input id="securityActionExpiresAt" class="input" type="datetime-local">
+                                            <div class="form-hint">Leave blank to keep the ban or suspension permanent.</div>
+                                        </div>
+                                    </div>
                                     <div style="display:flex; gap:12px; flex-wrap:wrap;">
                                         <button id="securitySuspendBtn" class="btn btn-secondary" type="button"><i class="ri-forbid-line"></i> Ban / Suspend</button>
                                         <button id="securityActivateBtn" class="btn btn-ghost" type="button"><i class="ri-shield-check-line"></i> Unban / Reactivate</button>
@@ -122,6 +133,20 @@
 <script>
 let selectedSecurityUser = null;
 
+function toDatetimeLocalValue(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const pad = (num) => String(num).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function formatStatusUntil(value) {
+    if (!value) return 'Permanent';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Permanent' : date.toLocaleString();
+}
+
 function renderSecurityUserCard(user) {
     const target = document.getElementById('securitySelectedUser');
     if (!user) {
@@ -129,8 +154,14 @@ function renderSecurityUserCard(user) {
         target.textContent = 'Select a user to unlock moderation actions.';
         return;
     }
+    const statusLine = user.account_status === 'suspended'
+        ? `Status: suspended · Until ${KatsuCases.escapeHtml(formatStatusUntil(user.account_status_expires_at))} · Role: ${KatsuCases.escapeHtml(user.site_role || 'player')} · Last IP: ${KatsuCases.escapeHtml(user.last_login_ip || 'unknown')}`
+        : `Status: ${KatsuCases.escapeHtml(user.account_status || 'active')} · Role: ${KatsuCases.escapeHtml(user.site_role || 'player')} · Last IP: ${KatsuCases.escapeHtml(user.last_login_ip || 'unknown')}`;
+    const reasonLine = user.account_status === 'suspended' && user.account_status_reason
+        ? `<div class="rain-meta" style="margin-top:6px;">Reason: ${KatsuCases.escapeHtml(user.account_status_reason)}</div>`
+        : '';
     target.className = 'admin-rain-card';
-    target.innerHTML = `<div><strong>${KatsuCases.escapeHtml(user.display_name || user.username)}</strong><div class="rain-meta">@${KatsuCases.escapeHtml(user.username)} · ${KatsuCases.escapeHtml(user.email || 'no email')} · ${KatsuCases.formatCompactCurrency(user.balance || 0)}</div><div class="rain-meta" style="margin-top:6px;">Status: ${KatsuCases.escapeHtml(user.account_status || 'active')} · Role: ${KatsuCases.escapeHtml(user.site_role || 'player')} · Last IP: ${KatsuCases.escapeHtml(user.last_login_ip || 'unknown')}</div>${user.suspected_ban_evasion ? '<div class="rain-meta" style="margin-top:6px; color:#fca5a5;">Ban evasion watch flag is active for this account.</div>' : ''}</div>`;
+    target.innerHTML = `<div><strong>${KatsuCases.escapeHtml(user.display_name || user.username)}</strong><div class="rain-meta">@${KatsuCases.escapeHtml(user.username)} · ${KatsuCases.escapeHtml(user.email || 'no email')} · ${KatsuCases.formatCompactCurrency(user.balance || 0)}</div><div class="rain-meta" style="margin-top:6px;">${statusLine}</div>${reasonLine}${user.suspected_ban_evasion ? '<div class="rain-meta" style="margin-top:6px; color:#fca5a5;">Ban evasion watch flag is active for this account.</div>' : ''}</div>`;
 }
 
 async function searchSecurityUsers(query = '') {
@@ -149,6 +180,9 @@ async function searchSecurityUsers(query = '') {
 function selectSecurityUser(id) {
     selectedSecurityUser = (window.__securityUsers || []).find((entry) => Number(entry.id) === Number(id)) || null;
     renderSecurityUserCard(selectedSecurityUser);
+    document.getElementById('securityActionReason').value = selectedSecurityUser?.account_status_reason || '';
+    if (!selectedSecurityUser?.account_status_reason) document.getElementById('securityActionReason').placeholder = 'Add the moderation reason players and staff should see.';
+    document.getElementById('securityActionExpiresAt').value = toDatetimeLocalValue(selectedSecurityUser?.account_status_expires_at);
 }
 
 async function loadSecurityTrades() {
@@ -196,9 +230,13 @@ document.getElementById('securityUserSearch').addEventListener('input', KatsuCas
 
 document.getElementById('securitySuspendBtn').addEventListener('click', async () => {
     if (!selectedSecurityUser) return KatsuCases.showToast('Select a user first', 'error');
+    const reason = document.getElementById('securityActionReason').value.trim() || 'Suspended from owner security console';
+    const expiresAt = document.getElementById('securityActionExpiresAt').value;
     try {
-        const result = await KatsuCases.api.post(`/api/admin/users/${selectedSecurityUser.id}/status`, { status: 'suspended', reason: 'Suspended from owner security console' });
+        const result = await KatsuCases.api.post(`/api/admin/users/${selectedSecurityUser.id}/status`, { status: 'suspended', reason, expires_at: expiresAt || null });
         selectedSecurityUser.account_status = 'suspended';
+        selectedSecurityUser.account_status_reason = result.user?.account_status_reason || reason;
+        selectedSecurityUser.account_status_expires_at = result.user?.account_status_expires_at || null;
         if (result.demoted_to_player) selectedSecurityUser.site_role = 'player';
         renderSecurityUserCard(selectedSecurityUser);
         KatsuCases.showToast(result.demoted_to_player ? 'Account suspended and demoted to player' : 'Account suspended', 'success');
@@ -209,9 +247,13 @@ document.getElementById('securitySuspendBtn').addEventListener('click', async ()
 
 document.getElementById('securityActivateBtn').addEventListener('click', async () => {
     if (!selectedSecurityUser) return KatsuCases.showToast('Select a user first', 'error');
+    const reason = document.getElementById('securityActionReason').value.trim() || 'Reactivated from owner security console';
     try {
-        await KatsuCases.api.post(`/api/admin/users/${selectedSecurityUser.id}/status`, { status: 'active', reason: 'Reactivated from owner security console' });
+        await KatsuCases.api.post(`/api/admin/users/${selectedSecurityUser.id}/status`, { status: 'active', reason });
         selectedSecurityUser.account_status = 'active';
+        selectedSecurityUser.account_status_reason = '';
+        selectedSecurityUser.account_status_expires_at = null;
+        document.getElementById('securityActionExpiresAt').value = '';
         renderSecurityUserCard(selectedSecurityUser);
         KatsuCases.showToast('Account reactivated', 'success');
     } catch (error) {

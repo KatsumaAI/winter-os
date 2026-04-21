@@ -14,6 +14,11 @@
       "notifications": 1,
       "support_tickets": 1,
       "account_snapshots": 1
+    },
+    "platform_config": {
+      "offline_roll_interval_minutes": 120,
+      "offline_roll_cap": 24,
+      "gist_backup_max_versions": 8
     }
   },
   "tables": {
@@ -40,42 +45,14 @@
         "offline_roll_enabled": 0,
         "offline_roll_last_at": null,
         "offline_roll_total_earned": 0,
-        "account_status": "active",
-        "pity_rare_streak": 0,
-        "pity_epic_streak": 0,
-        "pity_legendary_streak": 0,
-        "pity_mythical_streak": 0,
-        "total_xp": 0,
-        "daily_claim_streak": 0,
-        "daily_last_claim_at": null,
-        "daily_cycle_day": null,
-        "daily_case_opens": 0,
-        "daily_chat_messages": 0,
-        "daily_trades_sent": 0,
-        "daily_mission_claims": {},
-        "favorite_case_ids": [],
-        "daily_claim_total": 0,
-        "theme_mode": "dark",
-        "known_ips": [
-          "::1"
-        ],
-        "signup_ip": "::1",
-        "last_login_ip": "::1",
-        "last_login_at": "2026-04-21T01:42:46.406Z",
-        "site_role": "player",
-        "force_logout_at": null,
-        "force_logout_reason": "",
-        "suspected_ban_evasion": 0,
-        "suspected_ban_evasion_at": null,
-        "suspected_ban_evasion_ip": null,
-        "created_ip": "::1"
+        "account_status": "active"
       }
     ],
     "inventory": [],
     "cases": [
       {
         "name": "Kanto Starter Case",
-        "description": "Classic Pokémon from the Kanto region",
+        "description": "Classic Pok\u00e9mon from the Kanto region",
         "price": 2.99,
         "image_color": "#3b82f6",
         "is_featured": 1,
@@ -86,10 +63,7 @@
         "created_at": "2026-04-16T18:43:01.611Z",
         "id": 1,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Johto Legends Case",
@@ -104,14 +78,11 @@
         "created_at": "2026-04-16T18:43:01.612Z",
         "id": 2,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Hoenn Adventures Case",
-        "description": "Exotic Pokémon from Hoenn",
+        "description": "Exotic Pok\u00e9mon from Hoenn",
         "price": 3.99,
         "image_color": "#10b981",
         "is_featured": 1,
@@ -122,10 +93,7 @@
         "created_at": "2026-04-16T18:43:01.612Z",
         "id": 3,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Sinnoh Elite Case",
@@ -140,14 +108,11 @@
         "created_at": "2026-04-16T18:43:01.612Z",
         "id": 4,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Unova Collection Case",
-        "description": "Unique Unova Pokémon",
+        "description": "Unique Unova Pok\u00e9mon",
         "price": 5.99,
         "image_color": "#ec4899",
         "is_featured": 0,
@@ -158,14 +123,11 @@
         "created_at": "2026-04-16T18:43:01.624Z",
         "id": 5,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Galar Champions Case",
-        "description": "High-tier Galar Pokémon",
+        "description": "High-tier Galar Pok\u00e9mon",
         "price": 9.99,
         "image_color": "#06b6d4",
         "is_featured": 1,
@@ -176,10 +138,7 @@
         "created_at": "2026-04-16T18:43:01.625Z",
         "id": 6,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Alola Tropics Case",
@@ -194,14 +153,11 @@
         "created_at": "2026-04-16T18:43:01.625Z",
         "id": 7,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Mythical Mystery Case",
-        "description": "Legendary and Mythical Pokémon",
+        "description": "Legendary and Mythical Pok\u00e9mon",
         "price": 14.99,
         "image_color": "#ec4899",
         "is_featured": 1,
@@ -212,10 +168,7 @@
         "created_at": "2026-04-16T18:43:01.625Z",
         "id": 8,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Shiny Hunter Case",
@@ -230,14 +183,11 @@
         "created_at": "2026-04-16T18:43:01.626Z",
         "id": 9,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Community Favorites Case",
-        "description": "Fan-favorite Pokémon",
+        "description": "Fan-favorite Pok\u00e9mon",
         "price": 3.49,
         "image_color": "#3b82f6",
         "is_featured": 0,
@@ -248,10 +198,7 @@
         "created_at": "2026-04-16T18:43:01.626Z",
         "id": 10,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Kalos Royale Case",
@@ -266,10 +213,7 @@
         "created_at": "2026-04-20T21:40:00.000Z",
         "id": 11,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Paldea Flux Case",
@@ -284,10 +228,7 @@
         "created_at": "2026-04-20T21:40:00.000Z",
         "id": 12,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Neo City Case",
@@ -302,10 +243,7 @@
         "created_at": "2026-04-20T21:40:00.000Z",
         "id": 13,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Fossil Jackpot Case",
@@ -320,10 +258,7 @@
         "created_at": "2026-04-20T21:40:00.000Z",
         "id": 14,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Night Market Case",
@@ -338,10 +273,7 @@
         "created_at": "2026-04-20T21:40:00.000Z",
         "id": 15,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Champion Vault Case",
@@ -356,10 +288,7 @@
         "created_at": "2026-04-20T21:40:00.000Z",
         "id": 16,
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "id": 17,
@@ -374,10 +303,7 @@
         "times_opened": 0,
         "created_at": "2026-04-20T22:32:02.748Z",
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "id": 18,
@@ -392,10 +318,7 @@
         "times_opened": 0,
         "created_at": "2026-04-20T22:32:02.750Z",
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "id": 19,
@@ -410,10 +333,7 @@
         "times_opened": 0,
         "created_at": "2026-04-20T22:32:02.750Z",
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "id": 20,
@@ -428,10 +348,7 @@
         "times_opened": 0,
         "created_at": "2026-04-20T22:32:02.750Z",
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "id": 21,
@@ -446,10 +363,7 @@
         "times_opened": 0,
         "created_at": "2026-04-20T22:32:02.753Z",
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "id": 22,
@@ -464,10 +378,7 @@
         "times_opened": 0,
         "created_at": "2026-04-20T22:32:02.754Z",
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "id": 23,
@@ -482,10 +393,7 @@
         "times_opened": 0,
         "created_at": "2026-04-20T22:32:02.754Z",
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "id": 24,
@@ -500,10 +408,7 @@
         "times_opened": 0,
         "created_at": "2026-04-20T22:32:02.754Z",
         "launch_at": null,
-        "is_hidden": 0,
-        "rotation_name": "",
-        "rotation_starts_at": null,
-        "rotation_ends_at": null
+        "is_hidden": 0
       },
       {
         "name": "Neon Nebula Case",
@@ -12661,7 +12566,7 @@
         "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/seedot.gif",
         "odds": 9,
         "is_shiny": 0,
-        "estimated_value": 9
+        "estimated_value": 9.0
       },
       {
         "id": 1005,
@@ -12673,7 +12578,7 @@
         "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/lotad.gif",
         "odds": 9,
         "is_shiny": 0,
-        "estimated_value": 9
+        "estimated_value": 9.0
       },
       {
         "id": 1006,
@@ -13453,7 +13358,7 @@
         "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/garchomp.gif",
         "odds": 1620,
         "is_shiny": 0,
-        "estimated_value": 56
+        "estimated_value": 56.0
       },
       {
         "id": 1071,
@@ -14797,7 +14702,7 @@
         "sprite_url": "https://play.pokemonshowdown.com/sprites/ani/scizor.gif",
         "odds": 147,
         "is_shiny": 0,
-        "estimated_value": 32
+        "estimated_value": 32.0
       },
       {
         "id": 1183,

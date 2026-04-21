@@ -571,8 +571,40 @@ function ensureUserAccountDefaults(user) {
     if (user.offline_roll_last_at === undefined) user.offline_roll_last_at = null;
     if (user.offline_roll_total_earned === undefined) user.offline_roll_total_earned = 0;
     if (user.account_status === undefined) user.account_status = 'active';
+    if (user.account_status_reason === undefined) user.account_status_reason = '';
+    if (user.account_status_expires_at === undefined) user.account_status_expires_at = null;
+    if (user.account_status_set_at === undefined) user.account_status_set_at = null;
+    if (user.account_status_set_by === undefined) user.account_status_set_by = null;
     if (user.hide_inventory === undefined) user.hide_inventory = 0;
     return user;
+}
+
+function parseAccountStatusExpiresAt(value) {
+    const raw = normalizeText(value);
+    if (!raw) return null;
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return parsed.toISOString();
+}
+
+function clearAccountStatusMetadata(user) {
+    ensureUserAccountDefaults(user);
+    user.account_status = 'active';
+    user.account_status_reason = '';
+    user.account_status_expires_at = null;
+    user.account_status_set_at = null;
+    user.account_status_set_by = null;
+    return user;
+}
+
+function refreshExpiredAccountStatus(user) {
+    ensureUserAccountDefaults(user);
+    if (String(user.account_status || 'active').toLowerCase() !== 'suspended') return false;
+    if (!user.account_status_expires_at) return false;
+    const expiresAt = new Date(user.account_status_expires_at).getTime();
+    if (!Number.isFinite(expiresAt) || expiresAt > Date.now()) return false;
+    clearAccountStatusMetadata(user);
+    return true;
 }
 
 function nextStateId(state, tableName) {
@@ -1226,6 +1258,8 @@ function searchUsersList(query, excludeUserId = null, limit = 8) {
             badges: getUserBadges(user).map(serializeBadge),
             custom_role: user.custom_role || '',
             account_status: user.account_status || 'active',
+            account_status_reason: user.account_status_reason || '',
+            account_status_expires_at: user.account_status_expires_at || null,
             signup_ip: user.signup_ip || null,
             last_login_ip: user.last_login_ip || null,
             suspected_ban_evasion: Boolean(Number(user.suspected_ban_evasion || 0)),
@@ -3802,7 +3836,6 @@ router.post('/admin/users/:id/status', isAuthenticated, requireAdmin, (req, res)
     try {
         const targetId = Number(req.params.id);
         const status = normalizeText(req.body.status || 'active').toLowerCase();
-        const reason = normalizeText(req.body.reason || 'Owner account status update').slice(0, 160) || 'Owner account status update';
         const requestedByOwner = isOwnerUserId(req.user.id);
         if (!['active', 'suspended'].includes(status)) {
             return res.status(400).json({ error: 'Invalid account status' });
@@ -3813,15 +3846,38 @@ router.post('/admin/users/:id/status', isAuthenticated, requireAdmin, (req, res)
         const state = readAppState();
         const userRow = safeArray(state.tables?.users).find((row) => Number(row.id) === targetId);
         if (!userRow) return res.status(404).json({ error: 'User not found' });
+        ensureUserAccountDefaults(userRow);
+        refreshExpiredAccountStatus(userRow);
         const targetRole = getUserSiteRole(userRow);
         if (!requestedByOwner && (targetRole === 'admin' || targetRole === 'co_owner' || targetRole === 'owner')) {
             return res.status(403).json({ error: 'Only the site owner can moderate elevated staff accounts' });
         }
+
+        const defaultReason = status === 'suspended' ? 'Suspended from owner security console' : 'Reactivated from owner security console';
+        const reason = normalizeText(req.body.reason || defaultReason).slice(0, 240) || defaultReason;
+        let expiresAt = null;
+        if (status === 'suspended') {
+            expiresAt = parseAccountStatusExpiresAt(req.body.expires_at || req.body.until || req.body.ends_at || '');
+            if ((req.body.expires_at || req.body.until || req.body.ends_at) && !expiresAt) {
+                return res.status(400).json({ error: 'Suspension end time is invalid' });
+            }
+            if (expiresAt && new Date(expiresAt).getTime() <= Date.now()) {
+                return res.status(400).json({ error: 'Suspension end time must be in the future' });
+            }
+        }
+
         buildUserAccountSnapshot(state, targetId, { actorId: req.user.id, reason, label: 'Account status change' });
-        ensureUserAccountDefaults(userRow);
         const wasElevated = ['admin', 'co_owner', 'owner'].includes(targetRole);
         let demotedToPlayer = false;
-        userRow.account_status = status;
+        if (status === 'suspended') {
+            userRow.account_status = 'suspended';
+            userRow.account_status_reason = reason;
+            userRow.account_status_expires_at = expiresAt;
+            userRow.account_status_set_at = new Date().toISOString();
+            userRow.account_status_set_by = Number(req.user.id) || null;
+        } else {
+            clearAccountStatusMetadata(userRow);
+        }
         userRow.force_logout_at = new Date().toISOString();
         userRow.force_logout_reason = status === 'suspended' ? 'staff_ban' : 'staff_session_reset';
         if (status === 'suspended' && requestedByOwner && wasElevated && !isOwnerUserId(userRow.id)) {
@@ -3829,12 +3885,28 @@ router.post('/admin/users/:id/status', isAuthenticated, requireAdmin, (req, res)
             demotedToPlayer = true;
         }
         writeJson(appDataPath, state);
+
         if (status === 'suspended') {
-            notifyUser(targetId, 'account_status', 'Account suspended', demotedToPlayer ? 'Your account was suspended and demoted back to player access by the site owner.' : 'Your account was suspended by the site owner.', '/support', { reason, demoted_to_player: demotedToPlayer });
+            const untilText = expiresAt ? ` Until ${new Date(expiresAt).toLocaleString()}.` : ' This suspension does not expire automatically.';
+            const baseMessage = demotedToPlayer
+                ? 'Your account was suspended and demoted back to player access by the site owner.'
+                : 'Your account was suspended by the site owner.';
+            notifyUser(targetId, 'account_status', 'Account suspended', `${baseMessage} Reason: ${reason}.${untilText}`, '/support', { reason, expires_at: expiresAt, demoted_to_player: demotedToPlayer });
         } else {
-            notifyUser(targetId, 'account_status', 'Account reactivated', 'Your account is active again.', '/profile', { reason });
+            notifyUser(targetId, 'account_status', 'Account reactivated', `Your account is active again. Reason: ${reason}.`, '/profile', { reason });
         }
-        res.json({ success: true, demoted_to_player: demotedToPlayer, user: { id: userRow.id, username: userRow.username, account_status: userRow.account_status, site_role: getUserSiteRole(userRow) } });
+        res.json({
+            success: true,
+            demoted_to_player: demotedToPlayer,
+            user: {
+                id: userRow.id,
+                username: userRow.username,
+                account_status: userRow.account_status,
+                account_status_reason: userRow.account_status_reason || '',
+                account_status_expires_at: userRow.account_status_expires_at || null,
+                site_role: getUserSiteRole(userRow)
+            }
+        });
     } catch (error) {
         console.error('Admin account status error:', error);
         res.status(500).json({ error: 'Failed to update account status' });
