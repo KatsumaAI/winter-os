@@ -1,12 +1,4 @@
 {
-  "nextMessageId": 1,
-  "nextRainId": 1,
-  "nextAnnouncementId": 1,
-  "nextClaimId": 1,
-  "messages": [],
-  "activeRain": null,
-  "rainHistory": [],
-  "announcements": [],
-  "presence": {},
-  "claimDrops": []
+  "nextId": 1,
+  "rooms": []
 }
