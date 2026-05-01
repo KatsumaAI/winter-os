@@ -17,10 +17,13 @@ const DEFAULT_TABLES = {
     transactions: [],
     notifications: [],
     support_tickets: [],
-    account_snapshots: []
+    account_snapshots: [],
+    friend_aliases: [],
+    profile_guestbook: [],
+    case_reviews: []
 };
 
-const ID_TABLES = ['users', 'inventory', 'cases', 'case_contents', 'openings', 'marketplace', 'trades', 'trade_items', 'transactions', 'notifications', 'support_tickets', 'account_snapshots'];
+const ID_TABLES = ['users', 'inventory', 'cases', 'case_contents', 'openings', 'marketplace', 'trades', 'trade_items', 'transactions', 'notifications', 'support_tickets', 'account_snapshots', 'friend_aliases', 'profile_guestbook', 'case_reviews'];
 const RARITY_SORT_ORDER = {
     mythical: 1,
     legendary: 2,
@@ -163,7 +166,25 @@ function loadState() {
         if (user.suspected_ban_evasion === undefined) { user.suspected_ban_evasion = 0; mutated = true; }
         if (user.suspected_ban_evasion_at === undefined) { user.suspected_ban_evasion_at = null; mutated = true; }
         if (user.suspected_ban_evasion_ip === undefined) { user.suspected_ban_evasion_ip = null; mutated = true; }
+        if (user.notification_trade === undefined) { user.notification_trade = 1; mutated = true; }
+        if (user.notification_market === undefined) { user.notification_market = 1; mutated = true; }
+        if (user.notification_support === undefined) { user.notification_support = 1; mutated = true; }
+        if (user.notification_system === undefined) { user.notification_system = 1; mutated = true; }
+        if (user.notification_quiet_mode === undefined) { user.notification_quiet_mode = 0; mutated = true; }
+        if (!Array.isArray(user.login_history)) { user.login_history = []; mutated = true; }
+        if (user.profile_status === undefined) { user.profile_status = ''; mutated = true; }
+        if (user.profile_bio === undefined) { user.profile_bio = ''; mutated = true; }
+        if (user.profile_theme === undefined) { user.profile_theme = 'default'; mutated = true; }
+        if (!Array.isArray(user.featured_item_ids)) { user.featured_item_ids = []; mutated = true; }
+        if (!Array.isArray(user.wishlist)) { user.wishlist = []; mutated = true; }
+        if (!Array.isArray(user.market_watchlist)) { user.market_watchlist = []; mutated = true; }
     }
+    for (const inventoryRow of table('inventory')) {
+        if (inventoryRow.is_locked === undefined) { inventoryRow.is_locked = 0; mutated = true; }
+        if (inventoryRow.is_favorite === undefined) { inventoryRow.is_favorite = 0; mutated = true; }
+    }
+    if (!Array.isArray(state.meta.audit_logs)) { state.meta.audit_logs = []; mutated = true; }
+    if (!Array.isArray(state.meta.reward_templates)) { state.meta.reward_templates = []; mutated = true; }
     for (const caseRow of table('cases')) {
         if (caseRow.launch_at === undefined) { caseRow.launch_at = null; mutated = true; }
         if (caseRow.is_hidden === undefined) { caseRow.is_hidden = 0; mutated = true; }
