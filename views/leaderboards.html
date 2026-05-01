@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social - KatsuCases</title>
+    <meta name="description" content="Manage friends, gifts, blocks, and live player connections across KatsuCases.">
+    <meta name="theme-color" content="#0a0e1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+    <style>
+        .social-shell{display:grid;grid-template-columns:340px minmax(0,1fr);gap:22px;align-items:start}
+        .social-pane,.social-main-card{background:rgba(11,15,24,.92);border:1px solid rgba(255,255,255,.08);border-radius:24px;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+        .social-pane{padding:18px;position:sticky;top:106px;display:grid;gap:18px}
+        .social-main{display:grid;gap:22px}
+        .social-main-card{padding:20px}
+        .social-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+        .social-summary-card{padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
+        .social-summary-card span{display:block;font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.08em}
+        .social-summary-card strong{display:block;margin-top:8px;font-size:26px;font-family:Outfit,Inter,sans-serif}
+        .social-section-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px}
+        .social-section-head h3{margin:0}
+        .social-copy{margin:6px 0 0;color:var(--text-secondary);font-size:13px}
+        .social-user-list,.social-request-list,.social-gift-list,.social-activity-list,.social-search-results,.social-block-list,.gift-item-grid{display:grid;gap:12px}
+        .social-user-card,.social-request-card,.social-gift-card,.social-activity-card,.social-block-card,.social-search-card{padding:14px;border-radius:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+        .social-user-card.online{border-color:rgba(34,197,94,.28);background:rgba(34,197,94,.08)}
+        .social-user-top,.social-search-top,.social-request-top,.social-gift-top,.social-activity-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+        .social-user-main,.social-search-main,.social-request-main,.social-block-main{display:flex;gap:12px;align-items:center}
+        .social-avatar{width:52px;height:52px;border-radius:16px;overflow:hidden;display:grid;place-items:center;background:rgba(255,255,255,.06);font-weight:700;flex:0 0 auto}
+        .social-avatar img{width:100%;height:100%;object-fit:cover}
+        .social-name{font-weight:700}
+        .social-subline{font-size:12px;color:var(--text-secondary);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap}
+        .social-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+        .social-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+        .social-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:var(--text-secondary)}
+        .social-chip.online{color:#86efac;border-color:rgba(34,197,94,.26);background:rgba(34,197,94,.12)}
+        .social-chip.pending{color:#fcd34d;border-color:rgba(251,191,36,.28);background:rgba(251,191,36,.12)}
+        .social-chip.friends{color:#93c5fd;border-color:rgba(59,130,246,.28);background:rgba(59,130,246,.12)}
+        .social-chip.blocked{color:#fca5a5;border-color:rgba(239,68,68,.28);background:rgba(239,68,68,.12)}
+        .social-empty{display:grid;place-items:center;text-align:center;padding:26px;border-radius:18px;border:1px dashed rgba(255,255,255,.08);color:var(--text-secondary)}
+        .social-empty i{font-size:34px;color:var(--accent-primary);margin-bottom:10px}
+        .social-pane-title{font-size:13px;color:var(--text-muted);letter-spacing:.12em;text-transform:uppercase}
+        .social-pane-card{padding:16px;border-radius:20px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.025)}
+        .gift-compose-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:18px}
+        .gift-type-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+        .gift-type-btn.active{background:rgba(99,102,241,.16);border-color:rgba(99,102,241,.4)}
+        .gift-item-card{padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);cursor:pointer;transition:.18s ease;text-align:center}
+        .gift-item-card.selected,.gift-item-card:hover{border-color:rgba(99,102,241,.42);background:rgba(99,102,241,.08);transform:translateY(-1px)}
+        .gift-item-card .pokemon-sprite{width:64px;height:64px}
+        .gift-history-meta{font-size:12px;color:var(--text-secondary);display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+        .gift-note{margin-top:10px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);font-size:13px;color:var(--text-secondary)}
+        .social-search-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}
+        .social-select{min-height:46px}
+        .activity-item{display:flex;gap:12px;align-items:center}
+        .activity-copy{display:grid;gap:5px}
+        .activity-copy strong{font-size:14px}
+        .activity-copy span{font-size:12px;color:var(--text-secondary)}
+        .social-mini-card{padding:12px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+        @media (max-width:1120px){.social-shell{grid-template-columns:1fr}.social-pane{position:static}.social-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gift-compose-grid{grid-template-columns:1fr}}
+        @media (max-width:720px){.social-summary-grid{grid-template-columns:1fr}.social-user-top,.social-search-top,.social-request-top,.social-gift-top,.social-activity-top,.social-section-head{flex-direction:column;align-items:flex-start}}
+    </style>
+</head>
+<body>
+<div class="page-wrapper">
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo"><span>KatsuCases</span></a>
+            <nav class="nav">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/cases" class="nav-link">Cases</a>
+                <a href="/inventory" class="nav-link">Inventory</a>
+                <a href="/trading" class="nav-link">Trading</a>
+                <a href="/social" class="nav-link">Social</a>
+            </nav>
+            <div class="header-actions">
+                <div class="balance-display"><i class="ri-wallet-3-line"></i><span class="balance-value">$0.00</span></div>
+                <div class="user-area" style="display:flex; align-items:center; gap:16px;">
+                    <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
+                    <div class="user-menu">
+                        <div class="user-menu-trigger"><div class="user-avatar"><span class="user-initial">U</span></div><span class="user-name">Username</span></div>
+                        <div class="user-menu-dropdown">
+                            <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                            <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                            <a href="/social" class="user-menu-item"><i class="ri-group-line"></i> Social</a>
+                            <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><i class="ri-menu-line"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="section-sm">
+            <div class="container" style="max-width:1360px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; margin-bottom:24px;">
+                    <div>
+                        <div class="section-kicker">SOCIAL HUB</div>
+                        <h1 style="margin:8px 0 10px;">Friends, gifting, and player links</h1>
+                        <p style="color:var(--text-secondary); max-width:820px;">Build a real player network with friend requests, online friend presence, direct credit gifts, Pokémon gifts, pending gift claims, friend activity, and block controls. The hub refreshes live so it feels more like an actual game social panel instead of a static page.</p>
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <a href="/trading" class="btn btn-secondary"><i class="ri-exchange-dollar-line"></i> Open Trading</a>
+                        <a href="/support" class="btn btn-ghost"><i class="ri-customer-service-2-line"></i> Support</a>
+                    </div>
+                </div>
+
+                <div class="social-shell">
+                    <aside class="social-pane">
+                        <div class="social-pane-card">
+                            <div class="social-pane-title">Find players</div>
+                            <h3 style="margin:8px 0 0;">Search users</h3>
+                            <p class="social-copy">Send friend requests, block users, or jump to profiles fast.</p>
+                            <div class="social-search-row" style="margin-top:14px;">
+                                <input id="socialSearchInput" class="input" placeholder="Search username, display name, or region">
+                                <button id="socialSearchBtn" class="btn btn-secondary" type="button"><i class="ri-search-line"></i> Search</button>
+                            </div>
+                            <div id="socialSearchResults" class="social-search-results" style="margin-top:14px;"></div>
+                        </div>
+
+                        <div class="social-pane-card">
+                            <div class="social-pane-title">Friend requests</div>
+                            <h3 style="margin:8px 0 0;">Pending approvals</h3>
+                            <p class="social-copy">Incoming and outgoing requests update here.</p>
+                            <div id="incomingRequestsList" class="social-request-list" style="margin-top:14px;"></div>
+                            <div id="outgoingRequestsList" class="social-request-list" style="margin-top:14px;"></div>
+                        </div>
+
+                        <div class="social-pane-card">
+                            <div class="social-pane-title">Block list</div>
+                            <h3 style="margin:8px 0 0;">Blocked players</h3>
+                            <p class="social-copy">Blocks remove friendships and stop new requests or gifts.</p>
+                            <div id="socialBlocksList" class="social-block-list" style="margin-top:14px;"></div>
+                        </div>
+                    </aside>
+
+                    <div class="social-main">
+                        <section class="social-main-card">
+                            <div class="social-summary-grid">
+                                <article class="social-summary-card"><span>Friends</span><strong id="socialStatFriends">0</strong></article>
+                                <article class="social-summary-card"><span>Online Friends</span><strong id="socialStatOnline">0</strong></article>
+                                <article class="social-summary-card"><span>Requests</span><strong id="socialStatRequests">0</strong></article>
+                                <article class="social-summary-card"><span>Pending Gifts</span><strong id="socialStatGifts">0</strong></article>
+                            </div>
+                        </section>
+
+                        <section class="social-main-card">
+                            <div class="social-section-head">
+                                <div>
+                                    <h3>Friends roster</h3>
+                                    <p class="social-copy">Live online status, quick gift targets, profile links, and direct trade shortcuts.</p>
+                                </div>
+                                <button id="socialRefreshBtn" class="btn btn-ghost btn-sm" type="button"><i class="ri-refresh-line"></i> Refresh</button>
+                            </div>
+                            <div id="friendsList" class="social-user-list"></div>
+                        </section>
+
+                        <section class="social-main-card">
+                            <div class="social-section-head">
+                                <div>
+                                    <h3>Send a gift</h3>
+                                    <p class="social-copy">Choose a friend, then send credits or one of your unlocked items with an optional note.</p>
+                                </div>
+                                <div class="social-chip friends"><i class="ri-heart-3-line"></i> Friends only</div>
+                            </div>
+                            <div class="gift-compose-grid">
+                                <div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="giftRecipientSelect">Friend recipient</label>
+                                        <select id="giftRecipientSelect" class="input social-select"></select>
+                                    </div>
+                                    <div class="gift-type-row">
+                                        <button class="btn btn-ghost gift-type-btn active" id="giftTypeCreditsBtn" type="button"><i class="ri-coins-line"></i> Credits</button>
+                                        <button class="btn btn-ghost gift-type-btn" id="giftTypeItemBtn" type="button"><i class="ri-gift-2-line"></i> Pokémon Item</button>
+                                    </div>
+                                    <div id="giftCreditsPane">
+                                        <div class="form-group">
+                                            <label class="form-label" for="giftCreditAmount">Credit amount</label>
+                                            <input id="giftCreditAmount" class="input" type="number" min="1" step="0.01" placeholder="25.00">
+                                        </div>
+                                    </div>
+                                    <div id="giftItemPane" style="display:none;">
+                                        <div class="form-group">
+                                            <label class="form-label">Choose an unlocked item</label>
+                                            <div id="giftItemGrid" class="gift-item-grid"></div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="giftNote">Gift note</label>
+                                        <textarea id="giftNote" class="textarea" rows="4" maxlength="200" placeholder="Optional message for the gift"></textarea>
+                                    </div>
+                                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                                        <button id="sendGiftBtn" class="btn btn-primary" type="button"><i class="ri-send-plane-2-line"></i> Send Gift</button>
+                                        <button id="clearGiftSelectionBtn" class="btn btn-ghost" type="button"><i class="ri-close-line"></i> Clear</button>
+                                    </div>
+                                </div>
+                                <div style="display:grid; gap:16px;">
+                                    <div class="social-mini-card">
+                                        <div class="social-pane-title">Selected target</div>
+                                        <div id="giftTargetPreview" style="margin-top:12px; color:var(--text-secondary);">Pick a friend from the roster or the selector to begin.</div>
+                                    </div>
+                                    <div class="social-mini-card">
+                                        <div class="social-pane-title">Gift tips</div>
+                                        <div style="display:grid; gap:10px; margin-top:12px; color:var(--text-secondary); font-size:13px; line-height:1.6;">
+                                            <div>Credit gifts reserve the balance right away and wait for the receiver to claim.</div>
+                                            <div>Item gifts temporarily lock the selected Pokémon so it cannot be listed or traded while pending.</div>
+                                            <div>Blocked users cannot send or receive friend requests, trades, or gifts with you.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="social-main-card">
+                            <div class="social-section-head">
+                                <div>
+                                    <h3>Gift inbox and history</h3>
+                                    <p class="social-copy">Claim incoming gifts, cancel outgoing ones, and review recent social transfers.</p>
+                                </div>
+                            </div>
+                            <div id="pendingIncomingGifts" class="social-gift-list"></div>
+                            <div id="pendingOutgoingGifts" class="social-gift-list" style="margin-top:14px;"></div>
+                            <div id="giftHistoryList" class="social-gift-list" style="margin-top:14px;"></div>
+                        </section>
+
+                        <section class="social-main-card">
+                            <div class="social-section-head">
+                                <div>
+                                    <h3>Friend activity</h3>
+                                    <p class="social-copy">Recent openings from your roster so the hub feels more alive.</p>
+                                </div>
+                            </div>
+                            <div id="friendActivityList" class="social-activity-list"></div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+<script src="/js/main.js"></script>
+<script>
+let socialData = null;
+let socialPoll = null;
+let selectedGiftType = 'credits';
+let selectedGiftItemId = null;
+let selectedRecipientId = null;
+
+function socialBadgeMarkup(badges = []) {
+    return (Array.isArray(badges) ? badges : []).slice(0, 4).map((badge) => `<span class="badge ${KatsuCases.escapeHtml(badge.className || 'badge-common')}">${KatsuCases.escapeHtml(badge.label || badge.key || 'TAG')}</span>`).join('');
+}
+
+function socialRelationChip(status = 'none') {
+    const map = {
+        friends: '<span class="social-chip friends"><i class="ri-heart-3-line"></i> Friends</span>',
+        incoming: '<span class="social-chip pending"><i class="ri-mail-open-line"></i> Incoming</span>',
+        outgoing: '<span class="social-chip pending"><i class="ri-time-line"></i> Outgoing</span>',
+        blocked_by_you: '<span class="social-chip blocked"><i class="ri-forbid-line"></i> Blocked</span>',
+        blocked_you: '<span class="social-chip blocked"><i class="ri-shield-cross-line"></i> Blocked You</span>',
+        self: '<span class="social-chip"><i class="ri-user-line"></i> You</span>'
+    };
+    return map[status] || '<span class="social-chip"><i class="ri-user-3-line"></i> Player</span>';
+}
+
+function socialPresenceChip(user) {
+    if (user?.online) return '<span class="social-chip online"><i class="ri-circle-fill"></i> Online</span>';
+    return `<span class="social-chip"><i class="ri-moon-clear-line"></i> ${KatsuCases.escapeHtml(user?.last_seen_at ? KatsuCases.formatRelativeTime(user.last_seen_at) : 'Offline')}</span>`;
+}
+
+function socialTargetPreviewMarkup(user) {
+    if (!user) return 'Pick a friend from the roster or the selector to begin.';
+    return `
+        <div class="social-user-main">
+            <div class="social-avatar">${KatsuCases.buildAvatarMarkup(user, 'social-avatar')}</div>
+            <div>
+                <div class="social-name">${KatsuCases.escapeHtml(user.display_name || user.username)}</div>
+                <div class="social-subline"><span>@${KatsuCases.escapeHtml(user.username || '')}</span>${user.region ? `<span>${KatsuCases.escapeHtml(user.region)}</span>` : ''}</div>
+                <div class="social-badges">${socialBadgeMarkup(user.badges)}</div>
+            </div>
+        </div>
+    `;
+}
+
+function socialUserActions(user) {
+    const status = user?.relationship_status || 'none';
+    const id = Number(user?.id || 0);
+    if (!id) return '';
+    if (status === 'friends') {
+        return `
+            <div class="social-actions">
+                <button class="btn btn-secondary btn-sm" type="button" onclick="selectGiftRecipient(${id})"><i class="ri-gift-line"></i> Gift</button>
+                <button class="btn btn-ghost btn-sm" type="button" onclick="editFriendAlias(${id})"><i class="ri-pencil-line"></i> Nickname</button>
+                <a class="btn btn-ghost btn-sm" href="/trading?user=${encodeURIComponent(user.username || '')}"><i class="ri-exchange-dollar-line"></i> Trade</a>
+                <a class="btn btn-ghost btn-sm" href="/profile?user=${encodeURIComponent(user.username || '')}"><i class="ri-user-line"></i> Profile</a>
+                <button class="btn btn-ghost btn-sm" type="button" onclick="removeFriend(${id})"><i class="ri-user-unfollow-line"></i> Remove</button>
+            </div>
+        `;
+    }
+    if (status === 'incoming') {
+        const request = (socialData?.incoming_requests || []).find((entry) => Number(entry.from?.id) === id);
+        return `
+            <div class="social-actions">
+                <button class="btn btn-secondary btn-sm" type="button" onclick="respondFriendRequest(${Number(request?.id || 0)}, 'accept')"><i class="ri-check-line"></i> Accept</button>
+                <button class="btn btn-ghost btn-sm" type="button" onclick="respondFriendRequest(${Number(request?.id || 0)}, 'decline')"><i class="ri-close-line"></i> Decline</button>
+            </div>
+        `;
+    }
+    if (status === 'outgoing') {
+        return `<div class="social-actions"><button class="btn btn-ghost btn-sm" type="button" disabled><i class="ri-time-line"></i> Request Sent</button></div>`;
+    }
+    if (status === 'blocked_by_you') {
+        return `<div class="social-actions"><button class="btn btn-secondary btn-sm" type="button" onclick="unblockUser(${id})"><i class="ri-lock-unlock-line"></i> Unblock</button></div>`;
+    }
+    if (status === 'blocked_you') {
+        return `<div class="social-actions"><button class="btn btn-ghost btn-sm" type="button" disabled><i class="ri-shield-cross-line"></i> Unavailable</button></div>`;
+    }
+    return `
+        <div class="social-actions">
+            <button class="btn btn-secondary btn-sm" type="button" onclick="sendFriendRequest(${id})"><i class="ri-user-add-line"></i> Add Friend</button>
+            <button class="btn btn-ghost btn-sm" type="button" onclick="blockUser(${id})"><i class="ri-forbid-line"></i> Block</button>
+            <a class="btn btn-ghost btn-sm" href="/profile?user=${encodeURIComponent(user.username || '')}"><i class="ri-user-line"></i> Profile</a>
+        </div>
+    `;
+}
+
+function friendCardMarkup(user) {
+    return `
+        <article class="social-user-card ${user.online ? 'online' : ''}">
+            <div class="social-user-top">
+                <div class="social-user-main">
+                    <div class="social-avatar">${KatsuCases.buildAvatarMarkup(user, 'social-avatar')}</div>
+                    <div>
+                        <div class="social-name">${KatsuCases.escapeHtml(user.display_name || user.username)}</div>
+                        <div class="social-subline"><span>@${KatsuCases.escapeHtml(user.username || '')}</span>${user.friend_alias ? `<span>Nickname for ${KatsuCases.escapeHtml(user.canonical_display_name || user.username || '')}</span>` : ''}${user.region ? `<span>${KatsuCases.escapeHtml(user.region)}</span>` : ''}${user.site_role && user.site_role !== 'player' ? `<span>${KatsuCases.escapeHtml(user.site_role.replace('_', ' '))}</span>` : ''}</div>
+                        <div class="social-badges">${socialBadgeMarkup(user.badges)}</div>
+                    </div>
+                </div>
+                <div style="display:grid; gap:8px; justify-items:end;">${socialPresenceChip(user)}${socialRelationChip(user.relationship_status)}</div>
+            </div>
+            ${socialUserActions(user)}
+        </article>
+    `;
+}
+
+function searchCardMarkup(user) {
+    return `
+        <article class="social-search-card">
+            <div class="social-search-top">
+                <div class="social-search-main">
+                    <div class="social-avatar">${KatsuCases.buildAvatarMarkup(user, 'social-avatar')}</div>
+                    <div>
+                        <div class="social-name">${KatsuCases.escapeHtml(user.display_name || user.username)}</div>
+                        <div class="social-subline"><span>@${KatsuCases.escapeHtml(user.username || '')}</span>${user.region ? `<span>${KatsuCases.escapeHtml(user.region)}</span>` : ''}</div>
+                    </div>
+                </div>
+                <div style="display:grid; gap:8px; justify-items:end;">${socialPresenceChip(user)}${socialRelationChip(user.relationship_status)}</div>
+            </div>
+            ${socialUserActions(user)}
+        </article>
+    `;
+}
+
+function requestCardMarkup(entry, direction = 'incoming') {
+    const user = direction === 'incoming' ? entry.from : entry.to;
+    return `
+        <article class="social-request-card">
+            <div class="social-request-top">
+                <div class="social-request-main">
+                    <div class="social-avatar">${KatsuCases.buildAvatarMarkup(user, 'social-avatar')}</div>
+                    <div>
+                        <div class="social-name">${KatsuCases.escapeHtml(user?.display_name || user?.username || 'Player')}</div>
+                        <div class="social-subline"><span>@${KatsuCases.escapeHtml(user?.username || '')}</span><span>${KatsuCases.escapeHtml(KatsuCases.formatRelativeTime(entry.created_at))}</span></div>
+                    </div>
+                </div>
+                ${socialPresenceChip(user)}
+            </div>
+            <div class="social-actions">
+                ${direction === 'incoming'
+                    ? `<button class="btn btn-secondary btn-sm" type="button" onclick="respondFriendRequest(${Number(entry.id)}, 'accept')"><i class="ri-check-line"></i> Accept</button><button class="btn btn-ghost btn-sm" type="button" onclick="respondFriendRequest(${Number(entry.id)}, 'decline')"><i class="ri-close-line"></i> Decline</button>`
+                    : `<button class="btn btn-ghost btn-sm" type="button" disabled><i class="ri-time-line"></i> Waiting</button><a class="btn btn-ghost btn-sm" href="/profile?user=${encodeURIComponent(user?.username || '')}"><i class="ri-user-line"></i> Profile</a>`}
+            </div>
+        </article>
+    `;
+}
+
+function blockCardMarkup(entry) {
+    const user = entry.user;
+    return `
+        <article class="social-block-card">
+            <div class="social-block-main">
+                <div class="social-avatar">${KatsuCases.buildAvatarMarkup(user, 'social-avatar')}</div>
+                <div>
+                    <div class="social-name">${KatsuCases.escapeHtml(user?.display_name || user?.username || 'Player')}</div>
+                    <div class="social-subline"><span>@${KatsuCases.escapeHtml(user?.username || '')}</span><span>${KatsuCases.escapeHtml(KatsuCases.formatRelativeTime(entry.created_at))}</span></div>
+                </div>
+            </div>
+            <div class="social-actions"><button class="btn btn-secondary btn-sm" type="button" onclick="unblockUser(${Number(user?.id || 0)})"><i class="ri-lock-unlock-line"></i> Unblock</button></div>
+        </article>
+    `;
+}
+
+function giftLabel(gift) {
+    if (gift.type === 'credits') return `${KatsuCases.formatCurrency(gift.amount || 0)} credits`;
+    const item = gift.item || {};
+    return `${item.pokemon_name || 'Pokémon item'}${item.rarity ? ` · ${item.rarity}` : ''}`;
+}
+
+function giftCardMarkup(gift, mode = 'history') {
+    const actor = gift.is_incoming ? gift.sender : gift.recipient;
+    const label = giftLabel(gift);
+    const statusChip = gift.status === 'pending'
+        ? '<span class="social-chip pending"><i class="ri-time-line"></i> Pending</span>'
+        : gift.status === 'claimed'
+            ? '<span class="social-chip friends"><i class="ri-check-line"></i> Claimed</span>'
+            : '<span class="social-chip blocked"><i class="ri-close-line"></i> ' + KatsuCases.escapeHtml(gift.status || 'closed') + '</span>';
+    return `
+        <article class="social-gift-card">
+            <div class="social-gift-top">
+                <div>
+                    <div class="social-name">${KatsuCases.escapeHtml(label)}</div>
+                    <div class="gift-history-meta">
+                        <span>${gift.is_incoming ? 'From' : 'To'} ${KatsuCases.escapeHtml(actor?.display_name || actor?.username || 'Player')}</span>
+                        <span>${KatsuCases.escapeHtml(KatsuCases.formatRelativeTime(gift.created_at))}</span>
+                    </div>
+                    ${gift.item ? `<div style="margin-top:10px; display:flex; gap:10px; align-items:center;">${KatsuCases.buildSpriteImg({ pokemonName: gift.item.pokemon_name, isShiny: gift.item.is_shiny, spriteUrl: gift.item.sprite_url, alt: gift.item.pokemon_name, style: 'width:52px;height:52px;' })}<div style="font-size:12px; color:var(--text-secondary);">${KatsuCases.escapeHtml(gift.item.pokemon_name)}${gift.item.estimated_value ? ` · ${KatsuCases.formatCurrency(gift.item.estimated_value)}` : ''}</div></div>` : ''}
+                    ${gift.note ? `<div class="gift-note">${KatsuCases.escapeHtml(gift.note)}</div>` : ''}
+                </div>
+                ${statusChip}
+            </div>
+            <div class="social-actions">
+                ${mode === 'incoming' ? `<button class="btn btn-secondary btn-sm" type="button" onclick="claimGift(${Number(gift.id)})"><i class="ri-check-double-line"></i> Claim</button><button class="btn btn-ghost btn-sm" type="button" onclick="declineGift(${Number(gift.id)})"><i class="ri-close-line"></i> Decline</button>` : ''}
+                ${mode === 'outgoing' ? `<button class="btn btn-ghost btn-sm" type="button" onclick="cancelGift(${Number(gift.id)})"><i class="ri-stop-circle-line"></i> Cancel</button>` : ''}
+                <a class="btn btn-ghost btn-sm" href="/profile?user=${encodeURIComponent(actor?.username || '')}"><i class="ri-user-line"></i> Profile</a>
+            </div>
+        </article>
+    `;
+}
+
+function activityCardMarkup(entry) {
+    const user = entry.user || {};
+    const item = entry.item || {};
+    return `
+        <article class="social-activity-card">
+            <div class="activity-item">
+                <div class="social-avatar" style="width:48px;height:48px;">${KatsuCases.buildAvatarMarkup(user, 'social-avatar')}</div>
+                <div class="activity-copy" style="flex:1;">
+                    <strong>${KatsuCases.escapeHtml(user.display_name || user.username || 'Player')} opened ${KatsuCases.escapeHtml(entry.case_name || 'a case')}</strong>
+                    <span>${KatsuCases.escapeHtml(item.pokemon_name || 'Unknown Pokémon')} · ${KatsuCases.escapeHtml(item.rarity || 'item')} · ${KatsuCases.formatRelativeTime(entry.created_at)}</span>
+                </div>
+                <div>${item.pokemon_name ? KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:58px;height:58px;' }) : ''}</div>
+            </div>
+        </article>
+    `;
+}
+
+function renderSocialSummary() {
+    const stats = socialData?.stats || {};
+    document.getElementById('socialStatFriends').textContent = String(stats.friends || 0);
+    document.getElementById('socialStatOnline').textContent = String(stats.online_friends || 0);
+    document.getElementById('socialStatRequests').textContent = String((stats.incoming_requests || 0) + (stats.outgoing_requests || 0));
+    document.getElementById('socialStatGifts').textContent = String(stats.pending_gifts || 0);
+}
+
+function renderFriends() {
+    const wrap = document.getElementById('friendsList');
+    const friends = socialData?.friends || [];
+    wrap.innerHTML = friends.length ? friends.map(friendCardMarkup).join('') : '<div class="social-empty"><div><i class="ri-group-line"></i><div>No friends yet</div><div style="margin-top:8px;">Send a request from the search panel to start building your roster.</div></div></div>';
+}
+
+function renderRequests() {
+    const incoming = socialData?.incoming_requests || [];
+    const outgoing = socialData?.outgoing_requests || [];
+    document.getElementById('incomingRequestsList').innerHTML = incoming.length ? incoming.map((entry) => requestCardMarkup(entry, 'incoming')).join('') : '<div class="social-empty"><div><i class="ri-inbox-line"></i><div>No incoming requests</div></div></div>';
+    document.getElementById('outgoingRequestsList').innerHTML = outgoing.length ? outgoing.map((entry) => requestCardMarkup(entry, 'outgoing')).join('') : '<div class="social-empty"><div><i class="ri-send-plane-line"></i><div>No outgoing requests</div></div></div>';
+}
+
+function renderBlocks() {
+    const blocks = socialData?.blocks || [];
+    document.getElementById('socialBlocksList').innerHTML = blocks.length ? blocks.map(blockCardMarkup).join('') : '<div class="social-empty"><div><i class="ri-shield-check-line"></i><div>No blocked players</div></div></div>';
+}
+
+function renderGiftRecipientOptions() {
+    const select = document.getElementById('giftRecipientSelect');
+    const friends = socialData?.friends || [];
+    if (!friends.length) {
+        select.innerHTML = '<option value="">No friends available</option>';
+        select.disabled = true;
+        selectedRecipientId = null;
+        document.getElementById('giftTargetPreview').innerHTML = socialTargetPreviewMarkup(null);
+        return;
+    }
+    select.disabled = false;
+    if (!friends.some((friend) => Number(friend.id) === Number(selectedRecipientId))) {
+        selectedRecipientId = Number(friends[0].id);
+    }
+    select.innerHTML = friends.map((friend) => `<option value="${Number(friend.id)}">${KatsuCases.escapeHtml(friend.display_name || friend.username)} (@${KatsuCases.escapeHtml(friend.username || '')})</option>`).join('');
+    select.value = String(selectedRecipientId || '');
+    const user = friends.find((friend) => Number(friend.id) === Number(selectedRecipientId));
+    document.getElementById('giftTargetPreview').innerHTML = socialTargetPreviewMarkup(user || null);
+}
+
+function renderGiftableItems() {
+    const wrap = document.getElementById('giftItemGrid');
+    const items = socialData?.giftable_inventory || [];
+    if (!items.length) {
+        wrap.innerHTML = '<div class="social-empty"><div><i class="ri-gift-2-line"></i><div>No unlocked giftable items</div></div></div>';
+        selectedGiftItemId = null;
+        return;
+    }
+    if (!items.some((item) => Number(item.id) === Number(selectedGiftItemId))) {
+        selectedGiftItemId = Number(items[0].id);
+    }
+    wrap.innerHTML = items.slice(0, 18).map((item) => `
+        <button class="gift-item-card ${Number(item.id) === Number(selectedGiftItemId) ? 'selected' : ''}" type="button" onclick="selectGiftItem(${Number(item.id)})">
+            ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name })}
+            <div style="font-weight:700; margin-top:8px;">${KatsuCases.escapeHtml(item.pokemon_name)}</div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:6px;">${KatsuCases.escapeHtml(item.rarity || 'item')} · ${KatsuCases.formatCurrency(item.estimated_value || 0)}</div>
+        </button>
+    `).join('');
+}
+
+function renderGifts() {
+    const incoming = socialData?.gifts?.incoming_pending || [];
+    const outgoing = socialData?.gifts?.outgoing_pending || [];
+    const history = socialData?.gifts?.history || [];
+    document.getElementById('pendingIncomingGifts').innerHTML = incoming.length ? incoming.map((gift) => giftCardMarkup(gift, 'incoming')).join('') : '<div class="social-empty"><div><i class="ri-inbox-archive-line"></i><div>No incoming gifts waiting</div></div></div>';
+    document.getElementById('pendingOutgoingGifts').innerHTML = outgoing.length ? outgoing.map((gift) => giftCardMarkup(gift, 'outgoing')).join('') : '<div class="social-empty"><div><i class="ri-gift-line"></i><div>No outgoing gifts pending</div></div></div>';
+    document.getElementById('giftHistoryList').innerHTML = history.length ? history.map((gift) => giftCardMarkup(gift, 'history')).join('') : '<div class="social-empty"><div><i class="ri-history-line"></i><div>No gift history yet</div></div></div>';
+}
+
+function renderActivity() {
+    const activity = socialData?.activity || [];
+    document.getElementById('friendActivityList').innerHTML = activity.length ? activity.map(activityCardMarkup).join('') : '<div class="social-empty"><div><i class="ri-flashlight-line"></i><div>No friend activity yet</div><div style="margin-top:8px;">Once your roster starts opening cases, their recent pulls will land here.</div></div></div>';
+}
+
+function renderSearchResults(users = null) {
+    const wrap = document.getElementById('socialSearchResults');
+    const list = Array.isArray(users) ? users : (socialData?.suggested || []);
+    wrap.innerHTML = list.length ? list.map(searchCardMarkup).join('') : '<div class="social-empty"><div><i class="ri-user-search-line"></i><div>No matching players</div></div></div>';
+}
+
+function renderSocialPage() {
+    renderSocialSummary();
+    renderFriends();
+    renderRequests();
+    renderBlocks();
+    renderGiftRecipientOptions();
+    renderGiftableItems();
+    renderGifts();
+    renderActivity();
+    renderSearchResults();
+}
+
+async function loadSocialSummary(silent = false) {
+    try {
+        socialData = await KatsuCases.api.get('/api/social/summary');
+        renderSocialPage();
+        return socialData;
+    } catch (error) {
+        if (!silent) KatsuCases.showToast(error.message || 'Failed to load social hub', 'error');
+        throw error;
+    }
+}
+
+async function searchPlayers() {
+    const query = document.getElementById('socialSearchInput').value.trim();
+    if (!query) {
+        renderSearchResults(socialData?.suggested || []);
+        return;
+    }
+    try {
+        const result = await KatsuCases.api.get(`/api/social/search?query=${encodeURIComponent(query)}`);
+        renderSearchResults(result.users || []);
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Search failed', 'error');
+    }
+}
+
+function setGiftType(type) {
+    selectedGiftType = type === 'item' ? 'item' : 'credits';
+    document.getElementById('giftTypeCreditsBtn').classList.toggle('active', selectedGiftType === 'credits');
+    document.getElementById('giftTypeItemBtn').classList.toggle('active', selectedGiftType === 'item');
+    document.getElementById('giftCreditsPane').style.display = selectedGiftType === 'credits' ? '' : 'none';
+    document.getElementById('giftItemPane').style.display = selectedGiftType === 'item' ? '' : 'none';
+}
+
+async function editFriendAlias(userId) {
+    const currentAlias = (socialData?.friends || []).find((entry) => Number(entry.id) === Number(userId))?.friend_alias || '';
+    const nextAlias = window.prompt('Set a nickname for this friend. Leave blank to clear it.', currentAlias || '');
+    if (nextAlias === null) return;
+    try {
+        await KatsuCases.api.post(`/api/social/friends/${userId}/alias`, { alias: nextAlias });
+        await loadSocialSummary();
+        KatsuCases.showToast(nextAlias.trim() ? 'Friend nickname updated' : 'Friend nickname cleared', 'success');
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to update nickname', 'error');
+    }
+}
+window.editFriendAlias = editFriendAlias;
+
+function selectGiftRecipient(userId) {
+    selectedRecipientId = Number(userId || 0) || null;
+    renderGiftRecipientOptions();
+    document.getElementById('giftRecipientSelect').value = String(selectedRecipientId || '');
+    document.getElementById('sendGiftBtn').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function selectGiftItem(itemId) {
+    selectedGiftItemId = Number(itemId || 0) || null;
+    renderGiftableItems();
+}
+
+async function refreshHeaderUser() {
+    try {
+        await refreshHeaderUser();
+        return auth.user || null;
+    } catch (error) {
+        if (Number(error?.status || 0) === 401 || Number(error?.status || 0) === 403) {
+            window.location.href = '/signin';
+            return null;
+        }
+        console.warn('Header refresh skipped on social page because auth failed temporarily.', error);
+        return KatsuCases.state.user || null;
+    }
+}
+
+async function sendFriendRequest(userId) {
+    try {
+        await KatsuCases.api.post('/api/social/friends/request', { userId });
+        KatsuCases.showToast('Friend request sent', 'success');
+        await loadSocialSummary(true);
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to send request', 'error');
+    }
+}
+
+async function respondFriendRequest(requestId, action) {
+    if (!requestId) return;
+    try {
+        await KatsuCases.api.post(`/api/social/friends/${requestId}/respond`, { action });
+        KatsuCases.showToast(action === 'accept' ? 'Friend added' : 'Request declined', 'success');
+        await loadSocialSummary(true);
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to update request', 'error');
+    }
+}
+
+async function removeFriend(userId) {
+    try {
+        await KatsuCases.api.delete(`/api/social/friends/${userId}`);
+        KatsuCases.showToast('Friend removed', 'success');
+        await loadSocialSummary(true);
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to remove friend', 'error');
+    }
+}
+
+async function blockUser(userId) {
+    try {
+        await KatsuCases.api.post('/api/social/blocks', { userId });
+        KatsuCases.showToast('Player blocked', 'success');
+        await loadSocialSummary(true);
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to block player', 'error');
+    }
+}
+
+async function unblockUser(userId) {
+    try {
+        await KatsuCases.api.delete(`/api/social/blocks/${userId}`);
+        KatsuCases.showToast('Player unblocked', 'success');
+        await loadSocialSummary(true);
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to unblock player', 'error');
+    }
+}
+
+async function sendGift() {
+    const recipientId = Number(document.getElementById('giftRecipientSelect').value || selectedRecipientId || 0);
+    if (!recipientId) {
+        KatsuCases.showToast('Choose a friend first', 'error');
+        return;
+    }
+    const note = document.getElementById('giftNote').value.trim();
+    const button = document.getElementById('sendGiftBtn');
+    KatsuCases.setLoading(true, button);
+    try {
+        if (selectedGiftType === 'credits') {
+            const amount = Number(document.getElementById('giftCreditAmount').value || 0);
+            await KatsuCases.api.post('/api/social/gifts/credits', { recipientId, amount, note });
+        } else {
+            await KatsuCases.api.post('/api/social/gifts/item', { recipientId, itemId: selectedGiftItemId, note });
+        }
+        document.getElementById('giftNote').value = '';
+        document.getElementById('giftCreditAmount').value = '';
+        KatsuCases.showToast('Gift sent', 'success');
+        await loadSocialSummary(true);
+        await refreshHeaderUser();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to send gift', 'error');
+    } finally {
+        KatsuCases.setLoading(false, button);
+    }
+}
+
+async function claimGift(giftId) {
+    try {
+        await KatsuCases.api.post(`/api/social/gifts/${giftId}/claim`, {});
+        KatsuCases.showToast('Gift claimed', 'success');
+        await loadSocialSummary(true);
+        await refreshHeaderUser();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to claim gift', 'error');
+    }
+}
+
+async function declineGift(giftId) {
+    try {
+        await KatsuCases.api.post(`/api/social/gifts/${giftId}/decline`, {});
+        KatsuCases.showToast('Gift declined', 'success');
+        await loadSocialSummary(true);
+        await refreshHeaderUser();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to decline gift', 'error');
+    }
+}
+
+async function cancelGift(giftId) {
+    try {
+        await KatsuCases.api.post(`/api/social/gifts/${giftId}/cancel`, {});
+        KatsuCases.showToast('Gift cancelled', 'success');
+        await loadSocialSummary(true);
+        await refreshHeaderUser();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to cancel gift', 'error');
+    }
+}
+
+function startSocialPolling() {
+    if (socialPoll) clearInterval(socialPoll);
+    socialPoll = window.setInterval(() => loadSocialSummary(true).catch(() => undefined), 8000);
+}
+
+document.getElementById('socialSearchBtn').addEventListener('click', searchPlayers);
+document.getElementById('socialSearchInput').addEventListener('input', KatsuCases.debounce(searchPlayers, 240));
+document.getElementById('socialRefreshBtn').addEventListener('click', () => loadSocialSummary());
+document.getElementById('giftRecipientSelect').addEventListener('change', (event) => selectGiftRecipient(event.target.value));
+document.getElementById('giftTypeCreditsBtn').addEventListener('click', () => setGiftType('credits'));
+document.getElementById('giftTypeItemBtn').addEventListener('click', () => setGiftType('item'));
+document.getElementById('sendGiftBtn').addEventListener('click', sendGift);
+document.getElementById('clearGiftSelectionBtn').addEventListener('click', () => {
+    document.getElementById('giftNote').value = '';
+    document.getElementById('giftCreditAmount').value = '';
+    selectedGiftItemId = null;
+    renderGiftableItems();
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await KatsuCases.init();
+    } catch (error) {
+        console.warn('Social page init hit a temporary error.', error);
+    }
+
+    if (!KatsuCases.state.user) {
+        try {
+            const auth = await KatsuCases.api.get('/api/auth/me');
+            if (auth.user) {
+                KatsuCases.updateUserUI(auth.user);
+            } else {
+                window.location.href = '/signin';
+                return;
+            }
+        } catch (error) {
+            if (Number(error?.status || 0) === 401 || Number(error?.status || 0) === 403) {
+                window.location.href = '/signin';
+                return;
+            }
+            KatsuCases.showToast('Social hub had trouble checking your session. Please retry.', 'error');
+            return;
+        }
+    }
+
+    setGiftType('credits');
+    try {
+        await loadSocialSummary();
+        startSocialPolling();
+    } catch (error) {
+        if (Number(error?.status || 0) === 401 || Number(error?.status || 0) === 403) {
+            window.location.href = '/signin';
+            return;
+        }
+    }
+});
+
+window.selectGiftRecipient = selectGiftRecipient;
+window.selectGiftItem = selectGiftItem;
+window.sendFriendRequest = sendFriendRequest;
+window.respondFriendRequest = respondFriendRequest;
+window.removeFriend = removeFriend;
+window.blockUser = blockUser;
+window.unblockUser = unblockUser;
+window.claimGift = claimGift;
+window.declineGift = declineGift;
+window.cancelGift = cancelGift;
+</script>
+</body>
+</html>

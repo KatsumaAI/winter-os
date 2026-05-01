@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Support - KatsuCases</title>
-    <meta name="description" content="Manage KatsuCases support tickets, reply to players, and close issues.">
+    <title>Settings - KatsuCases</title>
+    <meta name="description" content="Manage your KatsuCases account settings, profile identity, privacy controls, and offline roll preferences.">
     <meta name="theme-color" content="#0a0e1a">
+    <meta property="og:title" content="Settings - KatsuCases">
+    <meta property="og:description" content="Manage account settings, privacy, and offline rolls on KatsuCases.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
@@ -13,233 +15,211 @@
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/pages.css">
-    <style>
-        .desk-shell{display:grid;grid-template-columns:380px minmax(0,1fr);gap:22px;align-items:start}
-        .desk-pane,.desk-thread{background:rgba(11,15,24,.94);border:1px solid rgba(255,255,255,.08);border-radius:24px;box-shadow:0 18px 50px rgba(0,0,0,.28)}
-        .desk-pane{padding:18px;position:sticky;top:106px}
-        .desk-thread{padding:22px;min-height:740px;display:grid;grid-template-rows:auto auto 1fr auto;gap:16px}
-        .desk-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
-        .desk-stat{padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
-        .desk-stat strong{display:block;font-size:22px;font-family:Outfit,Inter,sans-serif}
-        .desk-filter-grid{display:grid;grid-template-columns:1fr 170px auto;gap:10px}
-        .desk-list{display:grid;gap:12px;margin-top:14px;max-height:520px;overflow:auto;padding-right:4px}
-        .desk-ticket{width:100%;text-align:left;padding:14px 15px;border-radius:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);transition:.2s ease;cursor:pointer}
-        .desk-ticket:hover,.desk-ticket.active{border-color:rgba(99,102,241,.48);background:rgba(99,102,241,.08);transform:translateY(-1px)}
-        .desk-ticket-head,.desk-thread-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
-        .desk-ticket-sub,.desk-thread-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-        .desk-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);font-size:12px;color:var(--text-secondary)}
-        .desk-pill.status-open,.desk-pill.status-customer-replied{color:#93c5fd;border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.12)}
-        .desk-pill.status-awaiting-user,.desk-pill.status-pending{color:#fcd34d;border-color:rgba(251,191,36,.34);background:rgba(251,191,36,.12)}
-        .desk-pill.status-resolved,.desk-pill.status-closed{color:#86efac;border-color:rgba(34,197,94,.34);background:rgba(34,197,94,.12)}
-        .desk-log{display:grid;gap:12px;overflow:auto;padding-right:4px}
-        .desk-bubble{padding:14px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03)}
-        .desk-bubble.support{background:rgba(81,118,255,.12);border-color:rgba(81,118,255,.28)}
-        .desk-bubble.note{background:rgba(251,191,36,.09);border-color:rgba(251,191,36,.24)}
-        .desk-bubble-head{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--text-secondary);margin-bottom:8px}
-        .desk-bubble-body{white-space:pre-wrap;line-height:1.65}
-        .desk-compose{display:grid;gap:10px}
-        .desk-empty{display:grid;place-items:center;text-align:center;min-height:320px;border:1px dashed rgba(255,255,255,.08);border-radius:22px;color:var(--text-secondary)}
-        .desk-empty i{font-size:42px;color:var(--accent-primary);margin-bottom:10px}
-        .desk-topbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
-        @media (max-width: 1120px){.desk-shell{grid-template-columns:1fr}.desk-pane{position:static}.desk-thread{min-height:0}.desk-stats{grid-template-columns:1fr 1fr}}
-        @media (max-width: 780px){.desk-stats{grid-template-columns:1fr}.desk-filter-grid{grid-template-columns:1fr}.desk-ticket-head,.desk-thread-head,.desk-topbar{flex-direction:column;align-items:flex-start}}
-    </style>
 </head>
 <body>
 <div class="page-wrapper">
-<header class="header">
-    <div class="header-inner">
-        <a href="/" class="logo"><span>KatsuCases</span></a>
-        <nav class="nav">
-            <a href="/admin" class="nav-link">Admin Home</a>
-            <a href="/admin/support" class="nav-link">Support</a>
-            <a href="/admin/rollbacks" class="nav-link">Rollbacks</a>
-            <a href="/settings" class="nav-link">Settings</a>
-        </nav>
-        <div class="header-actions">
-            <div class="balance-display"><i class="ri-wallet-3-line"></i><span class="balance-value">$0.00</span></div>
-            <div class="user-area" style="display:flex; align-items:center; gap:16px;">
-                <div class="user-menu">
-                    <div class="user-menu-trigger"><div class="user-avatar"><span class="user-initial">U</span></div><span class="user-name">Username</span></div>
-                    <div class="user-menu-dropdown">
-                        <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
-                        <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo"><span>KatsuCases</span></a>
+            <nav class="nav">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/cases" class="nav-link">Cases</a>
+                <a href="/inventory" class="nav-link">Inventory</a>
+                <a href="/support" class="nav-link">Support</a>
+            </nav>
+            <div class="header-actions">
+                <div class="balance-display"><i class="ri-wallet-3-line"></i><span class="balance-value">$0.00</span></div>
+                <div class="user-area" style="display:flex; align-items:center; gap:16px;">
+                    <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
+                    <div class="user-menu">
+                        <div class="user-menu-trigger"><div class="user-avatar"><span class="user-initial">U</span></div><span class="user-name">Username</span></div>
+                        <div class="user-menu-dropdown">
+                            <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                            <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                            <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><i class="ri-menu-line"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="section-sm">
+            <div class="container" style="max-width:1180px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; margin-bottom:24px;">
+                    <div>
+                        <div class="section-kicker">ACCOUNT SETTINGS</div>
+                        <h1 style="margin:8px 0 10px;">Identity, privacy, and offline rolls</h1>
+                        <p style="color:var(--text-secondary); max-width:760px;">Your profile settings now live on this dedicated page. Update your public identity, hide inventory if needed, and toggle offline rolls so your account can build free spins while you are away.</p>
+                    </div>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                        <a href="/profile" class="btn btn-secondary"><i class="ri-user-line"></i> Profile</a>
+                        <a href="/support" class="btn btn-ghost"><i class="ri-customer-service-2-line"></i> Support</a>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:minmax(0, 1.2fr) minmax(300px, .8fr); gap:24px; align-items:start;">
+                    <section class="profile-section">
+                        <div class="panel-head"><div><h3>Profile settings</h3><p>Control how your account appears across the site.</p></div></div>
+                        <form id="settingsForm" class="profile-settings-form" style="display:grid; gap:14px;">
+                            <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px;">
+                                <input id="settingsUsername" class="input" placeholder="Username">
+                                <input id="settingsDisplayName" class="input" placeholder="Display name">
+                            </div>
+                            <input id="settingsAvatarUrl" class="input" placeholder="Profile picture URL">
+                            <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px;">
+                                <input id="settingsPronouns" class="input" placeholder="Pronouns">
+                                <input id="settingsRegion" class="input" placeholder="Region">
+                            </div>
+                            <label class="profile-checkbox-row">
+                                <input id="settingsHideInventory" type="checkbox"> Hide my inventory on my public profile
+                            </label>
+                            <label class="profile-checkbox-row">
+                                <input id="settingsOfflineRollEnabled" type="checkbox"> Enable offline rolls
+                            </label>
+                            <div class="form-group">
+                                <label for="themeMode" class="form-label">Appearance</label>
+                                <select id="themeMode" class="input">
+                                    <option value="dark">Dark mode</option>
+                                    <option value="light">Light mode</option>
+                                </select>
+                                <span class="form-hint">Applies instantly across the site on this browser.</span>
+                            </div>
+                            <section class="profile-section" style="padding:18px; border:1px solid rgba(255,255,255,.06); background:rgba(255,255,255,.02);">
+                                <div class="panel-head"><div><h3>Notification controls</h3><p>Choose which alerts still reach your account.</p></div></div>
+                                <div style="display:grid; gap:10px;">
+                                    <label class="profile-checkbox-row"><input id="settingsNotifTrade" type="checkbox"> Trade alerts</label>
+                                    <label class="profile-checkbox-row"><input id="settingsNotifMarket" type="checkbox"> Market and claim alerts</label>
+                                    <label class="profile-checkbox-row"><input id="settingsNotifSupport" type="checkbox"> Support and reset alerts</label>
+                                    <label class="profile-checkbox-row"><input id="settingsNotifSystem" type="checkbox"> System alerts</label>
+                                    <label class="profile-checkbox-row"><input id="settingsNotifQuietMode" type="checkbox"> Quiet mode (mute all account alerts)</label>
+                                </div>
+                            </section>
+                            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:6px;">
+                                <button class="btn btn-primary" type="submit"><i class="ri-save-line"></i> Save Settings</button>
+                                <a href="/cases" class="btn btn-ghost"><i class="ri-gamepad-line"></i> Open Cases</a>
+                            </div>
+                        </form>
+                    </section>
+
+                    <div style="display:grid; gap:24px;">
+                        <section class="profile-section">
+                            <div class="panel-head"><div><h3>Offline roll status</h3><p>Earn free rolls over time when enabled.</p></div></div>
+                            <div class="profile-summary-stack">
+                                <article class="profile-summary-card"><span>Stored Free Rolls</span><strong id="offlineStored">0</strong><p id="offlineCapText">Cap information will load here.</p></article>
+                                <article class="profile-summary-card"><span>Next Roll</span><strong id="offlineNext">—</strong><p id="offlineLast">Waiting for settings.</p></article>
+                                <article class="profile-summary-card"><span>Total Earned Offline</span><strong id="offlineTotal">0</strong><p>Lifetime free rolls granted by the offline system.</p></article>
+                            </div>
+                        </section>
+                        <section class="profile-section">
+                            <div class="panel-head"><div><h3>Quick links</h3><p>Jump to the pages you will use most often.</p></div></div>
+                            <div style="display:grid; gap:10px;">
+                                <a href="/inventory" class="btn btn-secondary" style="justify-content:flex-start;"><i class="ri-archive-line"></i> Inventory</a>
+                                <a href="/pokedex" class="btn btn-secondary" style="justify-content:flex-start;"><i class="ri-book-open-line"></i> Collection</a>
+                                <a href="/support" class="btn btn-secondary" style="justify-content:flex-start;"><i class="ri-lifebuoy-line"></i> Open Support</a>
+                                <a href="/profile" class="btn btn-secondary" style="justify-content:flex-start;"><i class="ri-user-line"></i> View Public Profile</a>
+                            </div>
+                        </section>
+                        <section class="profile-section">
+                            <div class="panel-head"><div><h3>Recent sessions</h3><p>Latest IP and device entries saved to your account.</p></div></div>
+                            <div id="settingsSessionHistory" style="display:grid; gap:10px;">
+                                <div class="cases-ops-empty">Loading session history…</div>
+                            </div>
+                        </section>
                     </div>
                 </div>
             </div>
-            <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><i class="ri-menu-line"></i></button>
-        </div>
-    </div>
-</header>
-<main class="main-content">
-    <section class="section-sm">
-        <div class="container" style="max-width:1360px;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; margin-bottom:24px;">
-                <div>
-                    <div class="section-kicker">OWNER SUPPORT DESK</div>
-                    <h1 style="margin:8px 0 10px;">Live ticket queue</h1>
-                    <p style="color:var(--text-secondary); max-width:820px;">Run support more like an actual game desk. Review the queue, triage player issues, reply in-thread, leave internal notes, and change ticket states without losing the live context.</p>
-                </div>
-                <a href="/admin/rollbacks" class="btn btn-secondary"><i class="ri-history-line"></i> Rollbacks</a>
-            </div>
-            <div class="desk-stats">
-                <div class="desk-stat"><span class="desk-pill"><i class="ri-customer-service-2-line"></i> Queue</span><strong id="deskTotal">0</strong></div>
-                <div class="desk-stat"><span class="desk-pill status-open"><i class="ri-loader-4-line"></i> Open</span><strong id="deskOpen">0</strong></div>
-                <div class="desk-stat"><span class="desk-pill status-awaiting-user"><i class="ri-time-line"></i> Waiting</span><strong id="deskWaiting">0</strong></div>
-                <div class="desk-stat"><span class="desk-pill status-resolved"><i class="ri-check-line"></i> Resolved</span><strong id="deskResolved">0</strong></div>
-            </div>
-            <div class="desk-shell">
-                <aside class="desk-pane">
-                    <div class="desk-topbar">
-                        <div>
-                            <h3 style="margin:0;">Ticket queue</h3>
-                            <p style="margin:6px 0 0; color:var(--text-secondary); font-size:13px;">Newest updates float to the top.</p>
-                        </div>
-                        <button id="supportReload" class="btn btn-ghost btn-sm"><i class="ri-refresh-line"></i> Refresh</button>
-                    </div>
-                    <div class="desk-filter-grid" style="margin-top:16px;">
-                        <input id="supportSearch" class="input" placeholder="Search by user, subject, or category">
-                        <select id="supportStatusFilter" class="input">
-                            <option value="">All statuses</option>
-                            <option value="open">Open</option>
-                            <option value="pending">Pending</option>
-                            <option value="awaiting-user">Awaiting user</option>
-                            <option value="customer-replied">Customer replied</option>
-                            <option value="resolved">Resolved</option>
-                            <option value="closed">Closed</option>
-                        </select>
-                        <button id="supportClearFilters" class="btn btn-secondary" type="button"><i class="ri-close-line"></i></button>
-                    </div>
-                    <div class="desk-list" id="adminSupportTickets"></div>
-                </aside>
-                <section class="desk-thread">
-                    <div class="desk-thread-head">
-                        <div>
-                            <div class="section-kicker">SELECTED TICKET</div>
-                            <h2 id="deskTicketTitle" style="margin:8px 0 0;">No ticket selected</h2>
-                        </div>
-                        <div class="desk-thread-meta" id="deskTicketMeta"></div>
-                    </div>
-                    <div id="deskControls" style="display:none; grid-template-columns:minmax(180px,220px) auto; gap:10px; align-items:center;">
-                        <select class="input" id="deskStatusSelect">
-                            <option value="open">Open</option>
-                            <option value="pending">Pending</option>
-                            <option value="awaiting-user">Awaiting user</option>
-                            <option value="customer-replied">Customer replied</option>
-                            <option value="resolved">Resolved</option>
-                            <option value="closed">Closed</option>
-                        </select>
-                        <button id="deskStatusSave" class="btn btn-secondary" type="button"><i class="ri-save-line"></i> Save Status</button>
-                    </div>
-                    <div class="profile-account-note" id="deskHint">Pick a ticket from the left to review the full support thread.</div>
-                    <div class="desk-log" id="deskThread"></div>
-                    <form id="deskReplyForm" class="desk-compose" style="display:none;">
-                        <textarea id="deskReplyMessage" class="textarea" rows="4" maxlength="2000" placeholder="Reply to the player or leave an internal note"></textarea>
-                        <label class="profile-checkbox-row"><input type="checkbox" id="deskInternalReply"> Internal note only</label>
-                        <div><button class="btn btn-primary" type="submit"><i class="ri-reply-line"></i> Send Reply</button></div>
-                    </form>
-                </section>
-            </div>
-        </div>
-    </section>
-</main>
+        </section>
+    </main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
 <script src="/js/main.js"></script>
 <script>
-let adminTickets = [];
-let activeAdminTicketId = null;
-let adminSupportPoll = null;
-function deskStatusClass(status = '') { return ['status', String(status || '').toLowerCase()].join(' '); }
-function deskTicketMarkup(ticket) {
-    const replies = Array.isArray(ticket.replies) ? ticket.replies : [];
-    const lastReply = replies[replies.length - 1];
-    return `<button class="desk-ticket ${Number(ticket.id) === Number(activeAdminTicketId) ? 'active' : ''}" type="button" data-ticket-id="${Number(ticket.id)}"><div class="desk-ticket-head"><strong>#${Number(ticket.id)} · ${KatsuCases.escapeHtml(ticket.subject || 'Untitled ticket')}</strong><span class="desk-pill ${deskStatusClass(ticket.status)}">${KatsuCases.escapeHtml(ticket.status || 'open')}</span></div><div class="desk-ticket-sub"><span class="desk-pill"><i class="ri-user-line"></i>@${KatsuCases.escapeHtml(ticket.username || 'unknown')}</span><span class="desk-pill"><i class="ri-price-tag-3-line"></i>${KatsuCases.escapeHtml(ticket.category || 'general')}</span><span class="desk-pill"><i class="ri-alarm-warning-line"></i>${KatsuCases.escapeHtml(ticket.priority || 'normal')}</span></div><div style="margin-top:10px; color:var(--text-secondary); font-size:13px; line-height:1.5;">${KatsuCases.escapeHtml((lastReply && lastReply.message) || '').slice(0, 130) || 'No replies yet.'}</div></button>`;
+async function loadSettings() {
+    const data = await KatsuCases.api.get('/api/settings');
+    const profile = data.profile || {};
+    const prefs = data.preferences || {};
+    const offline = data.offline_roll || {};
+    const platform = data.platform || {};
+
+    document.getElementById('settingsUsername').value = profile.username || '';
+    document.getElementById('settingsDisplayName').value = profile.display_name || '';
+    document.getElementById('settingsAvatarUrl').value = profile.avatar_url || '';
+    document.getElementById('settingsPronouns').value = profile.pronouns || '';
+    document.getElementById('settingsRegion').value = profile.region || '';
+    document.getElementById('settingsHideInventory').checked = Boolean(profile.hide_inventory);
+    document.getElementById('settingsOfflineRollEnabled').checked = Boolean(prefs.offline_roll_enabled);
+    document.getElementById('themeMode').value = prefs.theme_mode || window.localStorage.getItem('katsucases.theme') || 'dark';
+    document.getElementById('settingsNotifTrade').checked = Boolean(prefs.notification_trade);
+    document.getElementById('settingsNotifMarket').checked = Boolean(prefs.notification_market);
+    document.getElementById('settingsNotifSupport').checked = Boolean(prefs.notification_support);
+    document.getElementById('settingsNotifSystem').checked = Boolean(prefs.notification_system);
+    document.getElementById('settingsNotifQuietMode').checked = Boolean(prefs.notification_quiet_mode);
+    KatsuCases.applyTheme(document.getElementById('themeMode').value);
+
+    const historyTarget = document.getElementById('settingsSessionHistory');
+    const sessionHistory = Array.isArray(data.session_history) ? data.session_history : [];
+    historyTarget.innerHTML = sessionHistory.length ? sessionHistory.map((entry) => `
+        <article class="ticket-thread-card">
+            <div style="font-weight:600;">${KatsuCases.escapeHtml(entry.ip || 'Unknown IP')}</div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">${entry.at ? new Date(entry.at).toLocaleString() : 'Unknown time'}</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">${KatsuCases.escapeHtml(entry.user_agent || 'Unknown device')}</div>
+        </article>
+    `).join('') : '<div class="cases-ops-empty">No saved sessions yet.</div>';
+
+    document.getElementById('offlineStored').textContent = String(offline.free_rolls || 0);
+    document.getElementById('offlineCapText').textContent = `Cap ${platform.offline_roll_cap || offline.cap || 0} · ${platform.offline_roll_interval_minutes || offline.interval_minutes || 0} min per roll`;
+    document.getElementById('offlineNext').textContent = offline.enabled ? `${offline.next_roll_in_minutes || 0} min` : 'Disabled';
+    document.getElementById('offlineLast').textContent = offline.last_tick_at ? `Last tick ${new Date(offline.last_tick_at).toLocaleString()}` : 'Offline rolls will start after you enable them.';
+    document.getElementById('offlineTotal').textContent = String(offline.total_earned || 0);
 }
-function deskBubbleMarkup(reply) {
-    const cls = reply.internal ? 'note' : (reply.author_type === 'admin' ? 'support' : '');
-    return `<article class="desk-bubble ${cls}"><div class="desk-bubble-head"><strong style="color:var(--text-primary);">${KatsuCases.escapeHtml(reply.display_name || reply.username || reply.author_type || 'Support')}${reply.internal ? ' · internal' : ''}</strong><span>${new Date(reply.created_at).toLocaleString()}</span></div><div class="desk-bubble-body">${KatsuCases.escapeHtml(reply.message || '')}</div></article>`;
-}
-function renderDeskStats() {
-    const total = adminTickets.length;
-    const open = adminTickets.filter((ticket) => ['open', 'customer-replied'].includes(String(ticket.status || '').toLowerCase())).length;
-    const waiting = adminTickets.filter((ticket) => ['pending', 'awaiting-user'].includes(String(ticket.status || '').toLowerCase())).length;
-    const resolved = adminTickets.filter((ticket) => ['resolved', 'closed'].includes(String(ticket.status || '').toLowerCase())).length;
-    document.getElementById('deskTotal').textContent = String(total);
-    document.getElementById('deskOpen').textContent = String(open);
-    document.getElementById('deskWaiting').textContent = String(waiting);
-    document.getElementById('deskResolved').textContent = String(resolved);
-}
-function renderDeskList() {
-    const wrap = document.getElementById('adminSupportTickets');
-    if (!adminTickets.length) { wrap.innerHTML = '<div class="desk-empty"><div><i class="ri-inbox-line"></i><div>No tickets matched the current filters.</div></div></div>'; return; }
-    wrap.innerHTML = adminTickets.map(deskTicketMarkup).join('');
-    wrap.querySelectorAll('[data-ticket-id]').forEach((button) => button.addEventListener('click', () => { activeAdminTicketId = Number(button.dataset.ticketId); renderDesk(); }));
-}
-function renderDeskThread() {
-    const ticket = adminTickets.find((entry) => Number(entry.id) === Number(activeAdminTicketId)) || adminTickets[0] || null;
-    if (ticket && activeAdminTicketId === null) activeAdminTicketId = Number(ticket.id);
-    const title = document.getElementById('deskTicketTitle');
-    const meta = document.getElementById('deskTicketMeta');
-    const log = document.getElementById('deskThread');
-    const hint = document.getElementById('deskHint');
-    const form = document.getElementById('deskReplyForm');
-    const controls = document.getElementById('deskControls');
-    if (!ticket) {
-        title.textContent = 'No ticket selected'; meta.innerHTML = ''; hint.style.display = 'block'; log.innerHTML = '<div class="desk-empty"><div><i class="ri-chat-off-line"></i><div>Select a ticket to open the live thread.</div></div></div>'; form.style.display = 'none'; controls.style.display = 'none'; return;
-    }
-    title.textContent = `#${Number(ticket.id)} · ${ticket.subject || 'Untitled ticket'}`;
-    meta.innerHTML = `<span class="desk-pill ${deskStatusClass(ticket.status)}">${KatsuCases.escapeHtml(ticket.status || 'open')}</span><span class="desk-pill"><i class="ri-user-line"></i>@${KatsuCases.escapeHtml(ticket.username || 'unknown')}</span><span class="desk-pill"><i class="ri-price-tag-3-line"></i>${KatsuCases.escapeHtml(ticket.category || 'general')}</span><span class="desk-pill"><i class="ri-time-line"></i>${new Date(ticket.updated_at || ticket.created_at).toLocaleString()}</span>`;
-    document.getElementById('deskStatusSelect').value = String(ticket.status || 'open').toLowerCase();
-    hint.style.display = 'none'; controls.style.display = 'grid';
-    log.innerHTML = (Array.isArray(ticket.replies) ? ticket.replies : []).map(deskBubbleMarkup).join('') || '<div class="desk-empty"><div><i class="ri-chat-1-line"></i><div>No replies yet.</div></div></div>';
-    log.scrollTop = log.scrollHeight; form.style.display = 'grid'; form.dataset.ticketId = String(ticket.id);
-}
-function renderDesk() { renderDeskStats(); renderDeskList(); renderDeskThread(); }
-async function loadAdminTickets(silent = false) {
-    try {
-        const query = document.getElementById('supportSearch').value.trim();
-        const status = document.getElementById('supportStatusFilter').value;
-        const params = new URLSearchParams(); if (query) params.set('query', query); if (status) params.set('status', status);
-        const data = await KatsuCases.api.get(`/api/admin/support/tickets?${params.toString()}`);
-        adminTickets = Array.isArray(data.tickets) ? data.tickets : [];
-        if (!adminTickets.some((ticket) => Number(ticket.id) === Number(activeAdminTicketId))) activeAdminTicketId = adminTickets.length ? Number(adminTickets[0].id) : null;
-        renderDesk();
-    } catch (error) { if (!silent) KatsuCases.showToast(error.message || 'Failed to load support tickets', 'error'); }
-}
-function startAdminSupportPolling() { if (!adminSupportPoll) adminSupportPoll = window.setInterval(() => loadAdminTickets(true), 6000); }
-document.getElementById('supportReload').addEventListener('click', () => loadAdminTickets());
-document.getElementById('supportClearFilters').addEventListener('click', () => { document.getElementById('supportSearch').value = ''; document.getElementById('supportStatusFilter').value = ''; loadAdminTickets(); });
-document.getElementById('supportStatusFilter').addEventListener('change', () => loadAdminTickets());
-document.getElementById('supportSearch').addEventListener('keydown', (event) => { if (event.key === 'Enter') loadAdminTickets(); });
-document.getElementById('deskReplyForm').addEventListener('submit', async (event) => {
+
+document.getElementById('themeMode').addEventListener('change', (event) => {
+    KatsuCases.applyTheme(event.target.value);
+});
+
+document.getElementById('settingsForm').addEventListener('submit', async (event) => {
     event.preventDefault();
-    const ticketId = event.target.dataset.ticketId;
-    const message = document.getElementById('deskReplyMessage').value.trim();
-    const internal = document.getElementById('deskInternalReply').checked;
-    if (!ticketId || !message) return;
     const button = event.target.querySelector('button[type="submit"]');
     KatsuCases.setLoading(true, button);
     try {
-        await KatsuCases.api.post(`/api/admin/support/tickets/${ticketId}/reply`, { message, internal });
-        document.getElementById('deskReplyMessage').value = ''; document.getElementById('deskInternalReply').checked = false;
-        KatsuCases.showToast(internal ? 'Internal note saved' : 'Support reply sent', 'success');
-        await loadAdminTickets(true);
-    } catch (error) { KatsuCases.showToast(error.message || 'Failed to send support reply', 'error'); }
-    finally { KatsuCases.setLoading(false, button); }
+        await KatsuCases.api.put('/api/settings', {
+            username: document.getElementById('settingsUsername').value,
+            display_name: document.getElementById('settingsDisplayName').value,
+            avatar_url: document.getElementById('settingsAvatarUrl').value,
+            pronouns: document.getElementById('settingsPronouns').value,
+            region: document.getElementById('settingsRegion').value,
+            hide_inventory: document.getElementById('settingsHideInventory').checked,
+            offline_roll_enabled: document.getElementById('settingsOfflineRollEnabled').checked,
+            theme_mode: document.getElementById('themeMode').value,
+            notification_trade: document.getElementById('settingsNotifTrade').checked,
+            notification_market: document.getElementById('settingsNotifMarket').checked,
+            notification_support: document.getElementById('settingsNotifSupport').checked,
+            notification_system: document.getElementById('settingsNotifSystem').checked,
+            notification_quiet_mode: document.getElementById('settingsNotifQuietMode').checked
+        });
+        KatsuCases.applyTheme(document.getElementById('themeMode').value);
+        KatsuCases.showToast('Settings updated', 'success');
+        await loadSettings();
+        const auth = await KatsuCases.api.get('/api/auth/me');
+        if (auth.user) KatsuCases.updateUserUI(auth.user);
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to save settings', 'error');
+    } finally {
+        KatsuCases.setLoading(false, button);
+    }
 });
-document.getElementById('deskStatusSave').addEventListener('click', async () => {
-    if (!activeAdminTicketId) return;
-    const button = document.getElementById('deskStatusSave');
-    KatsuCases.setLoading(true, button);
+
+document.addEventListener('DOMContentLoaded', async () => {
+    KatsuCases.init();
     try {
-        await KatsuCases.api.post(`/api/admin/support/tickets/${activeAdminTicketId}/status`, { status: document.getElementById('deskStatusSelect').value });
-        KatsuCases.showToast('Ticket status updated', 'success');
-        await loadAdminTickets(true);
-    } catch (error) { KatsuCases.showToast(error.message || 'Failed to update status', 'error'); }
-    finally { KatsuCases.setLoading(false, button); }
+        await loadSettings();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to load settings', 'error');
+    }
 });
-document.addEventListener('DOMContentLoaded', async () => { KatsuCases.init(); try { const auth = await KatsuCases.api.get('/api/auth/me'); if (!auth.user?.is_admin) { window.location.href = '/'; return; } await loadAdminTickets(); startAdminSupportPolling(); } catch (error) { KatsuCases.showToast(error.message || 'Failed to load support desk', 'error'); } });
 </script>
 </body>
 </html>

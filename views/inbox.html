@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Achievements - KatsuCases</title>
+    <meta name="description" content="Track your KatsuCases achievement progress, unlocked milestones, and collection growth.">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0e1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+    <style>
+        .feature-shell{display:grid;gap:20px}.feature-hero{padding:28px;border:1px solid var(--border-color);border-radius:22px;background:rgba(8,11,22,.86)}
+        .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}.feature-card{padding:18px;border:1px solid var(--border-color);border-radius:18px;background:rgba(10,14,26,.9)}
+        .mini-muted{color:var(--text-secondary);font-size:13px}.pill-row{display:flex;flex-wrap:wrap;gap:10px}.pill-row button{border:none;border-radius:999px;padding:10px 14px;background:rgba(255,255,255,.06);color:var(--text-primary);cursor:pointer}.pill-row button.active{background:rgba(124,58,237,.24)}
+        .stack-list{display:grid;gap:12px}.list-card{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px 16px;border:1px solid var(--border-color);border-radius:18px;background:rgba(12,17,30,.9)}
+        .rank-badge{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:rgba(124,58,237,.18);font-weight:800}.simple-avatar{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;overflow:hidden;font-weight:700}.simple-avatar img{width:100%;height:100%;object-fit:cover}
+        .field-grid{display:grid;gap:12px}.field-row{display:grid;grid-template-columns:minmax(0,1fr) 140px 110px auto;gap:10px}.field-row input,.field-row textarea,.field-row select{width:100%;background:rgba(255,255,255,.04);color:var(--text-primary);border:1px solid var(--border-color);border-radius:14px;padding:12px}.field-row button,.action-btn{border:none;border-radius:14px;padding:12px 14px;background:rgba(124,58,237,.22);color:var(--text-primary);cursor:pointer}.field-row .ghost,.action-btn.ghost{background:rgba(255,255,255,.06)}
+        .chip-list{display:flex;flex-wrap:wrap;gap:10px}.chip{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.06)}.chip button{border:none;background:none;color:var(--text-secondary);cursor:pointer}
+        .notif-card{padding:16px;border:1px solid var(--border-color);border-radius:18px;background:rgba(10,14,26,.9)}.notif-card.unread{box-shadow:inset 0 0 0 1px rgba(124,58,237,.25)}
+        .review-stars{display:inline-flex;gap:4px}.review-stars i.active{color:#fbbf24}
+        @media (max-width:900px){.field-row{grid-template-columns:1fr}.list-card{grid-template-columns:auto 1fr}.feature-grid{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <header class="header">
+            <div class="header-inner">
+                <a href="/" class="logo"><span>KatsuCases</span></a>
+                <nav class="nav">
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/cases" class="nav-link">Cases</a>
+                    <a href="/marketplace" class="nav-link">Marketplace</a>
+                    <a href="/trading" class="nav-link">Trading</a>
+                    <a href="/social" class="nav-link">Social</a>
+                </nav>
+                <div class="header-actions">
+                    <div class="balance-display"><i class="ri-wallet-3-line"></i><span class="balance-value">$0.00</span></div>
+                    <div class="user-area">
+                        <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
+                        <div class="user-menu">
+                            <div class="user-menu-trigger"><div class="user-avatar"><span class="user-initial">U</span></div><span class="user-name">Username</span></div>
+                            <div class="user-menu-dropdown">
+                                <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                                <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                                <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><i class="ri-menu-line"></i></button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content"><section class="section-sm"><div class="container feature-shell">
+            <section class="feature-hero"><div class="eyebrow">Progression</div><h1 style="margin:10px 0 8px;">Achievements</h1><p class="mini-muted">Permanent milestones for openings, social play, trading, and collection depth.</p></section>
+            <section class="feature-grid" id="achievementSummary"></section>
+            <section class="feature-card"><h3 style="margin:0 0 14px;">Unlocked</h3><div class="feature-grid" id="unlockedGrid"></div></section>
+            <section class="feature-card"><h3 style="margin:0 0 14px;">Still Locked</h3><div class="feature-grid" id="lockedGrid"></div></section>
+        </div></section></main>
+        <script>
+        function achievementCard(item){return `<article class="feature-card"><div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;"><div class="rank-badge"><i class="${KatsuCases.escapeHtml(item.icon||'ri-medal-line')}"></i></div><div><div style="font-weight:700;">${KatsuCases.escapeHtml(item.label)}</div><div class="mini-muted">${item.unlocked?'Unlocked':'Locked'}</div></div></div><div class="mini-muted">${KatsuCases.escapeHtml(item.description||'')}</div></article>`}
+        document.addEventListener('DOMContentLoaded', async()=>{await KatsuCases.init(); const data=await KatsuCases.api.get('/api/achievements'); document.getElementById('achievementSummary').innerHTML=`<article class="feature-card"><span class="mini-muted">Unlocked</span><div style="font-size:28px;font-weight:800;">${data.progress?.unlocked_count||0}</div></article><article class="feature-card"><span class="mini-muted">Total</span><div style="font-size:28px;font-weight:800;">${data.progress?.total||0}</div></article><article class="feature-card"><span class="mini-muted">Completion</span><div style="font-size:28px;font-weight:800;">${data.progress?.percent||0}%</div></article>`; document.getElementById('unlockedGrid').innerHTML=(data.unlocked||[]).map(achievementCard).join('')||'<div class="mini-muted">No achievements yet.</div>'; document.getElementById('lockedGrid').innerHTML=(data.locked||[]).map(achievementCard).join('')||'<div class="mini-muted">Everything is unlocked.</div>';});
+        </script>
+
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>

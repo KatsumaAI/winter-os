@@ -1,19 +1,20 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - KatsuCases</title>
-    <meta name="description" content="Create your KatsuCases account and start opening Pokémon cases, collecting drops, and joining the live economy.">
+    <title>Profile - KatsuCases</title>
+    <meta name="description" content="View KatsuCases player profiles, showcase collections, review value totals, and explore public account details.">
     <meta name="theme-color" content="#0a0e1a">
-    <meta name="robots" content="noindex,nofollow">
+    <meta name="robots" content="noindex,follow">
     <meta property="og:site_name" content="KatsuCases">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Sign Up - KatsuCases">
-    <meta property="og:description" content="Create your KatsuCases account and start opening Pokémon cases, collecting drops, and joining the live economy.">
+    <meta property="og:title" content="Profile - KatsuCases">
+    <meta property="og:description" content="View KatsuCases player profiles, showcase collections, review value totals, and explore public account details.">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Sign Up - KatsuCases">
-    <meta name="twitter:description" content="Create your KatsuCases account and start opening Pokémon cases, collecting drops, and joining the live economy.">
+    <meta name="twitter:title" content="Profile - KatsuCases">
+    <meta name="twitter:description" content="View KatsuCases player profiles, showcase collections, review value totals, and explore public account details.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
@@ -23,176 +24,782 @@
     <link rel="stylesheet" href="/css/pages.css">
 </head>
 <body>
-    <div class="auth-page auth-page--split">
-        <div class="auth-shell">
-            <section class="auth-showcase auth-showcase--signup">
-                <a href="/" class="auth-brand" aria-label="KatsuCases home">
-                    <img src="/assets/katsucases-topbar-logo.png" alt="KatsuCases" class="auth-brand-logo">
-                </a>
-                <div class="auth-showcase-copy">
-                    <div class="auth-kicker"><span class="live-dot"></span> New account bonus ready</div>
-                    <h1>Create your account and start opening immediately.</h1>
-                    <p>Build your profile, collect drops with full value tracking, join the live economy, and move straight into your first openings.</p>
-                </div>
-
-                <div class="auth-bonus-card">
-                    <div class="auth-bonus-icon"><i class="ri-gift-2-line"></i></div>
-                    <div>
-                        <strong>$100 welcome balance</strong>
-                        <p>New accounts get a starting bonus so you can test cases right away.</p>
-                    </div>
-                </div>
-
-                <div class="auth-checklist">
-                    <div class="auth-checklist-item"><i class="ri-check-line"></i><span>Profile, display name, region, badges, and inventory visibility controls.</span></div>
-                    <div class="auth-checklist-item"><i class="ri-check-line"></i><span>Trading, market listings, Case Vs rooms, and live pull replay support.</span></div>
-                    <div class="auth-checklist-item"><i class="ri-check-line"></i><span>Original owner history, values, and more detailed player profiles.</span></div>
-                </div>
-            </section>
-
-            <section class="auth-panel">
-                <div class="auth-card auth-card--discordish auth-card--wide-form">
-                    <div class="auth-header auth-header--left">
-                        <div class="auth-chip">Create account</div>
-                        <h2>Claim your KatsuCases profile</h2>
-                        <p>Set up your account details below and jump into the site with your welcome bonus.</p>
-                    </div>
-
-                    <form id="signupForm" class="auth-form auth-form--enhanced">
-                        <div class="form-group">
-                            <label class="form-label" for="username">Username</label>
-                            <div class="auth-input-wrap">
-                                <i class="ri-at-line auth-input-icon"></i>
-                                <input type="text" class="form-input auth-input" id="username" placeholder="Choose a username" autocomplete="username" required minlength="3" maxlength="20">
-                            </div>
-                            <span class="form-hint">3–20 characters. Letters, numbers, and underscores only.</span>
-                            <div id="usernameAvailability" class="form-hint" style="margin-top:8px;">We will check availability while you type.</div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="email">Email Address</label>
-                            <div class="auth-input-wrap">
-                                <i class="ri-mail-line auth-input-icon"></i>
-                                <input type="email" class="form-input auth-input" id="email" placeholder="you@example.com" autocomplete="email" required>
+    <div class="page-wrapper">
+        <header class="header">
+            <div class="header-inner">
+                <a href="/" class="logo"><span>KatsuCases</span></a>
+                <nav class="nav">
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/cases" class="nav-link">Cases</a>
+                    <a href="/marketplace" class="nav-link">Marketplace</a>
+                    <a href="/trading" class="nav-link">Trading</a>
+                    <a href="/livepulls" class="nav-link">Live Pulls</a>
+                </nav>
+                <div class="header-actions">
+                    <div class="balance-display"><i class="ri-wallet-3-line"></i><span class="balance-value">$0.00</span></div>
+                    <div class="user-area">
+                        <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
+                        <div class="user-menu">
+                            <div class="user-menu-trigger"><div class="user-avatar"><span class="user-initial">U</span></div><span class="user-name">Username</span></div>
+                            <div class="user-menu-dropdown">
+                                <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                                <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                                <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
                             </div>
                         </div>
+                    </div>
+                                    <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><i class="ri-menu-line"></i></button>
+                </div>
+            </div>
+        </header>
 
-                        <div class="auth-grid-two">
-                            <div class="form-group">
-                                <label class="form-label" for="password">Password</label>
-                                <div class="auth-input-wrap">
-                                    <i class="ri-lock-2-line auth-input-icon"></i>
-                                    <input type="password" class="form-input auth-input auth-input--password" id="password" placeholder="Create a password" autocomplete="new-password" required minlength="6">
-                                    <button type="button" class="auth-input-action" data-toggle-password="#password" aria-label="Show password">
-                                        <i class="ri-eye-line"></i>
-                                    </button>
+        <main class="main-content">
+            <section class="section-sm">
+                <div class="container profile-shell">
+                    <div id="profileNotFound" class="profile-not-found" style="display:none;">
+                        <i class="ri-user-search-line"></i>
+                        <h2 style="margin-top:12px;">This user doesn’t exist</h2>
+                        <p style="color:var(--text-secondary); margin-top:10px;">The profile you tried to open could not be found. Check the username and try again.</p>
+                        <div style="margin-top:18px;"><a href="/trading" class="btn btn-primary">Back to Trading</a></div>
+                    </div>
+
+                    <div id="profileShell" class="profile-shell-themed">
+                        <section class="profile-banner-card" id="profileBannerCard">
+                            <div class="profile-hero">
+                                <div class="profile-avatar profile-avatar-lg" id="profileAvatar">U</div>
+                                <div>
+                                    <div class="profile-title-row">
+                                        <h1 id="profileName" style="margin:0;">Username</h1>
+                                        <span class="profile-handle" id="profileHandle">@username</span>
+                                    </div>
+                                    <div id="profileBadges" class="profile-badge-row"></div>
+                                    <div class="profile-meta-line" id="profileMetaLine">Pronouns · Region · Role</div>
+                                    <div class="profile-status-copy" id="profileStatusText" style="margin-top:10px; font-weight:600; color:var(--text-primary); display:none;"></div>
+                                    <div class="profile-bio-copy" id="profileBioText" style="margin-top:8px; max-width:700px; color:var(--text-secondary); display:none;"></div>
+                                    <div class="profile-joined-line" id="profileJoined">Member since January 2024</div>
+                                    <div class="profile-joined-line" id="profileEmail">@username</div>
+                                    <div class="profile-joined-line" id="profilePastNamesLabel" style="display:none;">Past usernames</div>
+                                    <div id="profilePastNames" class="profile-badge-row" style="display:none; margin-top:8px;"></div>
                                 </div>
-                                <span class="form-hint">At least 6 characters.</span>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label" for="confirmPassword">Confirm Password</label>
-                                <div class="auth-input-wrap">
-                                    <i class="ri-shield-check-line auth-input-icon"></i>
-                                    <input type="password" class="form-input auth-input auth-input--password" id="confirmPassword" placeholder="Repeat password" autocomplete="new-password" required minlength="6">
-                                    <button type="button" class="auth-input-action" data-toggle-password="#confirmPassword" aria-label="Show password">
-                                        <i class="ri-eye-line"></i>
-                                    </button>
+                                <div class="profile-hero-actions">
+                                    <a href="/cases" class="btn btn-primary"><i class="ri-gamepad-line"></i> Open Cases</a>
+                                    <a href="/trading" id="tradeWithProfileBtn" class="btn btn-secondary" style="display:none;"><i class="ri-exchange-dollar-line"></i> Trade With</a>
+                                    <button type="button" id="friendProfileBtn" class="btn btn-secondary" style="display:none;"><i class="ri-user-add-line"></i> Add Friend</button>
+                                    <a href="/inventory" id="inventoryShortcutBtn" class="btn btn-ghost"><i class="ri-archive-line"></i> Inventory</a>
+                                    <button type="button" id="copyProfileLinkBtn" class="btn btn-ghost"><i class="ri-link"></i> Copy Link</button>
                                 </div>
                             </div>
+                            <div class="profile-top-stats">
+                                <div class="profile-top-stat"><strong id="statCasesOpened">0</strong><span>Cases Opened</span></div>
+                                <div class="profile-top-stat"><strong id="statInventoryValue">$0</strong><span>Inventory Value</span></div>
+                                <div class="profile-top-stat"><strong id="statTotalSpent">$0</strong><span>Total Spent</span></div>
+                                <div class="profile-top-stat"><strong id="statTotalEarned">$0</strong><span>Total Earned</span></div>
+                            </div>
+                        </section>
+
+                        <div class="profile-grid profile-grid-revamp">
+                            <div>
+                                <section class="profile-section">
+                                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;">
+                                        <h4 class="profile-section-title" style="margin:0;">Inventory Showcase</h4>
+                                        <span id="profileInventoryHint" style="color:var(--text-muted); font-size:12px;">Top items by value</span>
+                                    </div>
+                                    <div id="profileInventoryShowcase" class="profile-showcase-grid"></div>
+                                </section>
+
+                                <section class="profile-section" style="margin-top:24px;">
+                                    <h4 class="profile-section-title">Recent Opens</h4>
+                                    <div id="recentOpens" class="profile-showcase-grid"></div>
+                                </section>
+
+                                <section class="profile-section" style="margin-top:24px;">
+                                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;">
+                                        <h4 class="profile-section-title" style="margin:0;">Guestbook</h4>
+                                        <span class="profile-status-pill" id="guestbookCountPill">0 entries</span>
+                                    </div>
+                                    <div id="guestbookComposer" style="display:none; margin-bottom:14px; gap:10px;">
+                                        <textarea id="guestbookMessageInput" class="input" maxlength="220" rows="3" placeholder="Leave a message for this player" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid var(--border-color); border-radius:16px; padding:12px; color:var(--text-primary);"></textarea>
+                                        <div style="display:flex; justify-content:flex-end; margin-top:10px;"><button type="button" class="btn btn-primary" id="guestbookSendBtn">Post Message</button></div>
+                                    </div>
+                                    <div id="guestbookEntries" class="profile-summary-stack"></div>
+                                </section>
+                            </div>
+
+                            <div>
+                                <section class="profile-section profile-member-card">
+                                    <div class="profile-member-card-top">
+                                        <div class="profile-mini-avatar" id="profileMiniAvatar">U</div>
+                                        <div class="profile-member-card-copy">
+                                            <div class="profile-mini-name" id="profileMiniName">Username</div>
+                                            <div class="profile-mini-handle" id="profileMiniHandle">@username</div>
+                                        </div>
+                                        <span class="profile-status-pill" id="profileStatusPill">Profile</span>
+                                    </div>
+                                    <div id="profileMemberBadges" class="profile-badge-row profile-member-badges"></div>
+                                    <div class="profile-member-grid">
+                                        <div class="profile-member-fact"><span>Joined</span><strong id="profileMemberSince">January 2024</strong></div>
+                                        <div class="profile-member-fact"><span>Inventory</span><strong id="profileMemberInventoryCount">0 items</strong></div>
+                                        <div class="profile-member-fact"><span>Visibility</span><strong id="profileMemberVisibility">Public</strong></div>
+                                        <div class="profile-member-fact"><span>Trading</span><strong id="profileMemberTradeStatus">Open</strong></div>
+                                    </div>
+                                </section>
+                                <section class="profile-section" style="margin-top:24px;">
+                                    <h4 class="profile-section-title">Progression</h4>
+                                    <div id="profileProgressionPanel"></div>
+                                </section>
+                                
+                                <section class="profile-section" id="profileMediaStudio" style="margin-top:24px; display:none;">
+                                    <h4 class="profile-section-title">Profile Media Studio</h4>
+                                    <p class="profile-account-note" style="margin-bottom:16px;">Upload your avatar, banner, and profile background right here, then swap back to older looks like a Discord-style media history.</p>
+                                    <div class="profile-media-grid">
+                                        <article class="profile-media-card">
+                                            <div class="profile-media-preview avatar" id="avatarPreviewPane"></div>
+                                            <div class="profile-media-actions">
+                                                <label class="profile-upload-btn" for="profileAvatarFile"><i class="ri-image-add-line"></i> Upload Avatar</label>
+                                                <input class="profile-file-input" id="profileAvatarFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+                                            </div>
+                                            <div class="profile-account-note" style="margin:0;">Avatar history</div>
+                                            <div class="profile-media-history" id="avatarHistoryGrid"></div>
+                                        </article>
+                                        <article class="profile-media-card">
+                                            <div class="profile-media-preview" id="bannerPreviewPane">Banner Preview</div>
+                                            <div class="profile-media-actions">
+                                                <label class="profile-upload-btn" for="profileBannerFile"><i class="ri-gallery-upload-line"></i> Upload Banner</label>
+                                                <input class="profile-file-input" id="profileBannerFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+                                            </div>
+                                            <div class="profile-account-note" style="margin:0;">Banner history</div>
+                                            <div class="profile-media-history" id="bannerHistoryGrid"></div>
+                                        </article>
+                                        <article class="profile-media-card">
+                                            <div class="profile-media-preview" id="backgroundPreviewPane">Background Preview</div>
+                                            <div class="profile-media-actions">
+                                                <label class="profile-upload-btn" for="profileBackgroundFile"><i class="ri-layout-masonry-line"></i> Upload Background</label>
+                                                <input class="profile-file-input" id="profileBackgroundFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+                                            </div>
+                                            <div class="profile-account-note" style="margin:0;">Background history</div>
+                                            <div class="profile-media-history" id="backgroundHistoryGrid"></div>
+                                        </article>
+                                    </div>
+                                    <div style="margin-top:18px;">
+                                        <div class="profile-account-note" style="margin-bottom:10px;">Avatar Decoration</div>
+                                        <div class="profile-decoration-grid" id="avatarDecorationGrid"></div>
+                                    </div>
+                                </section>
+
+                                <section class="profile-section" style="margin-top:24px;">
+                                    <h4 class="profile-section-title">Profile Flavor</h4>
+                                    <div id="profileFlavorReadOnly" class="profile-account-note" style="display:none;">This player's profile status, bio, and trainer card theme are shown above on the member card.</div>
+                                    <form id="profileFlavorForm" class="profile-settings-form" style="display:none; gap:12px;">
+                                        <input id="settingsProfileStatus" class="input" maxlength="80" placeholder="Custom status, for example: Hunting mythicals tonight">
+                                        <textarea id="settingsProfileBio" class="input" rows="4" maxlength="320" placeholder="Short bio or about section"></textarea>
+                                        <select id="settingsProfileTheme" class="input">
+                                            <option value="default">Default Theme</option>
+                                            <option value="royal">Royal Theme</option>
+                                            <option value="ember">Ember Theme</option>
+                                            <option value="mint">Mint Theme</option>
+                                            <option value="midnight">Midnight Theme</option>
+                                        </select>
+                                        <div class="profile-account-note" style="margin:0;">Pin up to 6 showcase Pokémon from your inventory page with the new pushpin action.</div>
+                                        <button class="btn btn-primary" type="submit"><i class="ri-save-line"></i> Save Profile Flavor</button>
+                                    </form>
+                                </section>
+
+                                <section class="profile-section" style="margin-top:24px;">
+                                    <h4 class="profile-section-title" id="accountSectionTitle">Account</h4>
+                                    <div id="accountSectionContent">
+                                        <div id="profileAccountNote" class="profile-account-note">Account settings moved to a dedicated page so your profile stays focused on collection value, progression, and visible history.</div>
+                                        <div id="selfSettingsInfo" class="profile-account-note" style="display:none;">
+                                            Open the settings page for account preferences, privacy controls, and offline rolls. Profile media uploads and avatar decoration now live above in the Media Studio.
+                                            <div style="margin-top:14px;"><a href="/settings" class="btn btn-primary"><i class="ri-settings-3-line"></i> Open Settings</a></div>
+                                        </div>
+                                        <form id="profileSettingsForm" class="profile-settings-form" style="display:none; visibility:hidden; height:0; overflow:hidden; margin:0; padding:0;">
+                                            <input id="settingsUsername" class="input" placeholder="Username">
+                                            <input id="settingsDisplayName" class="input" placeholder="Display name">
+                                            <input id="settingsAvatarUrl" class="input" placeholder="Profile picture URL">
+                                            <input id="settingsPronouns" class="input" placeholder="Pronouns">
+                                            <input id="settingsRegion" class="input" placeholder="Region">
+                                            <label class="profile-checkbox-row">
+                                                <input id="settingsHideInventory" type="checkbox"> Hide my inventory on my public profile
+                                            </label>
+                                            <button class="btn btn-primary" type="submit"><i class="ri-save-line"></i> Save Profile</button>
+                                        </form>
+                                        <div id="publicProfileInfo" class="profile-account-note" style="display:none;">
+                                            View this player’s public overview, their recent opens, and their visible showcase items. Trading still works from here.
+                                        </div>
+                                    </div>
+                                </section>
+                                <section class="profile-section" style="margin-top:24px;">
+                                    <h4 class="profile-section-title">Wanted Pokémon</h4>
+                                    <div id="profileWishlist" class="profile-badge-row" style="gap:10px; flex-wrap:wrap;"></div>
+                                </section>
+
+                                <section class="profile-section" style="margin-top:24px;">
+                                    <h4 class="profile-section-title" id="transactionsTitle">Collection Overview</h4>
+                                    <div id="transactionsList"></div>
+                                </section>
+                            </div>
                         </div>
-
-                        <div class="auth-action-row auth-action-row--stacked">
-                            <label class="form-checkbox auth-checkbox">
-                                <input type="checkbox" id="terms" required>
-                                <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
-                            </label>
-                            <div class="auth-security-note"><i class="ri-shield-star-line"></i> Your account is protected with secure session storage.</div>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary btn-lg auth-submit">
-                            <i class="ri-user-add-line"></i> Create Account
-                        </button>
-                    </form>
-
-                    <div class="auth-footer auth-footer--compact">
-                        Already have an account? <a href="/signin">Sign in</a>
                     </div>
                 </div>
             </section>
-        </div>
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
     <script src="/js/main.js"></script>
     <script>
-        const usernameInput = document.getElementById('username');
-        const usernameAvailability = document.getElementById('usernameAvailability');
-        const checkUsernameAvailability = KatsuCases.debounce(async (value) => {
-            const username = String(value || '').trim();
-            if (!username) {
-                usernameAvailability.textContent = 'We will check availability while you type.';
-                usernameAvailability.style.color = 'var(--text-muted)';
+        let viewingIdentifier = null;
+        let profileUser = null;
+        let profilePayload = null;
+
+        function getProfileIdentifier() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('user') || params.get('id') || null;
+        }
+
+        function itemCardMarkup(item) {
+            return `
+                <article class="profile-item-card rarity-glow-${item.rarity}">
+                    ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:74px; height:74px;' })}
+                    <div style="font-weight:700; margin-top:8px;">${KatsuCases.escapeHtml(item.pokemon_name)}</div>
+                    <div style="font-size:12px; color:var(--text-secondary); margin-top:6px;">${KatsuCases.escapeHtml(item.rarity)} · ${KatsuCases.formatCurrency(item.estimated_value || 0)}</div>
+                    ${item.original_owner_username ? `<div style="font-size:11px; color:var(--text-muted); margin-top:6px;">Original owner · <a href="/profile?user=${encodeURIComponent(item.original_owner_username)}">${KatsuCases.escapeHtml(item.original_owner_username)}</a></div>` : ''}
+                </article>
+            `;
+        }
+
+        const AVATAR_DECORATIONS = [
+            { key: 'none', label: 'None' },
+            { key: 'glow', label: 'Glow' },
+            { key: 'crown', label: 'Crown' },
+            { key: 'cosmic', label: 'Cosmic' },
+            { key: 'verified', label: 'Verified' },
+            { key: 'flora', label: 'Flora' },
+            { key: 'shadow', label: 'Shadow' },
+            { key: 'crystal', label: 'Crystal' }
+        ];
+        let profileMediaHistory = { avatars: [], banners: [], backgrounds: [] };
+
+        function avatarShellMarkup(user, baseClass = 'profile-avatar-image', sizeClass = 'community-avatar') {
+            const display = user.display_name || user.username || 'User';
+            const initial = KatsuCases.escapeHtml(display.charAt(0).toUpperCase());
+            const decoration = KatsuCases.escapeHtml(String(user.avatar_decoration || 'none').toLowerCase());
+            const inner = user.avatar_url
+                ? `<img src="${KatsuCases.escapeHtml(user.avatar_url)}" alt="${KatsuCases.escapeHtml(display)}" class="${baseClass}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`
+                : `<span class="${sizeClass} fallback" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">${initial}</span>`;
+            return `<span class="avatar-deco-shell avatar-deco-${decoration}" style="width:100%;height:100%;border-radius:inherit;">${inner}<span class="avatar-deco-overlay"></span></span>`;
+        }
+
+        function setProfileAvatar(target, user, avatarClass = '') {
+            if (!target) return;
+            target.innerHTML = avatarShellMarkup(user, avatarClass || 'profile-avatar-image');
+        }
+
+        function applyProfileTheme(user) {
+            const shell = document.getElementById('profileShell');
+            const banner = document.getElementById('profileBannerCard');
+            const backgroundUrl = String(user.profile_background_url || '').replace(/"/g, '\"');
+            const bannerUrl = String(user.banner_url || '').replace(/"/g, '\"');
+            const theme = String(user.profile_theme || 'default').toLowerCase();
+            const themeStyles = {
+                default: { ring: 'rgba(139,92,246,0.24)', glow: 'rgba(124,58,237,0.18)' },
+                royal: { ring: 'rgba(99,102,241,0.28)', glow: 'rgba(76,29,149,0.2)' },
+                ember: { ring: 'rgba(249,115,22,0.24)', glow: 'rgba(153,27,27,0.18)' },
+                mint: { ring: 'rgba(16,185,129,0.24)', glow: 'rgba(20,184,166,0.16)' },
+                midnight: { ring: 'rgba(59,130,246,0.2)', glow: 'rgba(15,23,42,0.28)' }
+            };
+            const colors = themeStyles[theme] || themeStyles.default;
+            if (shell && backgroundUrl) {
+                shell.style.backgroundImage = `url("${backgroundUrl}")`;
+                shell.style.backgroundPosition = 'center';
+                shell.style.backgroundSize = 'cover';
+            } else if (shell) {
+                shell.style.backgroundImage = '';
+            }
+            if (shell) {
+                shell.style.boxShadow = `0 28px 90px ${colors.glow}`;
+            }
+            if (banner) {
+                banner.style.borderColor = colors.ring;
+                banner.style.boxShadow = `inset 0 0 0 1px ${colors.ring}`;
+            }
+            if (banner && bannerUrl) {
+                banner.classList.add('profile-banner-themed');
+                banner.style.backgroundImage = `url("${bannerUrl}")`;
+                banner.style.backgroundPosition = 'center';
+                banner.style.backgroundSize = 'cover';
+            } else if (banner) {
+                banner.classList.remove('profile-banner-themed');
+                banner.style.backgroundImage = '';
+            }
+        }
+
+        function previewPaneMarkup(value, label, isAvatar = false) {
+            if (!value) return `<span>${KatsuCases.escapeHtml(label)}</span>`;
+            return isAvatar ? avatarShellMarkup({ avatar_url: value, display_name: 'Preview', avatar_decoration: profileUser?.avatar_decoration || 'none' }, 'profile-avatar-image') : `<img src="${KatsuCases.escapeHtml(value)}" alt="${KatsuCases.escapeHtml(label)}">`;
+        }
+
+        function renderMediaHistory(type, activeValue) {
+            const map = {
+                avatar: { list: profileMediaHistory.avatars || [], grid: 'avatarHistoryGrid', label: 'Avatar' },
+                banner: { list: profileMediaHistory.banners || [], grid: 'bannerHistoryGrid', label: 'Banner' },
+                background: { list: profileMediaHistory.backgrounds || [], grid: 'backgroundHistoryGrid', label: 'Background' }
+            };
+            const config = map[type];
+            const grid = document.getElementById(config.grid);
+            if (!grid) return;
+            const unique = (config.list || []).filter(Boolean).filter((value, index, array) => array.indexOf(value) === index).slice(0, 12);
+            if (!unique.length) {
+                grid.innerHTML = '<div class="profile-account-note" style="margin:0;">No saved looks yet.</div>';
+                return;
+            }
+            grid.innerHTML = unique.map((value, index) => `
+                <button type="button" class="profile-history-swatch ${value === activeValue ? 'active' : ''}" onclick="applyHistoryMedia('${type}', ${index})">
+                    ${type === 'avatar' ? previewPaneMarkup(value, config.label, true) : `<img class="cover" src="${KatsuCases.escapeHtml(value)}" alt="${config.label} ${index + 1}">`}
+                    <span class="meta">Use</span>
+                </button>
+            `).join('');
+        }
+
+        function renderDecorationOptions(active = 'none') {
+            const grid = document.getElementById('avatarDecorationGrid');
+            if (!grid) return;
+            grid.innerHTML = AVATAR_DECORATIONS.map((option) => `
+                <button type="button" class="profile-deco-option ${option.key === active ? 'active' : ''}" onclick="selectAvatarDecoration('${option.key}')">
+                    <div style="width:68px;height:68px;border-radius:999px;">${avatarShellMarkup({ avatar_url: profileUser?.avatar_url || null, display_name: profileUser?.display_name || 'U', avatar_decoration: option.key }, 'profile-avatar-image', 'community-avatar')}</div>
+                    <span class="profile-deco-label">${KatsuCases.escapeHtml(option.label)}</span>
+                </button>
+            `).join('');
+        }
+
+        async function readImageFile(file) {
+            if (!file) return null;
+            if (!String(file.type || '').startsWith('image/')) throw new Error('Choose an image file');
+            if (Number(file.size || 0) > 2_000_000) throw new Error('Image must be 2 MB or smaller');
+            return await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result || ''));
+                reader.onerror = () => reject(new Error('Could not read image'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function saveProfileMedia(payload, successMessage = 'Profile media updated') {
+            await KatsuCases.api.put('/api/profile', payload);
+            KatsuCases.showToast(successMessage, 'success');
+            await KatsuCases.checkAuth();
+            await loadProfile();
+        }
+
+        async function handleProfileUpload(type, input) {
+            try {
+                const file = input?.files?.[0];
+                if (!file) return;
+                const dataUrl = await readImageFile(file);
+                if (type === 'avatar') await saveProfileMedia({ avatar_url: dataUrl }, 'Avatar updated');
+                if (type === 'banner') await saveProfileMedia({ banner_url: dataUrl }, 'Banner updated');
+                if (type === 'background') await saveProfileMedia({ profile_background_url: dataUrl }, 'Background updated');
+                input.value = '';
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Upload failed', 'error');
+                if (input) input.value = '';
+            }
+        }
+
+        async function applyHistoryMedia(type, index) {
+            const value = (type === 'avatar' ? profileMediaHistory.avatars : type === 'banner' ? profileMediaHistory.banners : profileMediaHistory.backgrounds)?.[index];
+            if (!value) return;
+            try {
+                if (type === 'avatar') await saveProfileMedia({ avatar_url: value }, 'Avatar restored');
+                if (type === 'banner') await saveProfileMedia({ banner_url: value }, 'Banner restored');
+                if (type === 'background') await saveProfileMedia({ profile_background_url: value }, 'Background restored');
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to restore media', 'error');
+            }
+        }
+        window.applyHistoryMedia = applyHistoryMedia;
+
+        async function selectAvatarDecoration(key) {
+            try {
+                await saveProfileMedia({ avatar_decoration: key }, 'Avatar decoration updated');
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Could not update avatar decoration', 'error');
+            }
+        }
+        window.selectAvatarDecoration = selectAvatarDecoration;
+
+
+        function progressionMarkup(progression, daily = null, isSelf = false, favoriteCaseCount = 0) {
+            const safe = progression || {};
+            const dailyBlock = isSelf && daily ? `
+                <article class="profile-summary-card">
+                    <span>Daily Streak</span>
+                    <strong>${Number(daily.streak || 0)}</strong>
+                    <p>${daily.claimed_today ? "Today\'s reward has already been claimed." : `Next claim pays ${KatsuCases.formatCurrency(daily.reward_preview?.credits || 0)}${daily.reward_preview?.free_rolls ? ` and ${daily.reward_preview.free_rolls} free roll` : ''}.`}</p>
+                </article>
+                <article class="profile-summary-card">
+                    <span>Favorited Cases</span>
+                    <strong>${Number(favoriteCaseCount || 0)}</strong>
+                    <p>Your pinned quick-open cases are synced from the cases page.</p>
+                </article>
+            ` : `
+                <article class="profile-summary-card">
+                    <span>Favorited Cases</span>
+                    <strong>${Number(favoriteCaseCount || 0)}</strong>
+                    <p>Favorite crates help define this player's quick-open rotation.</p>
+                </article>
+            `;
+            return `
+                <div class="profile-summary-stack">
+                    <article class="profile-summary-card">
+                        <span>Hunter Level</span>
+                        <strong>Level ${Number(safe.level || 1)}</strong>
+                        <p>${Number(safe.total_xp || 0)} total XP earned from openings, missions, and site activity.</p>
+                    </article>
+                    <article class="profile-summary-card profile-progress-card">
+                        <span>Level Progress</span>
+                        <strong>${Number(safe.xp_into_level || 0)} / ${Number(safe.xp_for_next_level || 0)} XP</strong>
+                        <div class="profile-progress-bar"><span style="width:${Math.max(5, Number(safe.progress_percent || 0))}%"></span></div>
+                        <p>${100 - Math.min(100, Number(safe.progress_percent || 0))}% left until the next level.</p>
+                    </article>
+                    ${dailyBlock}
+                </div>
+            `;
+        }
+
+        function transactionMarkup(user, profileData, isSelf) {
+            const cards = [
+                {
+                    label: 'Collection Value',
+                    value: KatsuCases.formatCurrency(user.inventory_value || 0),
+                    detail: `${Number(user.inventory_count || 0)} tracked item${Number(user.inventory_count || 0) === 1 ? '' : 's'} across the profile.`
+                },
+                {
+                    label: isSelf ? 'Wallet Balance' : 'Cases Opened',
+                    value: isSelf ? KatsuCases.formatCurrency(user.balance || 0) : String(user.cases_opened || 0),
+                    detail: isSelf ? `${Number(user.free_rolls || 0)} free roll${Number(user.free_rolls || 0) === 1 ? '' : 's'} currently available.` : 'Total openings shown on the public player card.'
+                },
+                {
+                    label: 'Spent',
+                    value: KatsuCases.formatCurrency(user.total_spent || 0),
+                    detail: 'Lifetime value spent across openings and market actions.'
+                },
+                {
+                    label: 'Earned',
+                    value: KatsuCases.formatCurrency(user.total_earned || 0),
+                    detail: 'Lifetime value earned back from wins, sells, and drops.'
+                },
+                {
+                    label: 'Inventory Visibility',
+                    value: user.hide_inventory ? 'Private' : 'Public',
+                    detail: user.hide_inventory ? 'Showcase is hidden from other players.' : 'Showcase is visible to other players.'
+                },
+                {
+                    label: 'Trade Status',
+                    value: profileData.canTrade ? 'Trade Ready' : (isSelf ? 'Viewing Self' : 'Read Only'),
+                    detail: profileData.canTrade ? 'You can jump into a direct offer from this page.' : (isSelf ? 'Manage your collection and profile from here.' : 'Trading is not available from this view.')
+                }
+            ];
+            return `
+                <div class="profile-summary-stack">
+                    ${cards.map((card) => `
+                        <article class="profile-summary-card">
+                            <span>${KatsuCases.escapeHtml(card.label)}</span>
+                            <strong>${KatsuCases.escapeHtml(card.value)}</strong>
+                            <p>${KatsuCases.escapeHtml(card.detail)}</p>
+                        </article>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+
+        function guestbookEntryMarkup(entry, canDelete = false) {
+            return `
+                <article class="profile-summary-card">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                        <div>
+                            <strong>${KatsuCases.escapeHtml(entry.author?.display_name || entry.author?.username || 'Player')}</strong>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${KatsuCases.formatRelativeTime(entry.created_at)}</div>
+                        </div>
+                        ${canDelete ? `<button class="btn btn-ghost btn-sm" onclick="deleteGuestbookEntry(${Number(entry.id)})"><i class="ri-delete-bin-line"></i></button>` : ''}
+                    </div>
+                    <div style="margin-top:10px; color:var(--text-secondary);">${KatsuCases.escapeHtml(entry.message || '')}</div>
+                </article>
+            `;
+        }
+
+        async function postGuestbookEntry() {
+            if (!profileUser) return;
+            const input = document.getElementById('guestbookMessageInput');
+            const message = String(input?.value || '').trim();
+            if (!message) {
+                KatsuCases.showToast('Write a message first', 'error');
                 return;
             }
             try {
-                const result = await KatsuCases.api.get(`/api/auth/availability/username?username=${encodeURIComponent(username)}`);
-                usernameAvailability.textContent = result.message || (result.available ? 'Username is available' : 'That username is already taken');
-                usernameAvailability.style.color = result.available ? 'var(--success)' : 'var(--warning)';
+                await KatsuCases.api.post(`/api/profiles/${encodeURIComponent(profileUser.username)}/guestbook`, { message });
+                input.value = '';
+                await loadProfile();
+                KatsuCases.showToast('Guestbook message posted', 'success');
             } catch (error) {
-                usernameAvailability.textContent = 'Could not check username right now.';
-                usernameAvailability.style.color = 'var(--warning)';
+                KatsuCases.showToast(error.message || 'Could not post guestbook message', 'error');
             }
-        }, 240);
+        }
+        window.postGuestbookEntry = postGuestbookEntry;
 
-        usernameInput.addEventListener('input', (event) => checkUsernameAvailability(event.target.value));
+        async function deleteGuestbookEntry(entryId) {
+            try {
+                await KatsuCases.api.delete(`/api/profile-guestbook/${entryId}`);
+                await loadProfile();
+                KatsuCases.showToast('Guestbook entry removed', 'success');
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Could not remove entry', 'error');
+            }
+        }
+        window.deleteGuestbookEntry = deleteGuestbookEntry;
 
-        document.querySelectorAll('[data-toggle-password]').forEach((button) => {
-            button.addEventListener('click', () => {
-                const input = document.querySelector(button.getAttribute('data-toggle-password'));
-                if (!input) return;
-                const icon = button.querySelector('i');
-                const nextType = input.type === 'password' ? 'text' : 'password';
-                input.type = nextType;
-                if (icon) {
-                    icon.className = nextType === 'password' ? 'ri-eye-line' : 'ri-eye-off-line';
+        function renderGuestbook(profileData) {
+            const entries = Array.isArray(profileData.guestbook_preview) ? profileData.guestbook_preview : [];
+            const wrap = document.getElementById('guestbookEntries');
+            const countPill = document.getElementById('guestbookCountPill');
+            const composer = document.getElementById('guestbookComposer');
+            if (countPill) countPill.textContent = `${entries.length} entr${entries.length === 1 ? 'y' : 'ies'}`;
+            const canCompose = Boolean(KatsuCases.state.user && profileData.user && Number(KatsuCases.state.user.id) !== Number(profileData.user.id));
+            if (composer) composer.style.display = canCompose ? 'block' : 'none';
+            wrap.innerHTML = entries.length
+                ? entries.map((entry) => guestbookEntryMarkup(entry, Boolean(KatsuCases.state.user && (Number(KatsuCases.state.user.id) === Number(entry.author_id) || Number(KatsuCases.state.user.id) === Number(profileData.user.id) || Boolean(KatsuCases.state.user.is_admin))))).join('')
+                : '<div class="profile-account-note" style="margin:0;">No guestbook entries yet.</div>';
+        }
+
+        function renderWishlistPreview(user) {
+            const wrap = document.getElementById('profileWishlist');
+            const entries = Array.isArray(user?.wishlist_preview) ? user.wishlist_preview : [];
+            wrap.innerHTML = entries.length
+                ? entries.map((entry) => `<span class="badge badge-rare">${KatsuCases.escapeHtml(entry.pokemon_name)} · ${KatsuCases.escapeHtml(entry.priority)}</span>`).join('')
+                : '<span class="profile-account-note" style="margin:0;">No public wishlist targets shared.</span>';
+        }
+
+        async function loadProfile() {
+            const shell = document.getElementById('profileShell');
+            const notFound = document.getElementById('profileNotFound');
+            try {
+                viewingIdentifier = getProfileIdentifier();
+                const endpoint = viewingIdentifier ? `/api/profiles/${encodeURIComponent(viewingIdentifier)}` : `/api/profiles/${encodeURIComponent(KatsuCases.state.user.username)}`;
+                const profileData = await KatsuCases.api.get(endpoint);
+                profilePayload = profileData;
+                const user = profileData.user;
+                profileMediaHistory = user.media_history || { avatars: [], banners: [], backgrounds: [] };
+                profileUser = user;
+                shell.style.display = '';
+                notFound.style.display = 'none';
+
+                const isSelf = Boolean(profileData.canEdit);
+                const joinedText = new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                applyProfileTheme(user);
+                setProfileAvatar(document.getElementById('profileAvatar'), user, 'profile-avatar-image');
+                setProfileAvatar(document.getElementById('profileMiniAvatar'), user, 'profile-mini-avatar-image');
+
+                document.getElementById('profileName').textContent = user.display_name || user.username;
+                document.getElementById('profileHandle').textContent = `@${user.username}`;
+                document.getElementById('profileEmail').textContent = isSelf && user.email ? user.email : `@${user.username}`;
+                document.getElementById('profileJoined').textContent = `Member since ${joinedText}`;
+                document.getElementById('profileMetaLine').textContent = [user.pronouns, user.region, user.custom_role].filter(Boolean).join(' · ') || 'No profile metadata set yet.';
+                const statusText = document.getElementById('profileStatusText');
+                const bioText = document.getElementById('profileBioText');
+                statusText.textContent = user.profile_status || '';
+                statusText.style.display = user.profile_status ? '' : 'none';
+                bioText.textContent = user.profile_bio || '';
+                bioText.style.display = user.profile_bio ? '' : 'none';
+                const badgeMarkup = (user.badges || []).map((badge) => `<span class="badge ${KatsuCases.escapeHtml(badge.className || 'badge-common')}">${KatsuCases.escapeHtml(badge.label || badge.key || 'TAG')}</span>`).join('') || '<span class="badge badge-common">PLAYER</span>';
+                document.getElementById('profileBadges').innerHTML = badgeMarkup;
+                document.getElementById('profileMemberBadges').innerHTML = badgeMarkup;
+                document.getElementById('profileMiniName').textContent = user.display_name || user.username;
+                document.getElementById('profileMiniHandle').textContent = `@${user.username}`;
+                document.getElementById('profileStatusPill').textContent = `${String(user.profile_theme || (isSelf ? 'your' : 'player')).replace(/_/g, ' ').toUpperCase()} CARD`;
+                document.getElementById('profileMemberSince').textContent = joinedText;
+                document.getElementById('profileMemberInventoryCount').textContent = `${Number(user.inventory_count || 0)} item${Number(user.inventory_count || 0) === 1 ? '' : 's'}`;
+                document.getElementById('profileMemberVisibility').textContent = user.hide_inventory ? 'Private' : 'Public';
+                document.getElementById('profileMemberTradeStatus').textContent = profileData.canTrade ? 'Trade Ready' : (isSelf ? 'Your Profile' : 'Read Only');
+                const pastNamesLabel = document.getElementById('profilePastNamesLabel');
+                const pastNames = document.getElementById('profilePastNames');
+                const history = Array.isArray(user.username_history) ? user.username_history.filter(Boolean) : [];
+                if (history.length) {
+                    pastNamesLabel.style.display = '';
+                    pastNames.style.display = 'flex';
+                    pastNames.innerHTML = history.map((name) => `<span class="badge badge-common">@${KatsuCases.escapeHtml(name)}</span>`).join('');
+                } else {
+                    pastNamesLabel.style.display = 'none';
+                    pastNames.style.display = 'none';
+                    pastNames.innerHTML = '';
+                }
+                document.getElementById('statCasesOpened').textContent = user.cases_opened || 0;
+                document.getElementById('statInventoryValue').textContent = KatsuCases.formatCurrency(user.inventory_value || 0);
+                document.getElementById('statTotalSpent').textContent = KatsuCases.formatCurrency(user.total_spent || 0);
+                document.getElementById('statTotalEarned').textContent = KatsuCases.formatCurrency(user.total_earned || 0);
+                document.getElementById('transactionsList').innerHTML = transactionMarkup(user, profileData, isSelf);
+                renderWishlistPreview(user);
+                renderGuestbook(profileData);
+                const sendBtn = document.getElementById('guestbookSendBtn');
+                if (sendBtn && !sendBtn.dataset.boundGuestbook) {
+                    sendBtn.dataset.boundGuestbook = '1';
+                    sendBtn.addEventListener('click', postGuestbookEntry);
+                }
+                document.getElementById('profileProgressionPanel').innerHTML = progressionMarkup(user.progression || {}, null, isSelf, user.favorite_case_count || 0);
+
+                const inventoryHint = document.getElementById('profileInventoryHint');
+                const showcase = document.getElementById('profileInventoryShowcase');
+                if (!profileData.canViewInventory) {
+                    inventoryHint.textContent = 'This player has hidden their inventory';
+                    showcase.innerHTML = '<div class="admin-rain-card empty" style="grid-column:1/-1;">This player chose to keep their inventory private.</div>';
+                } else if (!(profileData.featuredInventory || []).length) {
+                    inventoryHint.textContent = 'No visible items yet';
+                    showcase.innerHTML = '<div class="admin-rain-card empty" style="grid-column:1/-1;">No showcase items yet.</div>';
+                } else {
+                    inventoryHint.textContent = `Showing ${profileData.featuredInventory.length} featured item${profileData.featuredInventory.length === 1 ? '' : 's'}`;
+                    showcase.innerHTML = profileData.featuredInventory.map(itemCardMarkup).join('');
+                }
+
+                const recentOpens = document.getElementById('recentOpens');
+                recentOpens.innerHTML = (profileData.recentOpens || []).length
+                    ? profileData.recentOpens.map(itemCardMarkup).join('')
+                    : '<div class="admin-rain-card empty" style="grid-column:1/-1;">No recent opens yet.</div>';
+
+                document.getElementById('inventoryShortcutBtn').style.display = isSelf ? '' : 'none';
+                document.getElementById('tradeWithProfileBtn').style.display = profileData.canTrade ? '' : 'none';
+                if (profileData.canTrade) {
+                    document.getElementById('tradeWithProfileBtn').href = `/trading?user=${encodeURIComponent(user.username)}`;
+                }
+                const friendProfileBtn = document.getElementById('friendProfileBtn');
+                if (friendProfileBtn) {
+                    const relationship = profileData.relationship_status || 'none';
+                    friendProfileBtn.style.display = !isSelf && profileData.canFriend ? '' : 'none';
+                    friendProfileBtn.disabled = relationship === 'outgoing';
+                    friendProfileBtn.dataset.relationship = relationship;
+                    friendProfileBtn.innerHTML = relationship === 'friends'
+                        ? '<i class="ri-group-line"></i> Open Social'
+                        : relationship === 'incoming'
+                            ? '<i class="ri-mail-open-line"></i> Open Social'
+                            : relationship === 'outgoing'
+                                ? '<i class="ri-time-line"></i> Request Sent'
+                                : '<i class="ri-user-add-line"></i> Add Friend';
+                }
+
+                document.getElementById('profileSettingsForm').style.display = 'none';
+                document.getElementById('profileMediaStudio').style.display = isSelf ? 'block' : 'none';
+                document.getElementById('selfSettingsInfo').style.display = isSelf ? 'block' : 'none';
+                document.getElementById('publicProfileInfo').style.display = isSelf ? 'none' : 'block';
+                document.getElementById('profileFlavorForm').style.display = isSelf ? 'grid' : 'none';
+                document.getElementById('profileFlavorReadOnly').style.display = isSelf ? 'none' : 'block';
+                document.getElementById('accountSectionTitle').textContent = isSelf ? 'Account Settings' : 'Public Profile';
+                document.getElementById('transactionsTitle').textContent = isSelf ? 'Collection Overview' : 'Player Snapshot';
+                document.getElementById('profileAccountNote').textContent = isSelf
+                    ? 'Fine-tune how your KatsuCases identity appears across the site, including your public showcase visibility.'
+                    : `${user.display_name || user.username}'s public member card, showcase status, and trade entry points are shown here.`;
+
+                if (isSelf) {
+                    document.getElementById('avatarPreviewPane').innerHTML = previewPaneMarkup(user.avatar_url, 'Avatar', true);
+                    document.getElementById('bannerPreviewPane').innerHTML = previewPaneMarkup(user.banner_url, 'Banner');
+                    document.getElementById('backgroundPreviewPane').innerHTML = previewPaneMarkup(user.profile_background_url, 'Background');
+                    renderMediaHistory('avatar', user.avatar_url || '');
+                    renderMediaHistory('banner', user.banner_url || '');
+                    renderMediaHistory('background', user.profile_background_url || '');
+                    renderDecorationOptions(user.avatar_decoration || 'none');
+                    document.getElementById('settingsUsername').value = user.username || '';
+                    document.getElementById('settingsDisplayName').value = user.display_name || '';
+                    document.getElementById('settingsAvatarUrl').value = user.avatar_url || '';
+                    document.getElementById('settingsPronouns').value = user.pronouns || '';
+                    document.getElementById('settingsRegion').value = user.region || '';
+                    document.getElementById('settingsHideInventory').checked = Boolean(user.hide_inventory);
+                    document.getElementById('settingsProfileStatus').value = user.profile_status || '';
+                    document.getElementById('settingsProfileBio').value = user.profile_bio || '';
+                    document.getElementById('settingsProfileTheme').value = user.profile_theme || 'default';
+                    try {
+                        const progressionData = await KatsuCases.api.get('/api/progression');
+                        document.getElementById('profileProgressionPanel').innerHTML = progressionMarkup(progressionData.progression || user.progression || {}, progressionData.daily || null, true, (progressionData.favorite_case_ids || []).length);
+                    } catch (progressError) {
+                        console.error('Failed to load private progression details:', progressError);
+                    }
+                }
+            } catch (error) {
+                shell.style.display = 'none';
+                notFound.style.display = 'block';
+                if (!String(error.message || '').toLowerCase().includes('user not found')) {
+                    KatsuCases.showToast(error.message || 'Failed to load profile', 'error');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            KatsuCases.applyBranding();
+            await KatsuCases.checkAuth();
+            if (!KatsuCases.state.user) {
+                window.location.href = '/signin';
+                return;
+            }
+            await loadProfile();
+            document.getElementById('copyProfileLinkBtn')?.addEventListener('click', async () => {
+                const userName = profileUser?.username || KatsuCases.state.user?.username;
+                const link = `${window.location.origin}/profile?user=${encodeURIComponent(userName || '')}`;
+                try {
+                    await navigator.clipboard.writeText(link);
+                    KatsuCases.showToast('Profile link copied', 'success');
+                } catch (error) {
+                    KatsuCases.showToast('Could not copy profile link', 'error');
                 }
             });
-        });
-
-        document.getElementById('signupForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = document.getElementById('username').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const button = e.target.querySelector('button[type="submit"]');
-
-            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-                KatsuCases.showToast('Username can only contain letters, numbers, and underscores', 'error');
-                return;
-            }
-            if (password !== confirmPassword) {
-                KatsuCases.showToast('Passwords do not match', 'error');
-                return;
-            }
-
-            const availability = await KatsuCases.api.get(`/api/auth/availability/username?username=${encodeURIComponent(username)}`);
-            if (!availability.available) {
-                KatsuCases.showToast(availability.message || 'That username is already taken', 'error');
-                return;
-            }
-            KatsuCases.setLoading(true, button);
-            try {
-                const data = await KatsuCases.api.post('/api/auth/register', { username, email, password });
-                KatsuCases.showToast('Account created! $100 bonus added!', 'success');
-                KatsuCases.updateUserUI(data.user);
-                window.location.href = '/';
-            } catch (error) {
-                KatsuCases.showToast(error.message || 'Registration failed', 'error');
-            } finally {
-                KatsuCases.setLoading(false, button);
-            }
+            document.getElementById('friendProfileBtn')?.addEventListener('click', async () => {
+                const relationship = document.getElementById('friendProfileBtn').dataset.relationship || 'none';
+                if (!profileUser) return;
+                if (relationship !== 'none') {
+                    window.location.href = '/social';
+                    return;
+                }
+                try {
+                    await KatsuCases.api.post('/api/social/friends/request', { userId: profileUser.id });
+                    KatsuCases.showToast('Friend request sent', 'success');
+                    await loadProfile();
+                } catch (error) {
+                    KatsuCases.showToast(error.message || 'Failed to send friend request', 'error');
+                }
+            });
+            document.getElementById('profileAvatarFile')?.addEventListener('change', (event) => handleProfileUpload('avatar', event.target));
+            document.getElementById('profileBannerFile')?.addEventListener('change', (event) => handleProfileUpload('banner', event.target));
+            document.getElementById('profileBackgroundFile')?.addEventListener('change', (event) => handleProfileUpload('background', event.target));
+            const form = document.getElementById('profileSettingsForm');
+            form?.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                try {
+                    await KatsuCases.api.put('/api/profile', {
+                        username: document.getElementById('settingsUsername').value,
+                        display_name: document.getElementById('settingsDisplayName').value,
+                        avatar_url: document.getElementById('settingsAvatarUrl').value,
+                        pronouns: document.getElementById('settingsPronouns').value,
+                        region: document.getElementById('settingsRegion').value,
+                        hide_inventory: document.getElementById('settingsHideInventory').checked
+                    });
+                    KatsuCases.showToast('Profile updated', 'success');
+                    await KatsuCases.checkAuth();
+                    await loadProfile();
+                } catch (error) {
+                    KatsuCases.showToast(error.message || 'Failed to save profile', 'error');
+                }
+            });
+            document.getElementById('profileFlavorForm')?.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                try {
+                    await KatsuCases.api.put('/api/profile', {
+                        profile_status: document.getElementById('settingsProfileStatus').value,
+                        profile_bio: document.getElementById('settingsProfileBio').value,
+                        profile_theme: document.getElementById('settingsProfileTheme').value
+                    });
+                    KatsuCases.showToast('Profile flavor updated', 'success');
+                    await KatsuCases.checkAuth();
+                    await loadProfile();
+                } catch (error) {
+                    KatsuCases.showToast(error.message || 'Failed to save profile flavor', 'error');
+                }
+            });
         });
     </script>
 </body>

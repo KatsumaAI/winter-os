@@ -3,40 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Case Vs - KatsuCases</title>
-    <meta name="description" content="Join live KatsuCases Case Vs rooms, spectate head-to-head openings, and watch round-by-round winners unfold in real time.">
+    <title>Cases - KatsuCases</title>
+    <meta name="description" content="Browse every KatsuCases crate, preview possible Pokémon drops, compare odds, and open premium cases with tracked values.">
     <meta name="theme-color" content="#0a0e1a">
     <meta name="robots" content="index,follow">
     <meta property="og:site_name" content="KatsuCases">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Case Vs - KatsuCases">
-    <meta property="og:description" content="Join live KatsuCases Case Vs rooms, spectate head-to-head openings, and watch round-by-round winners unfold in real time.">
+    <meta property="og:title" content="Cases - KatsuCases">
+    <meta property="og:description" content="Browse every KatsuCases crate, preview possible Pokémon drops, compare odds, and open premium cases with tracked values.">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Case Vs - KatsuCases">
-    <meta name="twitter:description" content="Join live KatsuCases Case Vs rooms, spectate head-to-head openings, and watch round-by-round winners unfold in real time.">
+    <meta name="twitter:title" content="Cases - KatsuCases">
+    <meta name="twitter:description" content="Browse every KatsuCases crate, preview possible Pokémon drops, compare odds, and open premium cases with tracked values.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
-
+    
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/pages.css">
 </head>
 <body>
     <div class="page-wrapper">
+        <!-- Header -->
         <header class="header">
             <div class="header-inner">
-                <a href="/" class="logo"><span>KatsuCases</span></a>
+                <a href="/" class="logo">
+                    <div class="logo-icon"><i class="ri-gamepad-line"></i></div>
+                    <span>KatsuCases</span>
+                </a>
+                
                 <nav class="nav">
                     <a href="/" class="nav-link">Home</a>
-                    <a href="/cases" class="nav-link">Cases</a>
+                    <a href="/cases" class="nav-link active">Cases</a>
                     <a href="/marketplace" class="nav-link">Marketplace</a>
                     <a href="/trading" class="nav-link">Trading</a>
                     <a href="/livepulls" class="nav-link">Live Pulls</a>
-                    <a href="/casevs" class="nav-link active">Case Vs</a>
                     <a href="/guide" class="nav-link">Info</a>
                 </nav>
+                
                 <div class="header-actions">
                     <div class="balance-display">
                         <i class="ri-wallet-3-line"></i>
@@ -46,7 +51,7 @@
                         <a href="/signin" class="btn btn-ghost">Sign In</a>
                         <a href="/signup" class="btn btn-primary">Sign Up</a>
                     </div>
-                    <div class="user-area" style="display:none;">
+                    <div class="user-area" style="display: none;">
                         <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
                         <div class="user-menu">
                             <div class="user-menu-trigger">
@@ -64,342 +69,1034 @@
                 </div>
             </div>
         </header>
-
-        <main class="main-content discord-page discord-casevs-page">
+        
+        <!-- Main Content -->
+        <main class="main-content discord-page discord-cases-page">
             <section class="cases-hero section-sm">
-                <div class="container">
+                <div class="container discord-content-shell">
                     <div class="section-title discord-section-title">
-                        <div class="discord-page-kicker"><i class="ri-sword-cross-line"></i> Duel Lobby</div>
-                        <h1>Case Vs</h1>
-                        <p>Create rooms, watch battles unfold, and inspect who won each round.</p>
+                        <div class="discord-page-kicker"><i class="ri-box-3-line"></i> Case Browser</div>
+                        <h1>Case Collection</h1>
+                        <p>Browse our selection of premium cases, claim daily rewards, track missions, and favorite the crates you want to quick-open.</p>
                     </div>
                     <div class="discord-hero-rail">
-                        <div class="discord-hero-chip"><i class="ri-door-open-line"></i><span>Public rooms</span></div>
-                        <div class="discord-hero-chip"><i class="ri-eye-line"></i><span>Spectator viewer</span></div>
-                        <div class="discord-hero-chip"><i class="ri-shield-check-line"></i><span>Seed-backed rounds</span></div>
+                        <div class="discord-hero-chip"><i class="ri-star-line"></i><span>Favorite quick-open rail</span></div>
+                        <div class="discord-hero-chip"><i class="ri-magic-line"></i><span>Pity-tracked rolls</span></div>
+                        <div class="discord-hero-chip"><i class="ri-task-line"></i><span>Daily ops board</span></div>
+                    </div>
+                    <div class="cases-ops-grid">
+                        <section class="cases-ops-card" id="dailyOpsPanel">
+                            <div class="cases-ops-empty">Loading daily ops…</div>
+                        </section>
+                        <section class="cases-ops-card">
+                            <div class="cases-ops-head">
+                                <div>
+                                    <div class="cases-ops-eyebrow">Quick Access</div>
+                                    <h3>Favorite Cases</h3>
+                                </div>
+                                <span class="cases-ops-chip"><i class="ri-star-smile-line"></i> Quick-open rail</span>
+                            </div>
+                            <div id="favoriteCasesRail" class="favorite-cases-rail">
+                                <div class="cases-ops-empty">Favorite cases to pin them here.</div>
+                            </div>
+                        </section>
                     </div>
                 </div>
             </section>
-
+            
             <section class="section-sm">
-                <div class="container casevs-layout discord-layout-shell">
-                    <div>
-                        <div class="trade-compose-card discord-panel" id="caseVsCreateCard">
-                            <div class="live-pull-head">
-                                <div>
-                                    <h3 style="margin-bottom:6px;">Create a Room</h3>
-                                    <p style="color:var(--text-secondary);">Choose a case, pick up to 3 rounds, then wait for another player to join.</p>
-                                </div>
-                                <span class="badge badge-epic">1v1</span>
-                            </div>
-                            <div style="display:grid; grid-template-columns: 1fr 160px auto; gap:12px; margin-top:18px;">
-                                <select id="caseSelect" class="select"><option value="">Select a case</option></select>
-                                <select id="roundSelect" class="select">
-                                    <option value="1">1 Round</option>
-                                    <option value="2">2 Rounds</option>
-                                    <option value="3">3 Rounds</option>
-                                </select>
-                                <button class="btn btn-primary" id="createRoomBtn"><i class="ri-add-line"></i> Create</button>
-                            </div>
-                            <p style="font-size:12px; color:var(--text-muted); margin-top:10px;">Players keep the Pokémon they pull. The room winner is decided by round wins, then by the best pull if tied.</p>
+                <div class="container discord-content-shell">
+                    <div class="cases-filters discord-filterbar">
+                        <div class="pills" id="categoryPills">
+                            <button class="pill active" data-filter="all">All Cases</button>
+                            <button class="pill" data-filter="featured">Featured</button>
+                            <button class="pill" data-filter="daily">Daily</button>
+                            <button class="pill" data-filter="special">Special</button>
+                            <button class="pill" data-filter="standard">Standard</button>
                         </div>
-
-                        <div class="casevs-room-list" id="roomsList"></div>
+                        
+                        <select class="form-input form-select" style="width: 180px;" id="sortSelect">
+                            <option value="featured">Featured First</option>
+                            <option value="price_low">Price: Low to High</option>
+                            <option value="price_high">Price: High to Low</option>
+                            <option value="popular">Most Popular</option>
+                        </select>
                     </div>
-
-                    <aside class="casevs-sidebar-card discord-panel" id="roomViewer">
-                        <h3 style="margin-bottom:8px;">Room Viewer</h3>
-                        <p style="color:var(--text-secondary); margin-bottom:18px;">Open a room to spectate the battle, inspect seeds, and see the winner.</p>
-                        <div class="empty-state" style="padding:32px 16px;">
-                            <i class="ri-sword-line"></i>
-                            <h3>No room selected</h3>
-                            <p>Pick a room from the list to spectate what is going on.</p>
-                        </div>
-                    </aside>
+                    
+                    <div class="cases-grid" id="casesGrid">
+                        <!-- Populated by JS -->
+                    </div>
                 </div>
             </section>
         </main>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-bottom" style="border-top: none; padding-top: 0;">
+                    <p>&copy; 2024 KatsuCases. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
-    <script src="/js/main.js"></script>
-    <script>
-        let roomsData = [];
-        let casesData = [];
-        let selectedRoomId = null;
-        let roomPollHandle = null;
-        let roomPlaybackTimer = null;
-        let roomsSignature = '';
-        let selectedRoomUpdatedAt = '';
-
-
-
-        function stopRoomPlayback() {
-            if (roomPlaybackTimer) {
-                window.clearTimeout(roomPlaybackTimer);
-                roomPlaybackTimer = null;
-            }
-        }
-
-        function getRoomWinCount(room, userId, uptoRound = null) {
-            const rounds = Array.isArray(room.rounds_data) ? room.rounds_data : [];
-            return rounds.filter((round) => (uptoRound === null || Number(round.round) <= Number(uptoRound)) && Number(round.winner_user_id) === Number(userId)).length;
-        }
-
-        function renderRoomRoundPair(round) {
-            return `
-                <div class="casevs-round casevs-round-live discord-round-card">
-                    <div class="live-pull-head">
-                        <div>
-                            <strong>Round ${round.round}</strong>
-                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${round.is_draw ? 'Round ended in a draw' : `Winner: ${KatsuCases.escapeHtml(round.winner_username)}`}</div>
-                        </div>
-                        <span class="casevs-room-chip"><i class="ri-flashlight-line"></i> Saved replay data</span>
-                    </div>
-                    <div class="casevs-round-pulls live-pair">
-                        ${round.pulls.map((pull) => `
-                            <div class="casevs-round-pull rarity-glow-${pull.rarity}">
-                                <div class="casevs-live-pull-top">
-                                    <div class="casevs-player-pill-main compact">
-                                        ${KatsuCases.buildAvatarMarkup ? KatsuCases.buildAvatarMarkup({ username: pull.username, display_name: pull.username }, 'casevs-player-avatar') : `<span class="casevs-player-avatar fallback">${KatsuCases.escapeHtml(String(pull.username || '?').charAt(0).toUpperCase())}</span>`}
-                                        <strong><a href="/profile?user=${encodeURIComponent(pull.username)}">${KatsuCases.escapeHtml(pull.username)}</a></strong>
-                                    </div>
-                                    <span class="badge badge-${pull.rarity}">${KatsuCases.escapeHtml(pull.rarity)}</span>
+    
+    <!-- Case Detail Modal -->
+    <div class="modal-overlay" id="case-modal">
+        <div class="modal case-preview-modal">
+            <div class="modal-header case-preview-modal-header">
+                <div>
+                    <div class="case-preview-modal-kicker">Case Preview</div>
+                    <h3 class="modal-title" id="modalCaseName">Case Name</h3>
+                </div>
+                <button class="modal-close" onclick="KatsuCases.closeModal('case-modal')">
+                    <i class="ri-close-line"></i>
+                </button>
+            </div>
+            <div class="modal-body case-preview-modal-body">
+                <div class="case-detail-grid discord-case-detail-grid">
+                    <div class="case-preview-stack">
+                        <section class="case-preview-hero-card">
+                            <div class="case-preview-hero-icon-wrap">
+                                <div class="case-preview-hero-icon" id="casePreviewHeroIcon">
+                                    <i class="ri-treasure-map-line"></i>
                                 </div>
-                                <div style="display:flex; gap:14px; align-items:center; margin-top:10px;">
-                                    ${KatsuCases.buildSpriteImg({ pokemonName: pull.pokemon_name, isShiny: pull.is_shiny, spriteUrl: pull.sprite_url, alt: pull.pokemon_name, style: 'width:62px; height:62px;' })}
-                                    <div>
-                                        <div style="font-weight:700; font-size:15px;">${KatsuCases.escapeHtml(pull.pokemon_name)}</div>
-                                        <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">${KatsuCases.formatCurrency(pull.estimated_value || 0)} · 1 in ${Number(pull.odds || 0).toLocaleString()}</div>
-                                        <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">Seed ${KatsuCases.escapeHtml(pull.seed)}</div>
+                                <div class="case-preview-hero-copy">
+                                    <div class="case-preview-channel-row">
+                                        <span class="case-preview-channel" id="modalCaseCategory"># featured</span>
+                                        <span class="case-preview-status-pill" id="modalCaseLiveState">Live Case</span>
                                     </div>
+                                    <p class="case-preview-description" id="modalCaseDescription">Premium case details.</p>
                                 </div>
                             </div>
-                        `).join('')}
+                            <div class="case-preview-intel-grid" id="casePreviewIntelGrid"></div>
+                            <div class="case-preview-highlight-strip" id="casePreviewHighlightStrip"></div>
+                        </section>
+                        <section class="case-preview-panel">
+                            <div class="case-preview-panel-head">
+                                <div>
+                                    <div class="case-preview-section-kicker">Odds Intel</div>
+                                    <h4>Rarity Distribution</h4>
+                                </div>
+                            </div>
+                            <div id="caseOddsSummary" class="case-odds-grid">
+                                <!-- Rarity odds populated by JS -->
+                            </div>
+                        </section>
+                        <div id="casePitySummary" class="case-pity-panel"></div>
+                    </div>
+                    <div class="case-preview-stack">
+                        <section class="case-preview-panel case-preview-content-panel">
+                            <div class="case-preview-panel-head case-preview-panel-head-tight">
+                                <div>
+                                    <div class="case-preview-section-kicker">Drop Table</div>
+                                    <h4>Case Contents</h4>
+                                </div>
+                                <div class="case-preview-toolbar">
+                                    <button class="case-preview-sort-btn active" type="button" data-sort="value" onclick="setCaseContentsSort('value')">Best value</button>
+                                    <button class="case-preview-sort-btn" type="button" data-sort="odds" onclick="setCaseContentsSort('odds')">Rarest</button>
+                                    <button class="case-preview-sort-btn" type="button" data-sort="rarity" onclick="setCaseContentsSort('rarity')">By rarity</button>
+                                </div>
+                            </div>
+                            <div class="case-preview-list-shell">
+                                <div class="case-preview-list-head">
+                                    <span>Possible pull</span>
+                                    <span>Odds / Value</span>
+                                </div>
+                                <div class="case-preview-list" id="caseContentsPreview">
+                                    <!-- Contents populated by JS -->
+                                </div>
+                            </div>
+
+                            <div class="case-preview-list-shell" style="margin-top:18px;">
+                                <div class="case-preview-list-head">
+                                    <span>Case Reviews</span>
+                                    <span id="caseReviewSummaryText">No reviews</span>
+                                </div>
+                                <div id="caseReviewsComposer" style="padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.06); display:grid; gap:10px;">
+                                    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                                        <select id="caseReviewRating" class="input" style="max-width:160px; background:rgba(255,255,255,0.04); border:1px solid var(--border-color); border-radius:12px; padding:10px; color:var(--text-primary);">
+                                            <option value="5">5 Stars</option>
+                                            <option value="4">4 Stars</option>
+                                            <option value="3">3 Stars</option>
+                                            <option value="2">2 Stars</option>
+                                            <option value="1">1 Star</option>
+                                        </select>
+                                        <button class="btn btn-secondary" type="button" id="submitCaseReviewBtn">Save Review</button>
+                                    </div>
+                                    <textarea id="caseReviewMessage" rows="3" maxlength="280" placeholder="What stood out about this case?" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid var(--border-color); border-radius:12px; padding:12px; color:var(--text-primary);"></textarea>
+                                </div>
+                                <div class="case-preview-list" id="caseReviewsList"></div>
+                            </div>
+                        </section>
                     </div>
                 </div>
-            `;
+            </div>
+            <div class="modal-footer case-preview-modal-footer">
+                <div class="opening-balance case-preview-balance-row">
+                    <div>
+                        <span>Balance</span>
+                        <strong id="modalBalance">$0.00</strong>
+                    </div>
+                    <div class="case-preview-balance-sub" id="casePreviewBalanceSub">Free rolls auto-apply before balance is used.</div>
+                </div>
+                <div class="case-preview-open-actions">
+                    <div class="case-preview-open-bar">
+                        <div class="case-preview-open-bar-copy">
+                            <div class="case-preview-open-kicker">Spin Loadout</div>
+                            <div class="case-preview-open-sub" id="casePreviewOpenSub">Choose how many spins to fire.</div>
+                        </div>
+                        <div class="case-preview-roll-select" id="casePreviewRollSelect" role="tablist" aria-label="Spin amount">
+                            <button class="case-preview-roll-btn active" type="button" data-open-select="1" onclick="selectOpeningAmount(1)">1</button>
+                            <button class="case-preview-roll-btn" type="button" data-open-select="2" onclick="selectOpeningAmount(2)">2</button>
+                            <button class="case-preview-roll-btn" type="button" data-open-select="3" onclick="selectOpeningAmount(3)">3</button>
+                        </div>
+                        <button class="btn btn-primary case-preview-launch-btn" id="casePreviewLaunchBtn" type="button" onclick="openSelectedCase()">
+                            <i class="ri-play-circle-line"></i>
+                            <span>Open 1 Spin</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Opening Modal -->
+    <div class="modal-overlay opening-modal" id="opening-modal">
+        <div class="modal opening-modal-shell">
+            <div class="opening-chrome">
+                <div class="opening-topbar">
+                    <button class="opening-back-btn" onclick="KatsuCases.closeModal('opening-modal')">
+                        <i class="ri-arrow-left-s-line"></i>
+                        <span>Back</span>
+                    </button>
+                    <div class="opening-title-wrap">
+                        <div class="opening-title-eyebrow">Case Opening</div>
+                        <h3 class="opening-title">Opening <span id="openingCaseName">Case</span></h3>
+                        <div class="opening-subtitle" id="openingCaseMeta">Provably fair replay-ready roll</div>
+                        <div class="opening-pity-spotlight" id="openingPitySpotlight"></div>
+                    </div>
+                    <div class="opening-topbar-actions">
+                        <div class="opening-top-pill">
+                            <i class="ri-shield-check-line"></i>
+                            <span>Provably Fair</span>
+                        </div>
+                        <button class="opening-top-icon" id="openingSkipBtn" type="button">
+                            <i class="ri-skip-forward-mini-fill"></i>
+                        </button>
+                        <button class="opening-top-icon" type="button" onclick="KatsuCases.closeModal('opening-modal')">
+                            <i class="ri-close-line"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="opening-stage">
+                    <div class="opening-stage-copy">
+                        <div class="opening-stage-kicker">Mystery Reel</div>
+                        <div class="opening-stage-hint" id="openingStageHint">The pull stays hidden until the center lock reveals it.</div>
+                        <div class="opening-mode-rail">
+                            <div class="opening-mode-segment" id="openingModeSegment" role="tablist" aria-label="Opening amount">
+                                <button class="opening-mode-btn active" type="button" data-opening-mode="1" onclick="selectOpeningAmount(1)">1 Spin</button>
+                                <button class="opening-mode-btn" type="button" data-opening-mode="2" onclick="selectOpeningAmount(2)">2 Spins</button>
+                                <button class="opening-mode-btn" type="button" data-opening-mode="3" onclick="selectOpeningAmount(3)">3 Spins</button>
+                            </div>
+                            <div class="opening-live-stats" id="openingLiveStats"></div>
+                        </div>
+                    </div>
+                    <div class="reward-reveal" id="rewardReveal">
+                        <!-- Reveal populated by JS -->
+                    </div>
+                    <div class="opening-roller-shell" id="openingRollShell">
+                        <div class="opening-shell-glow glow-left"></div>
+                        <div class="opening-shell-glow glow-right"></div>
+                        <div class="opening-shell-beam beam-left"></div>
+                        <div class="opening-shell-beam beam-right"></div>
+                        <div class="opening-shell-scanline"></div>
+                        <div class="opening-shell-badge" id="openingShellBadge">Mystery Reel Armed</div>
+                        <div class="roller-fade left"></div>
+                        <div class="roller-fade right"></div>
+                        <div class="roller-center-line"></div>
+                        <div class="roller-pointer"></div>
+                        <div class="opening-roller" id="roller"></div>
+                    </div>
+                </div>
+                <div class="opening-lower-rail" id="openingLowerRail">
+                    <div class="opening-lower-rail-header">
+                        <div class="opening-lower-rail-copy">
+                            <span>Case Pool</span>
+                            <span id="openingDropCount">0 unique drops</span>
+                        </div>
+                        <button class="opening-pool-toggle" id="openingPoolToggle" type="button" onclick="toggleOpeningPool()">Show pool</button>
+                    </div>
+                    <div class="opening-drop-rail" id="openingDropRail"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/animations.js"></script>
+    <script>
+        let currentCase = null;
+        let currentCaseContents = [];
+        let casesData = [];
+        let currentOpeningAmount = 1;
+        let openingBusy = false;
+        let currentCasePity = null;
+        let currentCaseContentsSort = 'value';
+        let progressionData = null;
+        let openingPoolExpanded = false;
+        function rarityWeightLabel(item) {
+            if (!item?.odds) return 'Unknown';
+            if (item.odds >= 1000000000) return 'Ultra chase';
+            if (item.odds >= 1000000) return 'Jackpot';
+            if (item.odds >= 100000) return 'Chase';
+            if (item.odds >= 1000) return 'Rare';
+            return 'Popular';
         }
 
-        function startRoomPlayback(room) {
-            stopRoomPlayback();
-            const rounds = Array.isArray(room.rounds_data) ? room.rounds_data : [];
-            if (!rounds.length) return;
-            let index = 0;
-            const step = () => {
-                renderRoomViewer(room, { playbackRound: index + 1, autoplay: false });
-                index += 1;
-                if (index < rounds.length) {
-                    roomPlaybackTimer = window.setTimeout(step, 1600);
-                }
-            };
-            step();
+
+        function syncLocalProgressionUser(payload) {
+            if (!payload || !KatsuCases.state.user) return;
+            if (payload.balance !== undefined) KatsuCases.state.user.balance = Number(payload.balance || 0);
+            if (payload.free_rolls !== undefined) KatsuCases.state.user.free_rolls = Number(payload.free_rolls || 0);
+            if (payload.progression) KatsuCases.state.user.progression = payload.progression;
+            if (Array.isArray(payload.favorite_case_ids)) KatsuCases.state.user.favorite_case_ids = payload.favorite_case_ids;
+            document.querySelectorAll('.balance-value').forEach((el) => {
+                el.textContent = KatsuCases.formatCurrency(KatsuCases.state.user.balance || 0);
+            });
         }
 
-        async function loadCases() {
-            const data = await KatsuCases.api.get('/api/cases');
-            casesData = Array.isArray(data.cases) ? data.cases : [];
-            const select = document.getElementById('caseSelect');
-            select.innerHTML = '<option value="">Select a case</option>' + casesData.map((item) => `
-                <option value="${item.id}">${KatsuCases.escapeHtml(item.name)} · ${KatsuCases.formatCurrency(item.price)}</option>
+        function renderFavoriteRail(sourceCases = casesData) {
+            const rail = document.getElementById('favoriteCasesRail');
+            if (!rail) return;
+            if (!KatsuCases.state.user) {
+                rail.innerHTML = '<div class="cases-ops-empty">Sign in to pin your favorite cases here.</div>';
+                return;
+            }
+            const favoriteIds = new Set((KatsuCases.state.user.favorite_case_ids || []).map((value) => Number(value)));
+            const favorites = (Array.isArray(sourceCases) ? sourceCases : []).filter((entry) => favoriteIds.has(Number(entry.id))).slice(0, 8);
+            if (!favorites.length) {
+                rail.innerHTML = '<div class="cases-ops-empty">Star a case card to build your quick-open rail.</div>';
+                return;
+            }
+            rail.innerHTML = favorites.map((item) => `
+                <button class="favorite-case-pill" type="button" onclick="openCaseModal(${item.id})">
+                    <span class="favorite-case-pill-icon"><i class="ri-treasure-map-line"></i></span>
+                    <span class="favorite-case-pill-copy">
+                        <strong>${KatsuCases.escapeHtml(item.name)}</strong>
+                        <span>${KatsuCases.formatCurrency(item.price)}</span>
+                    </span>
+                </button>
             `).join('');
         }
 
-        async function loadRooms() {
-            try {
-                const data = await KatsuCases.api.get('/api/casevs/rooms');
-                roomsData = Array.isArray(data.rooms) ? data.rooms : [];
-                const nextSignature = JSON.stringify(roomsData.map((room) => [room.id, room.status, room.updated_at, room.winner_username]));
-                if (nextSignature !== roomsSignature) {
-                    roomsSignature = nextSignature;
-                    renderRooms();
-                }
-            } catch (error) {
-                console.error('Failed to load rooms:', error);
-                KatsuCases.showToast('Failed to load Case Vs rooms', 'error');
-            }
-        }
-
-        function renderRooms() {
-            const list = document.getElementById('roomsList');
-            if (!roomsData.length) {
-                list.innerHTML = `
-                    <div class="casevs-room-card empty-state">
-                        <i class="ri-door-open-line"></i>
-                        <h3>No rooms yet</h3>
-                        <p>Create the first room and let someone challenge you.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            list.innerHTML = roomsData.map((room) => {
-                const playerA = room.players[0];
-                const playerB = room.players[1];
-                return `
-                    <article class="casevs-room-card discord-room-card">
-                        <div class="casevs-room-head">
-                            <div>
-                                <div class="casevs-room-eyebrow"># duel-room-${room.id}</div>
-                                <div class="casevs-room-title">${KatsuCases.escapeHtml(room.case_name)}</div>
-                                <div class="casevs-room-meta">
-                                    <span class="casevs-room-chip"><i class="ri-repeat-line"></i> ${room.rounds} round${room.rounds > 1 ? 's' : ''}</span>
-                                    <span class="casevs-room-chip"><i class="ri-coin-line"></i> ${KatsuCases.formatCurrency(room.case_price)} each</span>
-                                </div>
-                            </div>
-                            <span class="badge badge-${room.status === 'finished' ? 'legendary' : room.status === 'draw' ? 'mythical' : room.status === 'waiting' ? 'common' : 'epic'}">${KatsuCases.escapeHtml(room.status)}</span>
-                        </div>
-                        <div class="casevs-player-row">
-                            <div class="casevs-player-pill">
-                                <div class="casevs-player-pill-main">
-                                    ${playerA?.username && KatsuCases.buildAvatarMarkup ? KatsuCases.buildAvatarMarkup({ username: playerA.username, display_name: playerA.username }, 'casevs-player-avatar') : '<span class="casevs-player-avatar fallback">A</span>'}
-                                    <div>
-                                        <div style="font-weight:600;">${playerA?.username ? `<a href="/profile?user=${encodeURIComponent(playerA.username)}">${KatsuCases.escapeHtml(playerA.username)}</a>` : 'Waiting'}</div>
-                                        <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Creator</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="casevs-vs-badge">VS</div>
-                            <div class="casevs-player-pill">
-                                <div class="casevs-player-pill-main">
-                                    ${playerB?.username && KatsuCases.buildAvatarMarkup ? KatsuCases.buildAvatarMarkup({ username: playerB.username, display_name: playerB.username }, 'casevs-player-avatar') : '<span class="casevs-player-avatar fallback">?</span>'}
-                                    <div>
-                                        <div style="font-weight:600;">${playerB?.username ? `<a href="/profile?user=${encodeURIComponent(playerB.username)}">${KatsuCases.escapeHtml(playerB.username)}</a>` : 'Open Slot'}</div>
-                                        <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${playerB ? 'Joined' : 'Waiting'}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        ${(room.winner_username || room.status === 'draw') ? `<div class="casevs-room-winner">${room.status === 'draw' ? '<strong>Draw</strong> · Pot split back to both players' : `Winner: <strong>${KatsuCases.escapeHtml(room.winner_username)}</strong>`}${room.summary?.pot_amount ? ` · Pot ${KatsuCases.formatCurrency(room.summary.pot_amount)}` : ''}</div>` : ''}
-                        <div class="live-pull-actions" style="margin-top:16px;">
-                            <button class="btn btn-ghost" onclick="viewRoom(${room.id})"><i class="ri-eye-line"></i> Spectate</button>
-                            ${room.can_join && KatsuCases.state.user ? `<button class="btn btn-primary" onclick="joinRoom(${room.id})"><i class="ri-login-box-line"></i> Join Room</button>` : ''}
-                        </div>
-                    </article>
-                `;
-            }).join('');
-        }
-
-        async function createRoom() {
+        function renderDailyOpsPanel() {
+            const panel = document.getElementById('dailyOpsPanel');
+            if (!panel) return;
             if (!KatsuCases.state.user) {
-                KatsuCases.showToast('Please sign in to create a room', 'error');
-                window.location.href = '/signin';
-                return;
-            }
-            const caseId = Number(document.getElementById('caseSelect').value);
-            const rounds = Number(document.getElementById('roundSelect').value);
-            if (!caseId) {
-                KatsuCases.showToast('Choose a case first', 'error');
-                return;
-            }
-            try {
-                const data = await KatsuCases.api.post('/api/casevs/rooms', { caseId, rounds });
-                KatsuCases.showToast('Room created', 'success');
-                await loadRooms();
-                viewRoom(data.room.id);
-            } catch (error) {
-                KatsuCases.showToast(error.message || 'Failed to create room', 'error');
-            }
-        }
-
-        async function joinRoom(roomId) {
-            const joinButton = event?.currentTarget || document.querySelector(`button[onclick="joinRoom(${roomId})"]`);
-            if (joinButton) { joinButton.disabled = true; joinButton.dataset.originalText = joinButton.innerHTML; joinButton.innerHTML = '<i class="ri-loader-4-line"></i> Joining…'; }
-            try {
-                const data = await KatsuCases.api.post(`/api/casevs/rooms/${roomId}/join`, {});
-                KatsuCases.showToast('Battle started', 'success');
-                if (KatsuCases.state.user) {
-                    await KatsuCases.checkAuth();
-                    await KatsuCases.refreshNotifications({ silent: true });
-                }
-                await loadRooms();
-                selectedRoomId = data.room.id;
-                selectedRoomUpdatedAt = String(data.room.updated_at || '');
-                renderRoomViewer(data.room, { playbackRound: 0, autoplay: false });
-            } catch (error) {
-                KatsuCases.showToast(error.message || 'Failed to join room', 'error');
-            } finally {
-                if (joinButton) { joinButton.disabled = false; joinButton.innerHTML = joinButton.dataset.originalText || '<i class="ri-login-box-line"></i> Join Room'; }
-            }
-        }
-
-        async function viewRoom(roomId) {
-            try {
-                const data = await KatsuCases.api.get(`/api/casevs/rooms/${roomId}`);
-                selectedRoomId = roomId;
-                selectedRoomUpdatedAt = String(data.room.updated_at || '');
-                renderRoomViewer(data.room, { playbackRound: data.room.status === 'finished' ? 1 : null, autoplay: false });
-                if (data.room.status === 'finished') startRoomPlayback(data.room);
-            } catch (error) {
-                KatsuCases.showToast(error.message || 'Failed to load room', 'error');
-            }
-        }
-
-        function renderRoomViewer(room, options = {}) {
-            const viewer = document.getElementById('roomViewer');
-            const players = room.players || [];
-            const summary = room.summary || null;
-            const playbackRound = Number(options.playbackRound || 0);
-            const rounds = Array.isArray(room.rounds_data) ? room.rounds_data : [];
-            const activeRounds = playbackRound > 0 ? rounds.filter((round) => Number(round.round) <= playbackRound) : rounds;
-            const activeRound = playbackRound > 0 ? rounds.find((round) => Number(round.round) === playbackRound) : null;
-            const roundsMarkup = playbackRound > 0
-                ? activeRounds.filter((round) => Number(round.round) < playbackRound).map((round) => renderRoomRoundPair(round)).join('')
-                : activeRounds.map((round) => renderRoomRoundPair(round)).join('');
-            viewer.innerHTML = `
-                <div class="live-pull-head">
-                    <div>
-                        <div class="discord-panel-kicker"><i class="ri-eye-line"></i> Spectator View</div>
-                        <h3 style="margin-bottom:6px;">${KatsuCases.escapeHtml(room.case_name)}</h3>
-                        <p style="color:var(--text-secondary);">Room #${room.id} · seed ${KatsuCases.escapeHtml(room.seed)}</p>
-                    </div>
-                    <span class="badge badge-${room.status === 'finished' ? 'legendary' : room.status === 'draw' ? 'mythical' : room.status === 'waiting' ? 'common' : 'epic'}">${KatsuCases.escapeHtml(room.status)}</span>
-                </div>
-                <div class="casevs-player-row" style="margin-top:18px;">
-                    ${players.map((player, index) => `
-                        <div class="casevs-player-pill">
-                            <div style="font-weight:700;"><a href="/profile?user=${encodeURIComponent(player.username)}">${KatsuCases.escapeHtml(player.username)}</a></div>
-                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${getRoomWinCount(room, player.user_id, playbackRound || null)} round wins</div>
+                panel.innerHTML = `
+                    <div class="cases-ops-head">
+                        <div>
+                            <div class="cases-ops-eyebrow">Daily Ops</div>
+                            <h3>Rewards & Missions</h3>
                         </div>
-                        ${index === 0 ? '<div class="casevs-vs-badge">VS</div>' : ''}
-                    `).join('')}
+                        <a class="cases-ops-chip" href="/signin"><i class="ri-login-box-line"></i> Sign in</a>
+                    </div>
+                    <div class="cases-ops-empty">Sign in to claim daily streak rewards, earn free rolls, and track your mission board.</div>
+                `;
+                return;
+            }
+            if (!progressionData) {
+                panel.innerHTML = '<div class="cases-ops-empty">Loading daily ops…</div>';
+                return;
+            }
+            const prog = progressionData.progression || {};
+            const daily = progressionData.daily || {};
+            const missions = Array.isArray(progressionData.missions) ? progressionData.missions : [];
+            panel.innerHTML = `
+                <div class="cases-ops-head">
+                    <div>
+                        <div class="cases-ops-eyebrow">Daily Ops</div>
+                        <h3>Level ${Number(prog.level || 1)} Hunter Track</h3>
+                    </div>
+                    <span class="cases-ops-chip"><i class="ri-sword-line"></i> ${Number(prog.total_xp || 0)} XP</span>
                 </div>
-                ${activeRound ? `<div class="admin-rain-card" style="margin-top:18px;"><strong>${activeRound.is_draw ? `Round ${activeRound.round} draw` : `Live Round ${activeRound.round}`}</strong><div class="rain-meta">Watching both rolls resolve live with the saved seeds and the exact stored result data.</div></div>${renderRoomRoundPair(activeRound)}` : ''}
-                ${(!playbackRound || playbackRound >= rounds.length) && (room.winner_username || room.status === 'draw') ? `<div style="margin-top:18px; padding:14px; border-radius:14px; background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.18);">${room.status === 'draw' ? 'Result: <strong>Draw</strong> · Both players matched the same value and had their entry returned.' : `Winner: <strong>${KatsuCases.escapeHtml(room.winner_username)}</strong>`}${summary?.pot_amount ? ` · Pot ${KatsuCases.formatCurrency(summary.pot_amount)}` : ''}</div>` : ''}
-                <div class="casevs-rounds">
-                    ${activeRounds.length ? (roundsMarkup || '') : '<div class="empty-state"><i class="ri-time-line"></i><h3>Waiting for challenger</h3><p>This room has not started yet.</p></div>'}
+                <div class="cases-xp-bar"><span style="width:${Math.max(5, Number(prog.progress_percent || 0))}%"></span></div>
+                <div class="cases-xp-copy">${Number(prog.xp_into_level || 0)} / ${Number(prog.xp_for_next_level || 0)} XP to the next level</div>
+                <div class="cases-daily-claim-row">
+                    <div>
+                        <strong>Daily streak ${Number(daily.streak || 0)}</strong>
+                        <div class="cases-daily-claim-sub">Next claim: ${KatsuCases.formatCurrency(daily.reward_preview?.credits || 0)}${daily.reward_preview?.free_rolls ? ` + ${daily.reward_preview.free_rolls} free roll` : ''}</div>
+                    </div>
+                    <button class="btn ${daily.claimed_today ? 'btn-secondary' : 'btn-primary'}" type="button" ${daily.claimed_today ? 'disabled' : ''} onclick="claimDailyReward()">${daily.claimed_today ? 'Claimed Today' : 'Claim Daily'}</button>
+                </div>
+                <div class="cases-mission-list">
+                    ${missions.map((mission) => `
+                        <article class="cases-mission-card ${mission.status}">
+                            <div class="cases-mission-icon"><i class="${KatsuCases.escapeHtml(mission.icon || 'ri-checkbox-circle-line')}"></i></div>
+                            <div class="cases-mission-main">
+                                <div class="cases-mission-title-row">
+                                    <strong>${KatsuCases.escapeHtml(mission.label)}</strong>
+                                    <span>${mission.progress}/${mission.goal}</span>
+                                </div>
+                                <div class="cases-xp-bar compact"><span style="width:${Math.max(5, Number(mission.progress_percent || 0))}%"></span></div>
+                                <div class="cases-mission-sub">${KatsuCases.escapeHtml(mission.description || '')} · Reward ${KatsuCases.formatCurrency(mission.rewards?.credits || 0)}${mission.rewards?.free_rolls ? ` + ${mission.rewards.free_rolls} free roll` : ''}</div>
+                            </div>
+                            <button class="btn ${mission.status === 'ready' ? 'btn-primary' : 'btn-ghost'}" type="button" ${mission.status === 'ready' ? '' : 'disabled'} onclick="claimMissionReward('${KatsuCases.escapeHtml(mission.key)}')">${mission.status === 'claimed' ? 'Claimed' : mission.status === 'ready' ? 'Claim' : 'Track'}</button>
+                        </article>
+                    `).join('')}
                 </div>
             `;
         }
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            KatsuCases.applyBranding();
-            await KatsuCases.checkAuth();
-            await loadCases();
-            await loadRooms();
-            document.getElementById('createRoomBtn').addEventListener('click', createRoom);
-            roomPollHandle = window.setInterval(async () => {
-                await loadRooms();
-                if (selectedRoomId) {
-                    try {
-                        const data = await KatsuCases.api.get(`/api/casevs/rooms/${selectedRoomId}`);
-                        const updatedAt = String(data.room.updated_at || '');
-                        if (updatedAt !== selectedRoomUpdatedAt) {
-                            selectedRoomUpdatedAt = updatedAt;
-                            if (data.room.status === 'finished' || data.room.status === 'draw') {
-                                if (!roomPlaybackTimer) {
-                                    renderRoomViewer(data.room, { playbackRound: 0, autoplay: false });
-                                    startRoomPlayback(data.room);
-                                }
-                            } else {
-                                renderRoomViewer(data.room, { playbackRound: 0, autoplay: false });
-                            }
-                        }
-                    } catch (error) {
-                        return;
-                    }
+        async function loadProgression() {
+            if (!KatsuCases.state.user) {
+                progressionData = null;
+                renderDailyOpsPanel();
+                renderFavoriteRail(casesData);
+                return;
+            }
+            try {
+                const data = await KatsuCases.api.get('/api/progression');
+                progressionData = data;
+                syncLocalProgressionUser(data);
+                renderDailyOpsPanel();
+                renderFavoriteRail(casesData);
+            } catch (error) {
+                console.error('Failed to load progression:', error);
+                renderDailyOpsPanel();
+            }
+        }
+
+        async function claimDailyReward() {
+            try {
+                const data = await KatsuCases.api.post('/api/daily/claim', {});
+                progressionData = data;
+                syncLocalProgressionUser(data);
+                renderDailyOpsPanel();
+                KatsuCases.showToast('Daily reward claimed', 'success');
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to claim daily reward', 'error');
+            }
+        }
+
+        async function claimMissionReward(key) {
+            try {
+                const data = await KatsuCases.api.post(`/api/missions/${encodeURIComponent(key)}/claim`, {});
+                progressionData = data;
+                syncLocalProgressionUser(data);
+                renderDailyOpsPanel();
+                KatsuCases.showToast('Mission reward claimed', 'success');
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to claim mission reward', 'error');
+            }
+        }
+
+        async function toggleFavoriteCase(caseId, event) {
+            event?.preventDefault?.();
+            event?.stopPropagation?.();
+            if (!KatsuCases.state.user) {
+                KatsuCases.showToast('Sign in to favorite cases', 'error');
+                return;
+            }
+            try {
+                const data = await KatsuCases.api.post(`/api/cases/${caseId}/favorite`, {});
+                KatsuCases.state.user.favorite_case_ids = Array.isArray(data.favorite_case_ids) ? data.favorite_case_ids : [];
+                casesData = casesData.map((entry) => Number(entry.id) === Number(caseId) ? { ...entry, is_favorite: Boolean(data.favorited) } : entry);
+                renderCases(casesData);
+                renderFavoriteRail(casesData);
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to update favorites', 'error');
+            }
+        }
+
+
+        function getCaseContentsSorted(items = currentCaseContents, sort = currentCaseContentsSort) {
+            const rarityRank = { mythical: 6, legendary: 5, epic: 4, rare: 3, uncommon: 2, common: 1 };
+            return [...(Array.isArray(items) ? items : [])].sort((a, b) => {
+                if (sort === 'odds') {
+                    return Number(b.odds || 0) - Number(a.odds || 0) || Number(b.estimated_value || 0) - Number(a.estimated_value || 0);
                 }
-            }, 1500);
+                if (sort === 'rarity') {
+                    return (rarityRank[b.rarity] || 0) - (rarityRank[a.rarity] || 0) || Number(b.odds || 0) - Number(a.odds || 0);
+                }
+                return Number(b.estimated_value || 0) - Number(a.estimated_value || 0) || Number(b.odds || 0) - Number(a.odds || 0);
+            });
+        }
+
+        function renderCaseContentsPreview(items = currentCaseContents) {
+            const contentsPreview = document.getElementById('caseContentsPreview');
+            if (!contentsPreview) return;
+            const rows = getCaseContentsSorted(items, currentCaseContentsSort);
+            contentsPreview.innerHTML = rows.map(item => `
+                <div class="case-preview-row case-preview-row-rich rarity-row-${item.rarity}">
+                    <div class="case-preview-main">
+                        <div class="case-preview-sprite ${item.is_shiny ? 'shiny' : ''}">
+                            ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width: 46px; height: 46px; image-rendering: pixelated;' })}
+                        </div>
+                        <div class="case-preview-copy">
+                            <div class="case-preview-name-row">
+                                <strong>${KatsuCases.escapeHtml(item.pokemon_name)}</strong>
+                                ${item.is_shiny ? '<span class="case-preview-mini-chip shiny">Shiny</span>' : ''}
+                                ${item.pokemon_form ? `<span class="case-preview-mini-chip form">${KatsuCases.escapeHtml(item.pokemon_form)}</span>` : ''}
+                            </div>
+                            <div class="case-preview-sub-row">
+                                <span class="badge badge-${item.rarity}">${KatsuCases.escapeHtml(item.rarity)}</span>
+                                <span class="case-preview-inline-meta">Pool slot · ${Number(item.dex_number || 0) > 0 ? `Dex #${KatsuCases.formatNumber(item.dex_number)}` : 'Special drop'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="case-preview-side">
+                        <span class="case-preview-value-chip">1 / ${KatsuCases.formatNumber(item.odds || 0)}</span>
+                        <span class="case-preview-cash">${KatsuCases.formatCurrency(item.estimated_value || 0)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setCaseContentsSort(sort = 'value') {
+            currentCaseContentsSort = sort;
+            document.querySelectorAll('.case-preview-sort-btn').forEach((button) => {
+                button.classList.toggle('active', button.dataset.sort === sort);
+            });
+            renderCaseContentsPreview();
+        }
+
+        function renderPitySummary(pityData) {
+            const container = document.getElementById('casePitySummary');
+            if (!container) return;
+            if (!pityData || !pityData.enabled || !Array.isArray(pityData.meters) || !pityData.meters.length) {
+                container.innerHTML = '';
+                container.classList.remove('active');
+                return;
+            }
+            container.classList.add('active');
+            const spotlight = pityData.spotlight;
+            container.innerHTML = `
+                <div class="case-pity-head">
+                    <div>
+                        <div class="case-pity-eyebrow">Pity System</div>
+                        <strong>Bad luck protection is active for this case.</strong>
+                    </div>
+                    ${spotlight ? `<span class="case-pity-chip ${spotlight.status}">${KatsuCases.escapeHtml(spotlight.label)} · ${spotlight.status === 'primed' ? 'ready now' : `${spotlight.remaining} to go`}</span>` : ''}
+                </div>
+                <div class="case-pity-meter-list">
+                    ${pityData.meters.map((meter) => `
+                        <div class="case-pity-meter ${meter.status}">
+                            <div class="case-pity-meter-row">
+                                <span>${KatsuCases.escapeHtml(meter.label)}</span>
+                                <strong>${meter.status === 'primed' ? 'READY' : `${meter.progress}/${meter.threshold - 1}`}</strong>
+                            </div>
+                            <div class="case-pity-meter-bar"><span style="width:${Math.max(6, meter.progress_percent || 0)}%"></span></div>
+                            <div class="case-pity-meter-sub">${meter.status === 'primed' ? `${KatsuCases.escapeHtml(meter.label)} guaranteed on the next miss-protected roll.` : `${meter.remaining} more roll${meter.remaining === 1 ? '' : 's'} until guaranteed ${KatsuCases.escapeHtml(meter.label)}.`}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function updateOpeningPitySpotlight(pityData) {
+            const el = document.getElementById('openingPitySpotlight');
+            if (!el) return;
+            const spotlight = pityData?.spotlight;
+            if (!spotlight) {
+                el.innerHTML = '';
+                el.classList.remove('active');
+                return;
+            }
+            el.classList.add('active');
+            el.innerHTML = `
+                <span class="opening-pity-badge ${spotlight.status}">
+                    <i class="ri-vip-diamond-line"></i>
+                    <span>${KatsuCases.escapeHtml(spotlight.label)} ${spotlight.status === 'primed' ? 'ready' : `in ${spotlight.remaining}`}</span>
+                </span>
+            `;
+        }
+        function dedupeCaseContents(items = []) {
+            const seen = new Set();
+            return (Array.isArray(items) ? items : []).filter((item) => {
+                const key = `${String(item?.pokemon_name || '').toLowerCase()}::${String(item?.pokemon_form || '').toLowerCase()}::${Number(item?.is_shiny || 0)}`;
+                if (!item?.pokemon_name || seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        }
+
+        function syncOpeningPoolUi() {
+            const railWrap = document.getElementById('openingLowerRail');
+            const toggle = document.getElementById('openingPoolToggle');
+            if (railWrap) railWrap.classList.toggle('expanded', Boolean(openingPoolExpanded));
+            if (toggle) toggle.textContent = openingPoolExpanded ? 'Hide pool' : 'Show pool';
+        }
+
+        function toggleOpeningPool(forceState) {
+            openingPoolExpanded = typeof forceState === 'boolean' ? forceState : !openingPoolExpanded;
+            syncOpeningPoolUi();
+        }
+
+        function renderOpeningPresentation() {
+            const dropRail = document.getElementById('openingDropRail');
+            const countEl = document.getElementById('openingDropCount');
+            const metaEl = document.getElementById('openingCaseMeta');
+            const hintEl = document.getElementById('openingStageHint');
+            const bestDrops = dedupeCaseContents(currentCaseContents)
+                .slice()
+                .sort((a, b) => (b.estimated_value || 0) - (a.estimated_value || 0))
+                .slice(0, 8);
+
+            if (metaEl && currentCase) {
+                const chaseCount = currentCaseContents.filter((item) => Number(item.odds || 0) >= 1000000).length;
+                const spotlight = currentCasePity?.spotlight;
+                const freeRolls = Math.max(0, Number(KatsuCases.state.user?.free_rolls || 0));
+                const paidRolls = Math.max(0, currentOpeningAmount - freeRolls);
+                const totalCost = Number((Number(currentCase.price || 0) * paidRolls).toFixed(2));
+                metaEl.textContent = `${currentOpeningAmount} spin${currentOpeningAmount > 1 ? 's' : ''} · ${totalCost > 0 ? KatsuCases.formatCurrency(totalCost) : 'Free'} · ${dedupeCaseContents(currentCaseContents).length} unique drops${chaseCount ? ` · ${chaseCount} chase pull${chaseCount === 1 ? '' : 's'}` : ''}${spotlight ? ` · ${spotlight.label} ${spotlight.status === 'primed' ? 'ready' : `in ${spotlight.remaining}`}` : ''}`;
+            }
+            updateOpeningControls();
+
+            if (countEl) {
+                countEl.textContent = `${dedupeCaseContents(currentCaseContents).length} unique drops`;
+                syncOpeningPoolUi();
+            }
+
+            if (hintEl) {
+                hintEl.textContent = currentCasePity?.spotlight?.status === 'primed'
+                    ? `${currentCasePity.spotlight.label} pity is primed for this opening.`
+                    : 'Mystery reel armed. The winning card stays sealed until the lock.';
+            }
+            updateOpeningPitySpotlight(currentCasePity);
+
+            if (dropRail) {
+                dropRail.innerHTML = bestDrops.map((item) => `
+                    <div class="opening-drop-chip rarity-glow-${item.rarity}">
+                        <div class="opening-drop-chip-sprite ${item.is_shiny ? 'shiny' : ''}">
+                            ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name })}
+                        </div>
+                        <div class="opening-drop-chip-meta">
+                            <div class="opening-drop-chip-name">${item.pokemon_name}</div>
+                            <div class="opening-drop-chip-sub">${rarityWeightLabel(item)} · ${KatsuCases.formatCurrency(item.estimated_value || 0)}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        
+        async function loadCases(category = 'all') {
+            try {
+                const url = category === 'all' ? '/api/cases' : `/api/cases?category=${category}`;
+                const data = await KatsuCases.api.get(url);
+                casesData = data.cases || [];
+                renderCases(casesData);
+                renderFavoriteRail(casesData);
+            } catch (error) {
+                console.error('Failed to load cases:', error);
+                KatsuCases.showToast('Failed to load cases', 'error');
+            }
+        }
+        
+        function renderCases(cases) {
+            const grid = document.getElementById('casesGrid');
+            
+            if (cases.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <i class="ri-inbox-line"></i>
+                        <h3>No cases found</h3>
+                        <p>Check back soon for new cases</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = cases.map(c => `
+                <div class="card case-card case-card-previewable discord-case-card ${c.is_favorite ? 'is-favorite' : ''}" style="--case-color: ${c.image_color}">
+                    <div class="case-card-image">
+                        <div class="case-card-top-meta">
+                            <span class="case-card-channel"># ${KatsuCases.escapeHtml(c.category || (c.is_featured ? 'featured' : 'standard'))}</span>
+                            <span class="case-card-online"><i class="ri-flashlight-line"></i> ${c.total_items} drops</span>
+                        </div>
+                        <button class="case-favorite-btn ${c.is_favorite ? 'active' : ''}" type="button" onclick="toggleFavoriteCase(${c.id}, event)"><i class="${c.is_favorite ? 'ri-star-fill' : 'ri-star-line'}"></i></button>
+                        <div class="case-card-glow"></div>
+                        <div class="case-card-icon">
+                            <i class="ri-treasure-map-line"></i>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="case-card-headline-row">
+                            <h3 class="card-title">${c.name}</h3>
+                            ${c.is_favorite ? '<span class="case-favorite-tag">Pinned</span>' : ''}
+                        </div>
+                        <div class="case-card-subline">Case room · pity tracked · replay ready</div>
+                        <p class="card-description">${c.description || `${c.total_items} items inside`}</p>
+                        ${c.rarity_breakdown ? `
+                            <div class="case-card-badge-row">
+                                ${c.rarity_breakdown.slice(0, 3).map(r => `
+                                    <span class="badge badge-${r.rarity}">${r.rarity}: ${r.count}</span>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        ${Array.isArray(c.top_items) && c.top_items.length ? `
+                            <div class="case-hover-preview">
+                                <div class="case-hover-preview-title">Possible pulls</div>
+                                <div class="case-hover-preview-grid">
+                                    ${c.top_items.slice(0, 6).map(item => `
+                                        <div class="case-hover-preview-item">
+                                            ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:40px;height:40px;' })}
+                                            <div class="case-hover-preview-name">${KatsuCases.escapeHtml(item.pokemon_name)}</div>
+                                            <div class="case-hover-preview-value">${KatsuCases.formatCurrency(item.estimated_value || 0)}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="card-footer">
+                        <div>
+                            <div class="case-card-price">${KatsuCases.formatCurrency(c.price)}</div>
+                            <div class="case-card-items">${c.total_items} items</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="openCaseModal(${c.id})">
+                            Open
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            window.KatsuAnimations.animateGridStagger('.cases-grid .case-card');
+        }
+        
+        function updateOpeningControls() {
+            const selectedAmount = Math.max(1, Math.min(3, Number(currentOpeningAmount) || 1));
+            currentOpeningAmount = selectedAmount;
+            window.currentOpeningAmount = selectedAmount;
+            const freeRolls = Math.max(0, Number(KatsuCases.state.user?.free_rolls || 0));
+            const paidRolls = Math.max(0, selectedAmount - freeRolls);
+            const totalCost = Number((Number(currentCase?.price || 0) * paidRolls).toFixed(2));
+            const costLabel = KatsuCases.formatCurrency(totalCost);
+            const usesFreeRolls = Math.min(freeRolls, selectedAmount);
+
+            document.querySelectorAll('[data-open-select]').forEach((button) => {
+                button.classList.toggle('active', Number(button.dataset.openSelect) === selectedAmount);
+            });
+            document.querySelectorAll('[data-opening-mode]').forEach((button) => {
+                button.classList.toggle('active', Number(button.dataset.openingMode) === selectedAmount);
+            });
+
+            const launchBtn = document.getElementById('casePreviewLaunchBtn');
+            if (launchBtn) {
+                const label = totalCost > 0 ? `Open ${selectedAmount} Spin${selectedAmount > 1 ? 's' : ''} · ${costLabel}` : `Open ${selectedAmount} Spin${selectedAmount > 1 ? 's' : ''} · Free`;
+                const span = launchBtn.querySelector('span');
+                if (span) span.textContent = label;
+                launchBtn.disabled = !!currentCase && !!KatsuCases.state.user && Number(KatsuCases.state.user.balance || 0) < totalCost;
+            }
+
+            const openSub = document.getElementById('casePreviewOpenSub');
+            if (openSub) {
+                openSub.textContent = usesFreeRolls > 0
+                    ? `${usesFreeRolls} free roll${usesFreeRolls > 1 ? 's' : ''} will apply first. ${paidRolls > 0 ? `${costLabel} from balance.` : 'No balance charge.'}`
+                    : `${costLabel} from balance for ${selectedAmount} spin${selectedAmount > 1 ? 's' : ''}.`;
+            }
+
+            const balanceSub = document.getElementById('casePreviewBalanceSub');
+            if (balanceSub) {
+                balanceSub.textContent = freeRolls > 0
+                    ? `${freeRolls} free roll${freeRolls > 1 ? 's' : ''} available right now.`
+                    : 'No free rolls queued. Balance will be used for every spin.';
+            }
+
+            const liveStats = document.getElementById('openingLiveStats');
+            if (liveStats && currentCase) {
+                const chaseCount = currentCaseContents.filter((item) => Number(item.odds || 0) >= 1000000).length;
+                liveStats.innerHTML = `
+                    <span class="opening-live-chip"><i class="ri-stack-line"></i>${selectedAmount} spin${selectedAmount > 1 ? 's' : ''}</span>
+                    <span class="opening-live-chip"><i class="ri-coins-line"></i>${totalCost > 0 ? costLabel : 'Free'}</span>
+                    <span class="opening-live-chip"><i class="ri-vip-diamond-line"></i>${chaseCount} chase</span>
+                `;
+            }
+        }
+
+        function selectOpeningAmount(amount = 1) {
+            currentOpeningAmount = Math.max(1, Math.min(3, Number(amount) || 1));
+            updateOpeningControls();
+        }
+
+        function openSelectedCase() {
+            return openCase(currentOpeningAmount || 1);
+        }
+
+
+        function reviewStarsMarkup(rating) {
+            return `<span style="display:inline-flex; gap:4px;">${Array.from({ length: 5 }).map((_, index) => `<i class="ri-star-${index < Number(rating || 0) ? 'fill' : 'line'}" style="color:${index < Number(rating || 0) ? '#fbbf24' : 'rgba(255,255,255,0.28)'};"></i>`).join('')}</span>`;
+        }
+
+        async function loadCaseReviews(caseId) {
+            try {
+                const data = await KatsuCases.api.get(`/api/cases/${caseId}/reviews`);
+                const summary = document.getElementById('caseReviewSummaryText');
+                const list = document.getElementById('caseReviewsList');
+                if (summary) summary.textContent = data.total_reviews ? `${data.average_rating}/5 · ${data.total_reviews} review${data.total_reviews === 1 ? '' : 's'}` : 'No reviews yet';
+                if (list) {
+                    list.innerHTML = (data.reviews || []).length
+                        ? data.reviews.map((entry) => `
+                            <article class="case-preview-item" style="grid-template-columns:1fr auto; align-items:flex-start;">
+                                <div>
+                                    <div style="font-weight:700;">${KatsuCases.escapeHtml(entry.author?.display_name || entry.author?.username || 'Player')}</div>
+                                    <div style="margin-top:6px;">${reviewStarsMarkup(entry.rating)}</div>
+                                    <div style="margin-top:8px; color:var(--text-secondary);">${KatsuCases.escapeHtml(entry.message || '') || 'No written notes provided.'}</div>
+                                </div>
+                                <div style="font-size:12px; color:var(--text-muted);">${KatsuCases.formatRelativeTime(entry.updated_at || entry.created_at)}</div>
+                            </article>
+                        `).join('')
+                        : '<div class="case-preview-item"><div style="color:var(--text-muted);">No one has reviewed this case yet.</div></div>';
+                }
+            } catch (error) {
+                const list = document.getElementById('caseReviewsList');
+                if (list) list.innerHTML = '<div class="case-preview-item"><div style="color:var(--text-muted);">Could not load reviews.</div></div>';
+            }
+        }
+
+        async function submitCaseReview() {
+            if (!currentCase) return;
+            try {
+                await KatsuCases.api.post(`/api/cases/${currentCase.id}/reviews`, {
+                    rating: Number(document.getElementById('caseReviewRating')?.value || 5),
+                    message: document.getElementById('caseReviewMessage')?.value || ''
+                });
+                KatsuCases.showToast('Review saved', 'success');
+                await loadCaseReviews(currentCase.id);
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Could not save review', 'error');
+            }
+        }
+        window.submitCaseReview = submitCaseReview;
+
+        async function openCaseModal(caseId) {
+            if (!KatsuCases.state.user) {
+                KatsuCases.showToast('Please sign in to open cases', 'error');
+                window.location.href = '/signin';
+                return;
+            }
+            
+            try {
+                const data = await KatsuCases.api.get(`/api/cases/${caseId}`);
+                currentCase = data.case;
+                currentCaseContents = dedupeCaseContents(Array.isArray(data.contents) ? data.contents : []);
+                
+                document.getElementById('modalCaseName').textContent = currentCase.name;
+                document.getElementById('modalBalance').textContent = KatsuCases.formatCurrency(KatsuCases.state.user.balance);
+                document.getElementById('modalCaseCategory').textContent = `# ${currentCase.category || (currentCase.is_featured ? 'featured' : 'standard')}`;
+                document.getElementById('modalCaseLiveState').textContent = currentCase.is_live ? 'Live Case' : 'Preview Locked';
+                document.getElementById('modalCaseDescription').textContent = currentCase.description || `${currentCase.total_items || currentCaseContents.length} unique drops inside this case.`;
+                currentCasePity = data.pity || null;
+                currentCaseContentsSort = 'value';
+                const allItems = dedupeCaseContents(Array.isArray(data.contents) ? data.contents : []);
+
+                const highestValueItem = [...allItems].sort((a, b) => Number(b.estimated_value || 0) - Number(a.estimated_value || 0))[0] || null;
+                const rarestItem = [...allItems].sort((a, b) => Number(b.odds || 0) - Number(a.odds || 0))[0] || null;
+                const chaseCount = allItems.filter((item) => Number(item.odds || 0) >= 1000000).length;
+
+                document.getElementById('casePreviewIntelGrid').innerHTML = `
+                    <article class="case-preview-intel-card">
+                        <span class="case-preview-intel-label">Entry</span>
+                        <strong>${KatsuCases.formatCurrency(currentCase.price || 0)}</strong>
+                        <small>Per roll</small>
+                    </article>
+                    <article class="case-preview-intel-card">
+                        <span class="case-preview-intel-label">Drops</span>
+                        <strong>${KatsuCases.formatNumber(allItems.length)}</strong>
+                        <small>Total pool size</small>
+                    </article>
+                    <article class="case-preview-intel-card">
+                        <span class="case-preview-intel-label">Chase pulls</span>
+                        <strong>${KatsuCases.formatNumber(chaseCount)}</strong>
+                        <small>Odds 1 / 1M+</small>
+                    </article>
+                    <article class="case-preview-intel-card">
+                        <span class="case-preview-intel-label">Top value</span>
+                        <strong>${highestValueItem ? KatsuCases.formatCurrency(highestValueItem.estimated_value || 0) : KatsuCases.formatCurrency(0)}</strong>
+                        <small>${highestValueItem ? KatsuCases.escapeHtml(highestValueItem.pokemon_name) : 'No spotlight drop'}</small>
+                    </article>
+                `;
+
+                document.getElementById('casePreviewHighlightStrip').innerHTML = allItems
+                    .slice()
+                    .sort((a, b) => Number(b.estimated_value || 0) - Number(a.estimated_value || 0))
+                    .slice(0, 4)
+                    .map((item) => `
+                        <div class="case-preview-highlight-item">
+                            <div class="case-preview-highlight-sprite ${item.is_shiny ? 'shiny' : ''}">
+                                ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width: 42px; height: 42px; image-rendering: pixelated;' })}
+                            </div>
+                            <div class="case-preview-highlight-copy">
+                                <strong>${KatsuCases.escapeHtml(item.pokemon_name)}</strong>
+                                <span>${KatsuCases.formatCurrency(item.estimated_value || 0)} · 1 / ${KatsuCases.formatNumber(item.odds || 0)}</span>
+                            </div>
+                        </div>
+                    `).join('');
+
+                const oddsSummary = document.getElementById('caseOddsSummary');
+                oddsSummary.innerHTML = Object.entries(data.byRarity).filter(([_, items]) => items.length > 0).map(([rarity, items]) => {
+                    const avgOdds = Math.round(items.reduce((sum, i) => sum + Number(i.odds || 0), 0) / Math.max(1, items.length));
+                    const bestValue = items.reduce((max, item) => Math.max(max, Number(item.estimated_value || 0)), 0);
+                    return `
+                        <div class="case-odds-card ${rarity}">
+                            <div class="case-odds-card-top">
+                                <span class="badge badge-${rarity}">${rarity.toUpperCase()}</span>
+                                <strong>${KatsuCases.formatNumber(items.length)}</strong>
+                            </div>
+                            <div class="case-odds-card-main">1 / ${KatsuCases.formatNumber(avgOdds)}</div>
+                            <div class="case-odds-card-sub">Average odds · Top value ${KatsuCases.formatCurrency(bestValue)}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                renderCaseContentsPreview(allItems);
+                setCaseContentsSort('value');
+                renderPitySummary(currentCasePity);
+                updateOpeningControls();
+                await loadCaseReviews(caseId);
+                const reviewBtn = document.getElementById('submitCaseReviewBtn');
+                if (reviewBtn && !reviewBtn.dataset.boundCaseReview) {
+                    reviewBtn.dataset.boundCaseReview = '1';
+                    reviewBtn.addEventListener('click', submitCaseReview);
+                }
+
+                const modalHeroIcon = document.getElementById('casePreviewHeroIcon');
+                if (modalHeroIcon) {
+                    modalHeroIcon.className = `case-preview-hero-icon rarity-border-${rarestItem?.rarity || 'rare'}`;
+                    modalHeroIcon.innerHTML = '<i class="ri-treasure-map-line"></i>';
+                }
+
+                KatsuCases.openModal('case-modal');
+            } catch (error) {
+                console.error('Failed to load case:', error);
+                KatsuCases.showToast('Failed to load case details', 'error');
+            }
+        }
+        
+        async function openCase(amount = 1) {
+            if (!currentCase || openingBusy) return;
+
+            currentOpeningAmount = Math.max(1, Math.min(3, Number(amount) || 1));
+            updateOpeningControls();
+            const availableFreeRolls = Math.max(0, Number(KatsuCases.state.user?.free_rolls || 0));
+            const effectivePaidRolls = Math.max(0, currentOpeningAmount - availableFreeRolls);
+            const totalCost = currentCase.price * effectivePaidRolls;
+            const openingMeta = document.getElementById('openingCaseMeta');
+            if (openingMeta && currentCase) {
+                openingMeta.textContent = `${KatsuCases.formatCurrency(totalCost)} total · ${currentOpeningAmount} roll${currentOpeningAmount > 1 ? 's' : ''} · ${dedupeCaseContents(currentCaseContents).length} unique drops`;
+                syncOpeningPoolUi();
+            }
+            if (KatsuCases.state.user.balance < totalCost) {
+                KatsuCases.showToast('Insufficient balance', 'error');
+                return;
+            }
+
+            openingBusy = true;
+            KatsuCases.closeModal('case-modal');
+            document.getElementById('openingCaseName').textContent = currentCase.name;
+            openingPoolExpanded = false;
+            syncOpeningPoolUi();
+            document.getElementById('rewardReveal').classList.remove('active');
+            document.getElementById('rewardReveal').innerHTML = '';
+            document.getElementById('roller').innerHTML = '';
+            renderOpeningPresentation();
+            if (window.KatsuAnimations?.setAnimationPool) window.KatsuAnimations.setAnimationPool(currentCaseContents);
+            if (window.KatsuAnimations?.setOpeningHint) window.KatsuAnimations.setOpeningHint(`Preparing ${currentOpeningAmount} roll${currentOpeningAmount > 1 ? 's' : ''}…`);
+            if (window.KatsuAnimations?.setOpenAnotherHandler) {
+                window.KatsuAnimations.setOpenAnotherHandler(() => openCase(currentOpeningAmount));
+            }
+            KatsuCases.openModal('opening-modal');
+
+            try {
+                const data = await KatsuCases.api.post(`/api/cases/${currentCase.id}/open`, { amount: currentOpeningAmount });
+
+                KatsuCases.state.user.balance = data.newBalance;
+                KatsuCases.state.user.free_rolls = Number(data.freeRolls || 0);
+                if (data.userPity) KatsuCases.state.user.pity = data.userPity;
+                if (data.progression) KatsuCases.state.user.progression = data.progression;
+                currentCasePity = data.pity || currentCasePity;
+                renderPitySummary(currentCasePity);
+                renderOpeningPresentation();
+                document.querySelectorAll('.balance-value').forEach((el) => {
+                    el.textContent = KatsuCases.formatCurrency(data.newBalance);
+                });
+                await loadProgression();
+
+                await window.KatsuAnimations.animateCaseOpen(
+                    data.results,
+                    document.getElementById('roller'),
+                    document.getElementById('rewardReveal')
+                );
+
+                openingBusy = false;
+                loadCases(document.querySelector('#categoryPills .pill.active')?.dataset.filter || 'all').catch(() => undefined);
+                return;
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to open case', 'error');
+                KatsuCases.closeModal('opening-modal');
+            } finally {
+                openingBusy = false;
+                updateOpeningControls();
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await KatsuCases.checkAuth();
+            await loadProgression();
+            updateOpeningControls();
+            
+            // Check URL params for category
+            const urlParams = new URLSearchParams(window.location.search);
+            const category = urlParams.get('category') || 'all';
+            
+            // Update active pill
+            document.querySelectorAll('#categoryPills .pill').forEach(pill => {
+                pill.classList.toggle('active', pill.dataset.filter === category);
+            });
+            
+            await loadCases(category);
+
+            const skipBtn = document.getElementById('openingSkipBtn');
+            if (skipBtn) {
+                skipBtn.addEventListener('click', () => {
+                    if (window.KatsuAnimations?.skipCurrentRoll) {
+                        window.KatsuAnimations.skipCurrentRoll();
+                    }
+                });
+            }
+
+            window.openAnotherCurrentCase = () => openCase(currentOpeningAmount || 1);
+            
+            // Category filter
+            document.querySelectorAll('#categoryPills .pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('#categoryPills .pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    loadCases(pill.dataset.filter);
+                });
+            });
+            
+            // Sort handler
+            document.getElementById('sortSelect').addEventListener('change', (e) => {
+                let sorted = [...casesData];
+                switch (e.target.value) {
+                    case 'price_low':
+                        sorted.sort((a, b) => a.price - b.price);
+                        break;
+                    case 'price_high':
+                        sorted.sort((a, b) => b.price - a.price);
+                        break;
+                    case 'popular':
+                        sorted.sort((a, b) => b.times_opened - a.times_opened);
+                        break;
+                    default:
+                        sorted.sort((a, b) => b.is_featured - a.is_featured);
+                }
+                renderCases(sorted);
+            });
         });
     </script>
 </body>

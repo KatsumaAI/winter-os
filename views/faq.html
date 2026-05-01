@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FAQ - KatsuCases</title>
-    <meta name="description" content="Find answers to common KatsuCases questions about accounts, openings, trading, case odds, and site features.">
+    <title>Case Vs - KatsuCases</title>
+    <meta name="description" content="Join live KatsuCases Case Vs rooms, spectate head-to-head openings, and watch round-by-round winners unfold in real time.">
     <meta name="theme-color" content="#0a0e1a">
     <meta name="robots" content="index,follow">
     <meta property="og:site_name" content="KatsuCases">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="FAQ - KatsuCases">
-    <meta property="og:description" content="Find answers to common KatsuCases questions about accounts, openings, trading, case odds, and site features.">
+    <meta property="og:title" content="Case Vs - KatsuCases">
+    <meta property="og:description" content="Join live KatsuCases Case Vs rooms, spectate head-to-head openings, and watch round-by-round winners unfold in real time.">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="FAQ - KatsuCases">
-    <meta name="twitter:description" content="Find answers to common KatsuCases questions about accounts, openings, trading, case odds, and site features.">
+    <meta name="twitter:title" content="Case Vs - KatsuCases">
+    <meta name="twitter:description" content="Join live KatsuCases Case Vs rooms, spectate head-to-head openings, and watch round-by-round winners unfold in real time.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
-    
+
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/pages.css">
@@ -27,20 +27,16 @@
     <div class="page-wrapper">
         <header class="header">
             <div class="header-inner">
-                <a href="/" class="logo">
-                    <div class="logo-icon"><i class="ri-gamepad-line"></i></div>
-                    <span>KatsuCases</span>
-                </a>
-                
+                <a href="/" class="logo"><span>KatsuCases</span></a>
                 <nav class="nav">
                     <a href="/" class="nav-link">Home</a>
                     <a href="/cases" class="nav-link">Cases</a>
                     <a href="/marketplace" class="nav-link">Marketplace</a>
                     <a href="/trading" class="nav-link">Trading</a>
                     <a href="/livepulls" class="nav-link">Live Pulls</a>
-                    <a href="/guide" class="nav-link active">Info</a>
+                    <a href="/casevs" class="nav-link active">Case Vs</a>
+                    <a href="/guide" class="nav-link">Info</a>
                 </nav>
-                
                 <div class="header-actions">
                     <div class="balance-display">
                         <i class="ri-wallet-3-line"></i>
@@ -50,11 +46,17 @@
                         <a href="/signin" class="btn btn-ghost">Sign In</a>
                         <a href="/signup" class="btn btn-primary">Sign Up</a>
                     </div>
-                    <div class="user-area" style="display: none;">
+                    <div class="user-area" style="display:none;">
                         <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
                         <div class="user-menu">
                             <div class="user-menu-trigger">
                                 <div class="user-avatar"><span class="user-initial">U</span></div>
+                                <span class="user-name">Username</span>
+                            </div>
+                            <div class="user-menu-dropdown">
+                                <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                                <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                                <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
                             </div>
                         </div>
                     </div>
@@ -62,162 +64,343 @@
                 </div>
             </div>
         </header>
-        
-        <main class="main-content">
+
+        <main class="main-content discord-page discord-casevs-page">
             <section class="cases-hero section-sm">
                 <div class="container">
-                    <div class="section-title">
-                        <h1>Frequently Asked Questions</h1>
-                        <p>Find answers to the most common questions about KatsuCases</p>
+                    <div class="section-title discord-section-title">
+                        <div class="discord-page-kicker"><i class="ri-sword-cross-line"></i> Duel Lobby</div>
+                        <h1>Case Vs</h1>
+                        <p>Create rooms, watch battles unfold, and inspect who won each round.</p>
+                    </div>
+                    <div class="discord-hero-rail">
+                        <div class="discord-hero-chip"><i class="ri-door-open-line"></i><span>Public rooms</span></div>
+                        <div class="discord-hero-chip"><i class="ri-eye-line"></i><span>Spectator viewer</span></div>
+                        <div class="discord-hero-chip"><i class="ri-shield-check-line"></i><span>Seed-backed rounds</span></div>
                     </div>
                 </div>
             </section>
-            
+
             <section class="section-sm">
-                <div class="container" style="max-width: 800px;">
-                    <div class="faq-list">
-                        <div class="faq-item">
-                            <button class="faq-question">
-                                How do I create an account?
-                                <i class="ri-arrow-down-s-line"></i>
-                            </button>
-                            <div class="faq-answer">
-                                <div class="faq-answer-inner">
-                                    Click the "Sign Up" button in the top right corner, enter your email address and create a password. You'll receive a welcome bonus to start opening cases immediately!
+                <div class="container casevs-layout discord-layout-shell">
+                    <div>
+                        <div class="trade-compose-card discord-panel" id="caseVsCreateCard">
+                            <div class="live-pull-head">
+                                <div>
+                                    <h3 style="margin-bottom:6px;">Create a Room</h3>
+                                    <p style="color:var(--text-secondary);">Choose a case, pick up to 3 rounds, then wait for another player to join.</p>
                                 </div>
+                                <span class="badge badge-epic">1v1</span>
                             </div>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <button class="faq-question">
-                                Is KatsuCases free to use?
-                                <i class="ri-arrow-down-s-line"></i>
-                            </button>
-                            <div class="faq-answer">
-                                <div class="faq-answer-inner">
-                                    Yes! Creating an account is completely free, and you'll receive a welcome bonus. Opening cases requires balance, which you can add through purchases or by selling items you've pulled.
-                                </div>
+                            <div style="display:grid; grid-template-columns: 1fr 160px auto; gap:12px; margin-top:18px;">
+                                <select id="caseSelect" class="select"><option value="">Select a case</option></select>
+                                <select id="roundSelect" class="select">
+                                    <option value="1">1 Round</option>
+                                    <option value="2">2 Rounds</option>
+                                    <option value="3">3 Rounds</option>
+                                </select>
+                                <button class="btn btn-primary" id="createRoomBtn"><i class="ri-add-line"></i> Create</button>
                             </div>
+                            <p style="font-size:12px; color:var(--text-muted); margin-top:10px;">Players keep the Pokémon they pull. The room winner is decided by round wins, then by the best pull if tied.</p>
                         </div>
-                        
-                        <div class="faq-item">
-                            <button class="faq-question">
-                                How are the pulls randomized?
-                                <i class="ri-arrow-down-s-line"></i>
-                            </button>
-                            <div class="faq-answer">
-                                <div class="faq-answer-inner">
-                                    We use a cryptographically secure random number generator combined with your session data and server seeds. Every pull is completely random and cannot be manipulated or predicted.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <button class="faq-question">
-                                Can I trade with other players?
-                                <i class="ri-arrow-down-s-line"></i>
-                            </button>
-                            <div class="faq-answer">
-                                <div class="faq-answer-inner">
-                                    Absolutely! Our trading system allows you to send trade offers directly to other players. You can propose item swaps, and the other player can accept or decline. All trades are processed securely.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <button class="faq-question">
-                                How do I sell items?
-                                <i class="ri-arrow-down-s-line"></i>
-                            </button>
-                            <div class="faq-answer">
-                                <div class="faq-answer-inner">
-                                    Go to your Inventory, click on an item you want to sell, and set your price. The item will be listed on the marketplace immediately. When someone purchases it, funds are added to your balance instantly.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <button class="faq-question">
-                                What are shiny Pokémon?
-                                <i class="ri-arrow-down-s-line"></i>
-                            </button>
-                            <div class="faq-answer">
-                                <div class="faq-answer-inner">
-                                    Shiny Pokémon are rare variants with alternate colorations from the games. They have the same stats as regular Pokémon but are significantly more valuable and sought after by collectors.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <button class="faq-question">
-                                Why should I verify my account?
-                                <i class="ri-arrow-down-s-line"></i>
-                            </button>
-                            <div class="faq-answer">
-                                <div class="faq-answer-inner">
-                                    Account verification helps secure your account and unlocks higher transaction limits. It also builds trust with other traders in the marketplace.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <button class="faq-question">
-                                What happens if I forget my password?
-                                <i class="ri-arrow-down-s-line"></i>
-                            </button>
-                            <div class="faq-answer">
-                                <div class="faq-answer-inner">
-                                    Click "Sign In" and then "Forgot Password". Enter your email address and we'll send you instructions to reset your password securely.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <button class="faq-question">
-                                Are there any fees?
-                                <i class="ri-arrow-down-s-line"></i>
-                            </button>
-                            <div class="faq-answer">
-                                <div class="faq-answer-inner">
-                                    There are no fees for creating an account or receiving items. A small platform fee (5%) is applied to marketplace sales to maintain the platform. Opening cases has no additional fees beyond the case price.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <button class="faq-question">
-                                How do I contact support?
-                                <i class="ri-arrow-down-s-line"></i>
-                            </button>
-                            <div class="faq-answer">
-                                <div class="faq-answer-inner">
-                                    You can reach our support team through the Discord server, by email at support@katsucases.com, or through the in-app chat. We're usually available within 24 hours.
-                                </div>
-                            </div>
-                        </div>
+
+                        <div class="casevs-room-list" id="roomsList"></div>
                     </div>
-                    
-                    <div style="text-align: center; margin-top: 48px; padding: 32px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px;">
-                        <h3 style="margin-bottom: 12px;">Still have questions?</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 24px;">Our support team is here to help you 24/7.</p>
-                        <a href="#" class="btn btn-primary">
-                            <i class="ri-customer-service-2-line"></i> Contact Support
-                        </a>
-                    </div>
+
+                    <aside class="casevs-sidebar-card discord-panel" id="roomViewer">
+                        <h3 style="margin-bottom:8px;">Room Viewer</h3>
+                        <p style="color:var(--text-secondary); margin-bottom:18px;">Open a room to spectate the battle, inspect seeds, and see the winner.</p>
+                        <div class="empty-state" style="padding:32px 16px;">
+                            <i class="ri-sword-line"></i>
+                            <h3>No room selected</h3>
+                            <p>Pick a room from the list to spectate what is going on.</p>
+                        </div>
+                    </aside>
                 </div>
             </section>
         </main>
-        
-        <footer class="footer">
-            <div class="container">
-                <div class="footer-bottom" style="border-top: none; padding-top: 0;">
-                    <p>&copy; 2024 KatsuCases. All rights reserved.</p>
-                </div>
-            </div>
-        </footer>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
     <script src="/js/main.js"></script>
+    <script>
+        let roomsData = [];
+        let casesData = [];
+        let selectedRoomId = null;
+        let roomPollHandle = null;
+        let roomPlaybackTimer = null;
+        let roomsSignature = '';
+        let selectedRoomUpdatedAt = '';
+
+
+
+        function stopRoomPlayback() {
+            if (roomPlaybackTimer) {
+                window.clearTimeout(roomPlaybackTimer);
+                roomPlaybackTimer = null;
+            }
+        }
+
+        function getRoomWinCount(room, userId, uptoRound = null) {
+            const rounds = Array.isArray(room.rounds_data) ? room.rounds_data : [];
+            return rounds.filter((round) => (uptoRound === null || Number(round.round) <= Number(uptoRound)) && Number(round.winner_user_id) === Number(userId)).length;
+        }
+
+        function renderRoomRoundPair(round) {
+            return `
+                <div class="casevs-round casevs-round-live discord-round-card">
+                    <div class="live-pull-head">
+                        <div>
+                            <strong>Round ${round.round}</strong>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${round.is_draw ? 'Round ended in a draw' : `Winner: ${KatsuCases.escapeHtml(round.winner_username)}`}</div>
+                        </div>
+                        <span class="casevs-room-chip"><i class="ri-flashlight-line"></i> Saved replay data</span>
+                    </div>
+                    <div class="casevs-round-pulls live-pair">
+                        ${round.pulls.map((pull) => `
+                            <div class="casevs-round-pull rarity-glow-${pull.rarity}">
+                                <div class="casevs-live-pull-top">
+                                    <div class="casevs-player-pill-main compact">
+                                        ${KatsuCases.buildAvatarMarkup ? KatsuCases.buildAvatarMarkup({ username: pull.username, display_name: pull.username }, 'casevs-player-avatar') : `<span class="casevs-player-avatar fallback">${KatsuCases.escapeHtml(String(pull.username || '?').charAt(0).toUpperCase())}</span>`}
+                                        <strong><a href="/profile?user=${encodeURIComponent(pull.username)}">${KatsuCases.escapeHtml(pull.username)}</a></strong>
+                                    </div>
+                                    <span class="badge badge-${pull.rarity}">${KatsuCases.escapeHtml(pull.rarity)}</span>
+                                </div>
+                                <div style="display:flex; gap:14px; align-items:center; margin-top:10px;">
+                                    ${KatsuCases.buildSpriteImg({ pokemonName: pull.pokemon_name, isShiny: pull.is_shiny, spriteUrl: pull.sprite_url, alt: pull.pokemon_name, style: 'width:62px; height:62px;' })}
+                                    <div>
+                                        <div style="font-weight:700; font-size:15px;">${KatsuCases.escapeHtml(pull.pokemon_name)}</div>
+                                        <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">${KatsuCases.formatCurrency(pull.estimated_value || 0)} · 1 in ${Number(pull.odds || 0).toLocaleString()}</div>
+                                        <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">Seed ${KatsuCases.escapeHtml(pull.seed)}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function startRoomPlayback(room) {
+            stopRoomPlayback();
+            const rounds = Array.isArray(room.rounds_data) ? room.rounds_data : [];
+            if (!rounds.length) return;
+            let index = 0;
+            const step = () => {
+                renderRoomViewer(room, { playbackRound: index + 1, autoplay: false });
+                index += 1;
+                if (index < rounds.length) {
+                    roomPlaybackTimer = window.setTimeout(step, 1600);
+                }
+            };
+            step();
+        }
+
+        async function loadCases() {
+            const data = await KatsuCases.api.get('/api/cases');
+            casesData = Array.isArray(data.cases) ? data.cases : [];
+            const select = document.getElementById('caseSelect');
+            select.innerHTML = '<option value="">Select a case</option>' + casesData.map((item) => `
+                <option value="${item.id}">${KatsuCases.escapeHtml(item.name)} · ${KatsuCases.formatCurrency(item.price)}</option>
+            `).join('');
+        }
+
+        async function loadRooms() {
+            try {
+                const data = await KatsuCases.api.get('/api/casevs/rooms');
+                roomsData = Array.isArray(data.rooms) ? data.rooms : [];
+                const nextSignature = JSON.stringify(roomsData.map((room) => [room.id, room.status, room.updated_at, room.winner_username]));
+                if (nextSignature !== roomsSignature) {
+                    roomsSignature = nextSignature;
+                    renderRooms();
+                }
+            } catch (error) {
+                console.error('Failed to load rooms:', error);
+                KatsuCases.showToast('Failed to load Case Vs rooms', 'error');
+            }
+        }
+
+        function renderRooms() {
+            const list = document.getElementById('roomsList');
+            if (!roomsData.length) {
+                list.innerHTML = `
+                    <div class="casevs-room-card empty-state">
+                        <i class="ri-door-open-line"></i>
+                        <h3>No rooms yet</h3>
+                        <p>Create the first room and let someone challenge you.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = roomsData.map((room) => {
+                const playerA = room.players[0];
+                const playerB = room.players[1];
+                return `
+                    <article class="casevs-room-card discord-room-card">
+                        <div class="casevs-room-head">
+                            <div>
+                                <div class="casevs-room-eyebrow"># duel-room-${room.id}</div>
+                                <div class="casevs-room-title">${KatsuCases.escapeHtml(room.case_name)}</div>
+                                <div class="casevs-room-meta">
+                                    <span class="casevs-room-chip"><i class="ri-repeat-line"></i> ${room.rounds} round${room.rounds > 1 ? 's' : ''}</span>
+                                    <span class="casevs-room-chip"><i class="ri-coin-line"></i> ${KatsuCases.formatCurrency(room.case_price)} each</span>
+                                </div>
+                            </div>
+                            <span class="badge badge-${room.status === 'finished' ? 'legendary' : room.status === 'draw' ? 'mythical' : room.status === 'waiting' ? 'common' : 'epic'}">${KatsuCases.escapeHtml(room.status)}</span>
+                        </div>
+                        <div class="casevs-player-row">
+                            <div class="casevs-player-pill">
+                                <div class="casevs-player-pill-main">
+                                    ${playerA?.username && KatsuCases.buildAvatarMarkup ? KatsuCases.buildAvatarMarkup({ username: playerA.username, display_name: playerA.username }, 'casevs-player-avatar') : '<span class="casevs-player-avatar fallback">A</span>'}
+                                    <div>
+                                        <div style="font-weight:600;">${playerA?.username ? `<a href="/profile?user=${encodeURIComponent(playerA.username)}">${KatsuCases.escapeHtml(playerA.username)}</a>` : 'Waiting'}</div>
+                                        <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Creator</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="casevs-vs-badge">VS</div>
+                            <div class="casevs-player-pill">
+                                <div class="casevs-player-pill-main">
+                                    ${playerB?.username && KatsuCases.buildAvatarMarkup ? KatsuCases.buildAvatarMarkup({ username: playerB.username, display_name: playerB.username }, 'casevs-player-avatar') : '<span class="casevs-player-avatar fallback">?</span>'}
+                                    <div>
+                                        <div style="font-weight:600;">${playerB?.username ? `<a href="/profile?user=${encodeURIComponent(playerB.username)}">${KatsuCases.escapeHtml(playerB.username)}</a>` : 'Open Slot'}</div>
+                                        <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${playerB ? 'Joined' : 'Waiting'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        ${(room.winner_username || room.status === 'draw') ? `<div class="casevs-room-winner">${room.status === 'draw' ? '<strong>Draw</strong> · Pot split back to both players' : `Winner: <strong>${KatsuCases.escapeHtml(room.winner_username)}</strong>`}${room.summary?.pot_amount ? ` · Pot ${KatsuCases.formatCurrency(room.summary.pot_amount)}` : ''}</div>` : ''}
+                        <div class="live-pull-actions" style="margin-top:16px;">
+                            <button class="btn btn-ghost" onclick="viewRoom(${room.id})"><i class="ri-eye-line"></i> Spectate</button>
+                            ${room.can_join && KatsuCases.state.user ? `<button class="btn btn-primary" onclick="joinRoom(${room.id})"><i class="ri-login-box-line"></i> Join Room</button>` : ''}
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        async function createRoom() {
+            if (!KatsuCases.state.user) {
+                KatsuCases.showToast('Please sign in to create a room', 'error');
+                window.location.href = '/signin';
+                return;
+            }
+            const caseId = Number(document.getElementById('caseSelect').value);
+            const rounds = Number(document.getElementById('roundSelect').value);
+            if (!caseId) {
+                KatsuCases.showToast('Choose a case first', 'error');
+                return;
+            }
+            try {
+                const data = await KatsuCases.api.post('/api/casevs/rooms', { caseId, rounds });
+                KatsuCases.showToast('Room created', 'success');
+                await loadRooms();
+                viewRoom(data.room.id);
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to create room', 'error');
+            }
+        }
+
+        async function joinRoom(roomId) {
+            const joinButton = event?.currentTarget || document.querySelector(`button[onclick="joinRoom(${roomId})"]`);
+            if (joinButton) { joinButton.disabled = true; joinButton.dataset.originalText = joinButton.innerHTML; joinButton.innerHTML = '<i class="ri-loader-4-line"></i> Joining…'; }
+            try {
+                const data = await KatsuCases.api.post(`/api/casevs/rooms/${roomId}/join`, {});
+                KatsuCases.showToast('Battle started', 'success');
+                if (KatsuCases.state.user) {
+                    await KatsuCases.checkAuth();
+                    await KatsuCases.refreshNotifications({ silent: true });
+                }
+                await loadRooms();
+                selectedRoomId = data.room.id;
+                selectedRoomUpdatedAt = String(data.room.updated_at || '');
+                renderRoomViewer(data.room, { playbackRound: 0, autoplay: false });
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to join room', 'error');
+            } finally {
+                if (joinButton) { joinButton.disabled = false; joinButton.innerHTML = joinButton.dataset.originalText || '<i class="ri-login-box-line"></i> Join Room'; }
+            }
+        }
+
+        async function viewRoom(roomId) {
+            try {
+                const data = await KatsuCases.api.get(`/api/casevs/rooms/${roomId}`);
+                selectedRoomId = roomId;
+                selectedRoomUpdatedAt = String(data.room.updated_at || '');
+                renderRoomViewer(data.room, { playbackRound: data.room.status === 'finished' ? 1 : null, autoplay: false });
+                if (data.room.status === 'finished') startRoomPlayback(data.room);
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to load room', 'error');
+            }
+        }
+
+        function renderRoomViewer(room, options = {}) {
+            const viewer = document.getElementById('roomViewer');
+            const players = room.players || [];
+            const summary = room.summary || null;
+            const playbackRound = Number(options.playbackRound || 0);
+            const rounds = Array.isArray(room.rounds_data) ? room.rounds_data : [];
+            const activeRounds = playbackRound > 0 ? rounds.filter((round) => Number(round.round) <= playbackRound) : rounds;
+            const activeRound = playbackRound > 0 ? rounds.find((round) => Number(round.round) === playbackRound) : null;
+            const roundsMarkup = playbackRound > 0
+                ? activeRounds.filter((round) => Number(round.round) < playbackRound).map((round) => renderRoomRoundPair(round)).join('')
+                : activeRounds.map((round) => renderRoomRoundPair(round)).join('');
+            viewer.innerHTML = `
+                <div class="live-pull-head">
+                    <div>
+                        <div class="discord-panel-kicker"><i class="ri-eye-line"></i> Spectator View</div>
+                        <h3 style="margin-bottom:6px;">${KatsuCases.escapeHtml(room.case_name)}</h3>
+                        <p style="color:var(--text-secondary);">Room #${room.id} · seed ${KatsuCases.escapeHtml(room.seed)}</p>
+                    </div>
+                    <span class="badge badge-${room.status === 'finished' ? 'legendary' : room.status === 'draw' ? 'mythical' : room.status === 'waiting' ? 'common' : 'epic'}">${KatsuCases.escapeHtml(room.status)}</span>
+                </div>
+                <div class="casevs-player-row" style="margin-top:18px;">
+                    ${players.map((player, index) => `
+                        <div class="casevs-player-pill">
+                            <div style="font-weight:700;"><a href="/profile?user=${encodeURIComponent(player.username)}">${KatsuCases.escapeHtml(player.username)}</a></div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">${getRoomWinCount(room, player.user_id, playbackRound || null)} round wins</div>
+                        </div>
+                        ${index === 0 ? '<div class="casevs-vs-badge">VS</div>' : ''}
+                    `).join('')}
+                </div>
+                ${activeRound ? `<div class="admin-rain-card" style="margin-top:18px;"><strong>${activeRound.is_draw ? `Round ${activeRound.round} draw` : `Live Round ${activeRound.round}`}</strong><div class="rain-meta">Watching both rolls resolve live with the saved seeds and the exact stored result data.</div></div>${renderRoomRoundPair(activeRound)}` : ''}
+                ${(!playbackRound || playbackRound >= rounds.length) && (room.winner_username || room.status === 'draw') ? `<div style="margin-top:18px; padding:14px; border-radius:14px; background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.18);">${room.status === 'draw' ? 'Result: <strong>Draw</strong> · Both players matched the same value and had their entry returned.' : `Winner: <strong>${KatsuCases.escapeHtml(room.winner_username)}</strong>`}${summary?.pot_amount ? ` · Pot ${KatsuCases.formatCurrency(summary.pot_amount)}` : ''}</div>` : ''}
+                <div class="casevs-rounds">
+                    ${activeRounds.length ? (roundsMarkup || '') : '<div class="empty-state"><i class="ri-time-line"></i><h3>Waiting for challenger</h3><p>This room has not started yet.</p></div>'}
+                </div>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            KatsuCases.applyBranding();
+            await KatsuCases.checkAuth();
+            await loadCases();
+            await loadRooms();
+            document.getElementById('createRoomBtn').addEventListener('click', createRoom);
+            roomPollHandle = window.setInterval(async () => {
+                await loadRooms();
+                if (selectedRoomId) {
+                    try {
+                        const data = await KatsuCases.api.get(`/api/casevs/rooms/${selectedRoomId}`);
+                        const updatedAt = String(data.room.updated_at || '');
+                        if (updatedAt !== selectedRoomUpdatedAt) {
+                            selectedRoomUpdatedAt = updatedAt;
+                            if (data.room.status === 'finished' || data.room.status === 'draw') {
+                                if (!roomPlaybackTimer) {
+                                    renderRoomViewer(data.room, { playbackRound: 0, autoplay: false });
+                                    startRoomPlayback(data.room);
+                                }
+                            } else {
+                                renderRoomViewer(data.room, { playbackRound: 0, autoplay: false });
+                            }
+                        }
+                    } catch (error) {
+                        return;
+                    }
+                }
+            }, 1500);
+        });
+    </script>
 </body>
 </html>

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Rollbacks - KatsuCases</title>
-    <meta name="description" content="Create account snapshots, restore older account states, and manage user status on KatsuCases.">
+    <title>Support - KatsuCases</title>
+    <meta name="description" content="Open and track support tickets for your KatsuCases account.">
     <meta name="theme-color" content="#0a0e1a">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +13,37 @@
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/pages.css">
+    <style>
+        .ticket-shell{display:grid;grid-template-columns:340px minmax(0,1fr);gap:22px;align-items:start}
+        .ticket-pane,.ticket-thread{background:rgba(11,15,24,.92);border:1px solid rgba(255,255,255,.08);border-radius:24px;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+        .ticket-pane{padding:18px;position:sticky;top:106px}
+        .ticket-thread{padding:22px;min-height:720px;display:grid;grid-template-rows:auto auto 1fr auto;gap:16px}
+        .ticket-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+        .ticket-summary-card{padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
+        .ticket-summary-card strong{display:block;font-size:22px;font-family:Outfit,Inter,sans-serif}
+        .ticket-list{display:grid;gap:12px;margin-top:14px;max-height:540px;overflow:auto;padding-right:4px}
+        .ticket-row{width:100%;text-align:left;padding:14px 15px;border-radius:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);transition:.2s ease;cursor:pointer}
+        .ticket-row:hover,.ticket-row.active{border-color:rgba(99,102,241,.48);background:rgba(99,102,241,.08);transform:translateY(-1px)}
+        .ticket-row-top,.ticket-thread-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+        .ticket-sub{font-size:12px;color:var(--text-secondary);margin-top:6px;display:flex;flex-wrap:wrap;gap:8px}
+        .ticket-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);font-size:12px;color:var(--text-secondary)}
+        .ticket-pill.status-open,.ticket-pill.status-customer-replied{color:#93c5fd;border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.12)}
+        .ticket-pill.status-awaiting-user,.ticket-pill.status-pending{color:#fcd34d;border-color:rgba(251,191,36,.34);background:rgba(251,191,36,.12)}
+        .ticket-pill.status-resolved,.ticket-pill.status-closed{color:#86efac;border-color:rgba(34,197,94,.34);background:rgba(34,197,94,.12)}
+        .ticket-thread-meta{display:flex;flex-wrap:wrap;gap:10px}
+        .ticket-thread-log{display:grid;gap:12px;overflow:auto;padding-right:4px}
+        .ticket-bubble{padding:14px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03)}
+        .ticket-bubble.support{background:rgba(81,118,255,.12);border-color:rgba(81,118,255,.28)}
+        .ticket-bubble-note{background:rgba(251,191,36,.09);border-color:rgba(251,191,36,.24)}
+        .ticket-bubble-head{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--text-secondary);margin-bottom:8px}
+        .ticket-bubble-body{white-space:pre-wrap;line-height:1.65}
+        .ticket-compose{display:grid;gap:10px}
+        .ticket-empty-state{display:grid;place-items:center;text-align:center;min-height:320px;border:1px dashed rgba(255,255,255,.08);border-radius:22px;color:var(--text-secondary)}
+        .ticket-empty-state i{font-size:42px;color:var(--accent-primary);margin-bottom:10px}
+        .ticket-toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+        @media (max-width: 1060px){.ticket-shell{grid-template-columns:1fr}.ticket-pane{position:static}.ticket-thread{min-height:0}.ticket-summary-grid{grid-template-columns:1fr 1fr 1fr}}
+        @media (max-width: 720px){.ticket-summary-grid{grid-template-columns:1fr}.ticket-thread-head,.ticket-row-top,.ticket-toolbar{flex-direction:column;align-items:flex-start}}
+    </style>
 </head>
 <body>
 <div class="page-wrapper">
@@ -20,18 +51,21 @@
     <div class="header-inner">
         <a href="/" class="logo"><span>KatsuCases</span></a>
         <nav class="nav">
-            <a href="/admin" class="nav-link">Admin Home</a>
-            <a href="/admin/support" class="nav-link">Support</a>
-            <a href="/admin/rollbacks" class="nav-link">Rollbacks</a>
+            <a href="/" class="nav-link">Home</a>
             <a href="/cases" class="nav-link">Cases</a>
+            <a href="/settings" class="nav-link">Settings</a>
+            <a href="/inventory" class="nav-link">Inventory</a>
         </nav>
         <div class="header-actions">
             <div class="balance-display"><i class="ri-wallet-3-line"></i><span class="balance-value">$0.00</span></div>
             <div class="user-area" style="display:flex; align-items:center; gap:16px;">
+                <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
                 <div class="user-menu">
                     <div class="user-menu-trigger"><div class="user-avatar"><span class="user-initial">U</span></div><span class="user-name">Username</span></div>
                     <div class="user-menu-dropdown">
                         <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                        <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                        <a href="/settings" class="user-menu-item"><i class="ri-settings-3-line"></i> Settings</a>
                         <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
                     </div>
                 </div>
@@ -42,28 +76,54 @@
 </header>
 <main class="main-content">
     <section class="section-sm">
-        <div class="container" style="max-width:1240px;">
+        <div class="container" style="max-width:1320px;">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; margin-bottom:24px;">
                 <div>
-                    <div class="section-kicker">ACCOUNT RECOVERY</div>
-                    <h1 style="margin:8px 0 10px;">User snapshots, rollback, and status control</h1>
-                    <p style="color:var(--text-secondary); max-width:780px;">Search for a player, create manual snapshots before risky changes, suspend or reactivate the account, and restore a previous account state when needed.</p>
+                    <div class="section-kicker">SUPPORT DESK</div>
+                    <h1 style="margin:8px 0 10px;">Live account tickets</h1>
+                    <p style="color:var(--text-secondary); max-width:760px;">Open a real support ticket for rollback requests, item issues, balance problems, claim disputes, marketplace problems, and account recovery. This desk refreshes live so replies land more like a real game support inbox.</p>
                 </div>
-                <a href="/admin/support" class="btn btn-secondary"><i class="ri-lifebuoy-line"></i> Support Desk</a>
+                <a href="/settings" class="btn btn-secondary"><i class="ri-settings-3-line"></i> Account Settings</a>
             </div>
-
-            <div style="display:grid; grid-template-columns:minmax(300px,.75fr) minmax(0,1.25fr); gap:24px; align-items:start;">
-                <section class="profile-section">
-                    <div class="panel-head"><div><h3>Find user</h3><p>Search by username, display name, or email.</p></div></div>
-                    <div style="display:flex; gap:10px; margin-bottom:16px;">
-                        <input id="userSearchInput" class="input" placeholder="Search user">
-                        <button id="userSearchBtn" class="btn btn-primary"><i class="ri-search-line"></i></button>
+            <div class="ticket-shell">
+                <aside class="ticket-pane">
+                    <div class="ticket-toolbar">
+                        <div>
+                            <h3 style="margin:0;">Create ticket</h3>
+                            <p style="margin:6px 0 0; color:var(--text-secondary); font-size:13px;">Clear details help support move faster.</p>
+                        </div>
+                        <button id="ticketRefreshBtn" class="btn btn-ghost btn-sm" type="button"><i class="ri-refresh-line"></i> Refresh</button>
                     </div>
-                    <div id="userSearchResults" style="display:grid; gap:12px;"></div>
-                </section>
-
-                <section class="profile-section">
-                    <div id="selectedUserPanel" class="profile-account-note">Select a user to manage snapshots and rollback versions.</div>
+                    <form id="supportForm" style="display:grid; gap:14px; margin-top:16px;">
+                        <input id="ticketSubject" class="input" maxlength="120" placeholder="Subject">
+                        <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px;">
+                            <select id="ticketCategory" class="input"><option value="account">Account</option><option value="rollback">Rollback</option><option value="marketplace">Marketplace</option><option value="trade">Trade</option><option value="case">Case opening</option><option value="claim">Claim / reward link</option><option value="other">Other</option></select>
+                            <select id="ticketPriority" class="input"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select>
+                        </div>
+                        <textarea id="ticketMessage" class="textarea" rows="8" maxlength="2000" placeholder="Describe what happened, the time it happened, and what support should check."></textarea>
+                        <button class="btn btn-primary" type="submit"><i class="ri-send-plane-2-line"></i> Open Ticket</button>
+                    </form>
+                    <div class="ticket-summary-grid" style="margin-top:18px;">
+                        <div class="ticket-summary-card"><span class="ticket-pill"><i class="ri-coupon-2-line"></i> Total</span><strong id="ticketCountTotal">0</strong></div>
+                        <div class="ticket-summary-card"><span class="ticket-pill status-open"><i class="ri-loader-4-line"></i> Open</span><strong id="ticketCountOpen">0</strong></div>
+                        <div class="ticket-summary-card"><span class="ticket-pill status-resolved"><i class="ri-check-line"></i> Resolved</span><strong id="ticketCountResolved">0</strong></div>
+                    </div>
+                    <div class="ticket-list" id="supportTicketsList"></div>
+                </aside>
+                <section class="ticket-thread">
+                    <div class="ticket-thread-head">
+                        <div>
+                            <div class="section-kicker">ACTIVE THREAD</div>
+                            <h2 id="activeTicketTitle" style="margin:8px 0 0;">No ticket selected</h2>
+                        </div>
+                        <div class="ticket-thread-meta" id="activeTicketMeta"></div>
+                    </div>
+                    <div class="profile-account-note" id="activeTicketHint">Pick a ticket from the left to read the full thread and send replies.</div>
+                    <div class="ticket-thread-log" id="supportThread"></div>
+                    <form id="supportReplyForm" class="ticket-compose" style="display:none;">
+                        <textarea id="supportReplyMessage" class="textarea" rows="4" maxlength="2000" placeholder="Reply to this ticket"></textarea>
+                        <div><button class="btn btn-secondary" type="submit"><i class="ri-reply-line"></i> Send Reply</button></div>
+                    </form>
                 </section>
             </div>
         </div>
@@ -73,172 +133,101 @@
 <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
 <script src="/js/main.js"></script>
 <script>
-let selectedUser = null;
-
-function toDatetimeLocalValue(value) {
-    if (!value) return '';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '';
-    const pad = (num) => String(num).padStart(2, '0');
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+let supportTickets = [];
+let activeTicketId = null;
+let supportPoll = null;
+function ticketStatusClass(status = '') { return ['status', String(status || '').toLowerCase()].join(' '); }
+function ticketRowMarkup(ticket) {
+    const replies = Array.isArray(ticket.replies) ? ticket.replies : [];
+    const lastReply = replies[replies.length - 1];
+    return `<button class="ticket-row ${Number(ticket.id) === Number(activeTicketId) ? 'active' : ''}" type="button" data-ticket-id="${Number(ticket.id)}"><div class="ticket-row-top"><strong>#${Number(ticket.id)} · ${KatsuCases.escapeHtml(ticket.subject || 'Untitled ticket')}</strong><span class="ticket-pill ${ticketStatusClass(ticket.status)}">${KatsuCases.escapeHtml(ticket.status || 'open')}</span></div><div class="ticket-sub"><span>${KatsuCases.escapeHtml(ticket.category || 'general')}</span><span>${KatsuCases.escapeHtml(ticket.priority || 'normal')} priority</span><span>${new Date(ticket.updated_at || ticket.created_at).toLocaleString()}</span></div><div style="margin-top:10px; color:var(--text-secondary); font-size:13px; line-height:1.5;">${KatsuCases.escapeHtml((lastReply && lastReply.message) || '').slice(0, 120) || 'No replies yet.'}</div></button>`;
 }
-
-function formatStatusUntil(value) {
-    if (!value) return 'Permanent';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? 'Permanent' : date.toLocaleString();
+function ticketBubbleMarkup(reply) {
+    const roleClass = reply.internal ? 'ticket-bubble-note' : (reply.author_type === 'admin' ? 'support' : '');
+    return `<article class="ticket-bubble ${roleClass}"><div class="ticket-bubble-head"><strong style="color:var(--text-primary);">${KatsuCases.escapeHtml(reply.display_name || reply.username || reply.author_type || 'Support')}${reply.internal ? ' · internal' : ''}</strong><span>${new Date(reply.created_at).toLocaleString()}</span></div><div class="ticket-bubble-body">${KatsuCases.escapeHtml(reply.message || '')}</div></article>`;
 }
-
-function userResultCard(user) {
-    return `<button class="btn btn-secondary rollback-user-card" data-user-id="${user.id}" style="display:flex; justify-content:space-between; align-items:center; gap:12px; text-align:left; width:100%;">
-        <span>
-            <strong style="display:block;">${KatsuCases.escapeHtml(user.display_name || user.username)}</strong>
-            <small style="display:block; color:var(--text-secondary);">@${KatsuCases.escapeHtml(user.username)} · ${KatsuCases.escapeHtml(user.email || '')}</small>
-        </span>
-        <span class="badge ${user.account_status === 'suspended' ? 'badge-mythical' : 'badge-uncommon'}">${KatsuCases.escapeHtml(user.account_status || 'active')}</span>
-    </button>`;
+function renderTicketSummary() {
+    const total = supportTickets.length;
+    const openish = supportTickets.filter((ticket) => ['open', 'pending', 'customer-replied'].includes(String(ticket.status || '').toLowerCase())).length;
+    const resolved = supportTickets.filter((ticket) => ['resolved', 'closed'].includes(String(ticket.status || '').toLowerCase())).length;
+    document.getElementById('ticketCountTotal').textContent = String(total);
+    document.getElementById('ticketCountOpen').textContent = String(openish);
+    document.getElementById('ticketCountResolved').textContent = String(resolved);
 }
-
-function snapshotCard(snapshot, userId) {
-    return `<article class="profile-summary-card" style="padding:16px;">
-        <strong style="display:block; margin-bottom:8px;">${KatsuCases.escapeHtml(snapshot.label || 'Snapshot')}</strong>
-        <div style="color:var(--text-secondary); font-size:13px; margin-bottom:8px;">${new Date(snapshot.created_at).toLocaleString()}</div>
-        <div style="white-space:pre-wrap; color:var(--text-secondary); line-height:1.6; margin-bottom:12px;">${KatsuCases.escapeHtml(snapshot.reason || '')}</div>
-        <button class="btn btn-secondary rollback-restore-btn" data-user-id="${userId}" data-snapshot-id="${snapshot.id}"><i class="ri-history-line"></i> Restore This Version</button>
-    </article>`;
-}
-
-async function loadSnapshots(userId) {
-    const data = await KatsuCases.api.get(`/api/admin/users/${userId}/snapshots`);
-    return Array.isArray(data.snapshots) ? data.snapshots : [];
-}
-
-async function renderSelectedUser(user) {
-    selectedUser = user;
-    const snapshots = await loadSnapshots(user.id);
-    document.getElementById('selectedUserPanel').innerHTML = `
-        <div style="display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px;">
-            <div>
-                <h3 style="margin:0 0 6px;">${KatsuCases.escapeHtml(user.display_name || user.username)}</h3>
-                <div style="color:var(--text-secondary);">@${KatsuCases.escapeHtml(user.username)} · ${KatsuCases.escapeHtml(user.email || '')}</div>
-                <div style="color:var(--text-secondary); margin-top:6px;">Balance ${KatsuCases.formatCurrency(user.balance || 0)} · ${KatsuCases.escapeHtml(user.account_status || 'active')}${user.account_status === 'suspended' ? ` · Until ${KatsuCases.escapeHtml(formatStatusUntil(user.account_status_expires_at))}` : ''}</div>
-                ${user.account_status === 'suspended' && user.account_status_reason ? `<div style="color:var(--text-secondary); margin-top:6px;">Reason: ${KatsuCases.escapeHtml(user.account_status_reason)}</div>` : ''}
-            </div>
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <button id="createSnapshotBtn" class="btn btn-primary"><i class="ri-camera-line"></i> Create Snapshot</button>
-                <button id="toggleStatusBtn" class="btn btn-secondary"><i class="ri-shield-user-line"></i> ${user.account_status === 'suspended' ? 'Reactivate' : 'Suspend'}</button>
-            </div>
-        </div>
-        <div style="display:grid; gap:14px; margin-bottom:18px;">
-            <input id="snapshotLabel" class="input" placeholder="Snapshot label" value="Manual snapshot">
-            <textarea id="snapshotReason" class="textarea" rows="3" placeholder="Why are you taking this snapshot or restoring this account?"></textarea>
-        </div>
-        <div class="field-grid" style="margin-bottom:18px;">
-            <div>
-                <label class="form-label" for="statusReason">Status reason</label>
-                <textarea id="statusReason" class="textarea" rows="3" placeholder="Add the reason for the ban, suspension, or reactivation.">${KatsuCases.escapeHtml(user.account_status_reason || '')}</textarea>
-            </div>
-            <div>
-                <label class="form-label" for="statusExpiresAt">Status ends at</label>
-                <input id="statusExpiresAt" class="input" type="datetime-local" value="${KatsuCases.escapeHtml(toDatetimeLocalValue(user.account_status_expires_at))}">
-                <div class="form-hint">Leave blank to keep the suspension permanent.</div>
-            </div>
-        </div>
-        <div class="panel-head"><div><h3>Stored versions</h3><p>Restore a previous account state when needed.</p></div></div>
-        <div id="snapshotList" style="display:grid; gap:14px; margin-top:14px;">${snapshots.length ? snapshots.map((snapshot) => snapshotCard(snapshot, user.id)).join('') : '<div class="profile-account-note">No snapshots yet for this user.</div>'}</div>
-    `;
-
-    document.getElementById('createSnapshotBtn').addEventListener('click', async () => {
-        const label = document.getElementById('snapshotLabel').value.trim() || 'Manual snapshot';
-        const reason = document.getElementById('snapshotReason').value.trim() || 'Manual admin snapshot';
-        const button = document.getElementById('createSnapshotBtn');
-        KatsuCases.setLoading(true, button);
-        try {
-            await KatsuCases.api.post(`/api/admin/users/${user.id}/snapshots`, { label, reason });
-            KatsuCases.showToast('Snapshot created', 'success');
-            await renderSelectedUser(user);
-        } catch (error) {
-            KatsuCases.showToast(error.message || 'Failed to create snapshot', 'error');
-        } finally {
-            KatsuCases.setLoading(false, button);
-        }
-    });
-
-    document.getElementById('toggleStatusBtn').addEventListener('click', async () => {
-        const nextStatus = user.account_status === 'suspended' ? 'active' : 'suspended';
-        const reason = document.getElementById('statusReason').value.trim() || `Account ${nextStatus}`;
-        const expiresAt = document.getElementById('statusExpiresAt').value;
-        const button = document.getElementById('toggleStatusBtn');
-        KatsuCases.setLoading(true, button);
-        try {
-            const result = await KatsuCases.api.post(`/api/admin/users/${user.id}/status`, { status: nextStatus, reason, expires_at: nextStatus === 'suspended' ? (expiresAt || null) : null });
-            user.account_status = nextStatus;
-            user.account_status_reason = result.user?.account_status_reason || (nextStatus === 'suspended' ? reason : '');
-            user.account_status_expires_at = result.user?.account_status_expires_at || null;
-            KatsuCases.showToast(`Account ${nextStatus === 'active' ? 'reactivated' : 'suspended'}`, 'success');
-            await renderSelectedUser(user);
-            await searchUsers();
-        } catch (error) {
-            KatsuCases.showToast(error.message || 'Failed to update account status', 'error');
-        } finally {
-            KatsuCases.setLoading(false, button);
-        }
-    });
-
-    document.querySelectorAll('.rollback-restore-btn').forEach((button) => {
-        button.addEventListener('click', async () => {
-            const snapshotId = button.dataset.snapshotId;
-            const label = document.getElementById('snapshotLabel').value.trim() || 'Rollback';
-            const reason = document.getElementById('snapshotReason').value.trim() || 'Admin rollback restore';
-            if (!confirm(`Restore snapshot #${snapshotId} for @${user.username}?`)) return;
-            KatsuCases.setLoading(true, button);
-            try {
-                await KatsuCases.api.post(`/api/admin/users/${user.id}/rollback/${snapshotId}`, { label, reason });
-                KatsuCases.showToast('Account restored from snapshot', 'success');
-                await renderSelectedUser(user);
-            } catch (error) {
-                KatsuCases.showToast(error.message || 'Failed to restore snapshot', 'error');
-            } finally {
-                KatsuCases.setLoading(false, button);
-            }
-        });
-    });
-}
-
-async function searchUsers() {
-    const query = document.getElementById('userSearchInput').value.trim();
-    const data = await KatsuCases.api.get(`/api/admin/users/search?query=${encodeURIComponent(query)}`);
-    const users = Array.isArray(data.users) ? data.users : [];
-    const wrap = document.getElementById('userSearchResults');
-    if (!users.length) {
-        wrap.innerHTML = '<div class="profile-account-note">No users matched your search.</div>';
+function renderTicketList() {
+    const wrap = document.getElementById('supportTicketsList');
+    if (!supportTickets.length) {
+        wrap.innerHTML = '<div class="ticket-empty-state"><div><i class="ri-customer-service-2-line"></i><div>No tickets yet</div><div style="margin-top:8px;">Open one from the form above.</div></div></div>';
         return;
     }
-    wrap.innerHTML = users.map(userResultCard).join('');
-    wrap.querySelectorAll('.rollback-user-card').forEach((button) => {
-        button.addEventListener('click', async () => {
-            const user = users.find((entry) => Number(entry.id) === Number(button.dataset.userId));
-            if (user) await renderSelectedUser(user);
-        });
-    });
+    wrap.innerHTML = supportTickets.map(ticketRowMarkup).join('');
+    wrap.querySelectorAll('[data-ticket-id]').forEach((button) => button.addEventListener('click', () => { activeTicketId = Number(button.dataset.ticketId); renderSupportDesk(); }));
 }
-
-document.getElementById('userSearchBtn').addEventListener('click', searchUsers);
-document.getElementById('userSearchInput').addEventListener('keydown', (event) => { if (event.key === 'Enter') searchUsers(); });
-
-document.addEventListener('DOMContentLoaded', async () => {
-    KatsuCases.init();
-    try {
-        const auth = await KatsuCases.api.get('/api/auth/me');
-        if (!auth.user?.is_admin) {
-            window.location.href = '/';
-            return;
-        }
-        await searchUsers();
-    } catch (error) {
-        KatsuCases.showToast(error.message || 'Failed to load rollback tools', 'error');
+function renderActiveTicket() {
+    const ticket = supportTickets.find((entry) => Number(entry.id) === Number(activeTicketId)) || supportTickets[0] || null;
+    if (ticket && activeTicketId === null) activeTicketId = Number(ticket.id);
+    const title = document.getElementById('activeTicketTitle');
+    const meta = document.getElementById('activeTicketMeta');
+    const log = document.getElementById('supportThread');
+    const hint = document.getElementById('activeTicketHint');
+    const form = document.getElementById('supportReplyForm');
+    if (!ticket) {
+        title.textContent = 'No ticket selected';
+        meta.innerHTML = '';
+        hint.style.display = 'block';
+        log.innerHTML = '<div class="ticket-empty-state"><div><i class="ri-mail-open-line"></i><div>No active support thread yet.</div></div></div>';
+        form.style.display = 'none';
+        return;
     }
+    title.textContent = `#${Number(ticket.id)} · ${ticket.subject || 'Untitled ticket'}`;
+    meta.innerHTML = `<span class="ticket-pill ${ticketStatusClass(ticket.status)}">${KatsuCases.escapeHtml(ticket.status || 'open')}</span><span class="ticket-pill"><i class="ri-price-tag-3-line"></i>${KatsuCases.escapeHtml(ticket.category || 'general')}</span><span class="ticket-pill"><i class="ri-alarm-warning-line"></i>${KatsuCases.escapeHtml(ticket.priority || 'normal')}</span><span class="ticket-pill"><i class="ri-time-line"></i>${new Date(ticket.updated_at || ticket.created_at).toLocaleString()}</span>`;
+    hint.style.display = 'none';
+    log.innerHTML = (Array.isArray(ticket.replies) ? ticket.replies : []).map(ticketBubbleMarkup).join('') || '<div class="ticket-empty-state"><div><i class="ri-chat-1-line"></i><div>No replies yet.</div></div></div>';
+    log.scrollTop = log.scrollHeight;
+    form.style.display = 'grid';
+    form.dataset.ticketId = String(ticket.id);
+}
+function renderSupportDesk() { renderTicketSummary(); renderTicketList(); renderActiveTicket(); }
+async function loadTickets(silent = false) {
+    try {
+        const data = await KatsuCases.api.get('/api/support/tickets');
+        supportTickets = Array.isArray(data.tickets) ? data.tickets : [];
+        if (!supportTickets.some((ticket) => Number(ticket.id) === Number(activeTicketId))) activeTicketId = supportTickets.length ? Number(supportTickets[0].id) : null;
+        renderSupportDesk();
+    } catch (error) { if (!silent) KatsuCases.showToast(error.message || 'Failed to load support tickets', 'error'); }
+}
+function startSupportPolling() { if (!supportPoll) supportPoll = window.setInterval(() => loadTickets(true), 6000); }
+document.getElementById('supportForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = event.target.querySelector('button[type="submit"]');
+    KatsuCases.setLoading(true, button);
+    try {
+        const result = await KatsuCases.api.post('/api/support/tickets', { subject: document.getElementById('ticketSubject').value, category: document.getElementById('ticketCategory').value, priority: document.getElementById('ticketPriority').value, message: document.getElementById('ticketMessage').value });
+        event.target.reset();
+        activeTicketId = Number(result.ticket?.id || 0) || activeTicketId;
+        KatsuCases.showToast('Support ticket opened', 'success');
+        await loadTickets(true);
+    } catch (error) { KatsuCases.showToast(error.message || 'Failed to create support ticket', 'error'); }
+    finally { KatsuCases.setLoading(false, button); }
 });
+document.getElementById('supportReplyForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const ticketId = event.target.dataset.ticketId;
+    const messageField = document.getElementById('supportReplyMessage');
+    const message = messageField.value.trim();
+    if (!ticketId || !message) return;
+    const button = event.target.querySelector('button[type="submit"]');
+    KatsuCases.setLoading(true, button);
+    try {
+        await KatsuCases.api.post(`/api/support/tickets/${ticketId}/reply`, { message });
+        messageField.value = '';
+        KatsuCases.showToast('Reply sent', 'success');
+        await loadTickets(true);
+    } catch (error) { KatsuCases.showToast(error.message || 'Failed to reply to ticket', 'error'); }
+    finally { KatsuCases.setLoading(false, button); }
+});
+document.getElementById('ticketRefreshBtn').addEventListener('click', () => loadTickets());
+document.addEventListener('DOMContentLoaded', async () => { KatsuCases.init(); await loadTickets(); startSupportPolling(); });
 </script>
 </body>
 </html>

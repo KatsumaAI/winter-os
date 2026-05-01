@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claim Reward - KatsuCases</title>
+    <meta name="description" content="Preview and redeem KatsuCases reward links for balance, free rolls, badges, and Pokémon drops.">
+    <meta name="theme-color" content="#0a0e1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body>
+<div class="page-wrapper">
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo"><span>KatsuCases</span></a>
+            <nav class="nav">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/cases" class="nav-link">Cases</a>
+                <a href="/inventory" class="nav-link">Inventory</a>
+                <a href="/casevs" class="nav-link">Case Vs</a>
+            </nav>
+            <div class="header-actions">
+                <div class="balance-display"><i class="ri-wallet-3-line"></i><span class="balance-value">$0.00</span></div>
+                <div class="auth-buttons">
+                    <a href="/signin" class="btn btn-ghost">Sign In</a>
+                    <a href="/signup" class="btn btn-primary">Sign Up</a>
+                </div>
+                <div class="user-area" style="display:none;">
+                    <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
+                    <div class="user-menu">
+                        <div class="user-menu-trigger"><div class="user-avatar"><span class="user-initial">U</span></div><span class="user-name">Username</span></div>
+                        <div class="user-menu-dropdown">
+                            <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                            <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><i class="ri-menu-line"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content" style="padding-top:120px;">
+        <section class="section-sm">
+            <div class="container" style="max-width:900px;">
+                <div class="section-title" style="margin-bottom:22px;">
+                    <div class="discord-page-kicker"><i class="ri-gift-2-line"></i> Reward Preview</div>
+                    <h1>Claim Link</h1>
+                    <p>See exactly what this reward grants before you redeem it.</p>
+                </div>
+                <div class="discord-panel" id="claimCard" style="padding:26px; min-height:320px; display:flex; align-items:center; justify-content:center;">
+                    <div class="empty-state"><i class="ri-loader-4-line"></i><h3>Loading reward</h3><p>Checking what this claim link contains.</p></div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+<script src="/js/main.js"></script>
+<script>
+function getClaimCode() {
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    return decodeURIComponent(parts[parts.length - 1] || '');
+}
+
+function claimDetailMarkup(claim) {
+    const details = claim.details || {};
+    if (claim.type === 'balance') {
+        return `<div class="admin-rain-card"><strong>Balance Drop</strong><div class="rain-meta" style="margin-top:8px;">Adds ${KatsuCases.formatCurrency(details.amount || 0)} to the account that redeems it.</div></div>`;
+    }
+    if (claim.type === 'rolls') {
+        return `<div class="admin-rain-card"><strong>Free Rolls</strong><div class="rain-meta" style="margin-top:8px;">Adds ${Number(details.rolls || 0)} free roll${Number(details.rolls || 0) === 1 ? '' : 's'}.</div></div>`;
+    }
+    if (claim.type === 'badge') {
+        return `<div class="admin-rain-card"><strong>Badge Unlock</strong><div class="rain-meta" style="margin-top:8px;">Awards the <span class="badge badge-verified">${KatsuCases.escapeHtml(String(details.badge || '').toUpperCase())}</span> badge.</div></div>`;
+    }
+    if (claim.type === 'pokemon') {
+        return `
+            <div class="admin-rain-card" style="display:flex; gap:18px; align-items:center;">
+                <div style="width:92px; height:92px; border-radius:22px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); display:flex; align-items:center; justify-content:center;">
+                    ${KatsuCases.buildSpriteImg({ pokemonName: details.pokemon_name, isShiny: details.is_shiny, spriteUrl: details.sprite_url || '', alt: details.pokemon_name, style: 'width:74px; height:74px;' })}
+                </div>
+                <div>
+                    <strong style="font-size:24px; display:block;">${KatsuCases.escapeHtml(details.pokemon_name || 'Pokémon Reward')}</strong>
+                    <div class="rain-meta" style="margin-top:8px;">${KatsuCases.escapeHtml(details.rarity || 'epic')} · 1 in ${KatsuCases.formatNumber(details.odds || 0)}${Number(details.is_shiny || 0) ? ' · Shiny' : ''}</div>
+                </div>
+            </div>`;
+    }
+    return '<div class="admin-rain-card">Unsupported reward type.</div>';
+}
+
+async function loadClaimPreview() {
+    const code = getClaimCode();
+    const target = document.getElementById('claimCard');
+    if (!code) {
+        target.innerHTML = '<div class="empty-state"><i class="ri-error-warning-line"></i><h3>No claim code found</h3><p>This link is missing its reward code.</p></div>';
+        return;
+    }
+    try {
+        const data = await KatsuCases.api.get(`/api/claims/${encodeURIComponent(code)}`);
+        const claim = data.claim;
+        const remaining = Math.max(0, Number(claim.max_claims || 0) - Number(claim.claimed_count || 0));
+        const expires = claim.expires_at ? new Date(claim.expires_at) : null;
+        target.innerHTML = `
+            <div style="width:100%; display:grid; gap:18px;">
+                <div class="live-pull-head">
+                    <div>
+                        <div class="discord-panel-kicker"><i class="ri-links-line"></i> Reward Link ${KatsuCases.escapeHtml(claim.code)}</div>
+                        <h3 style="margin:8px 0 6px;">${KatsuCases.escapeHtml(claim.title)}</h3>
+                        <p style="color:var(--text-secondary);">${remaining} of ${Number(claim.max_claims || 0)} claim${Number(claim.max_claims || 0) === 1 ? '' : 's'} remaining${expires ? ` · expires ${expires.toLocaleString()}` : ''}</p>
+                    </div>
+                    <span class="badge badge-${claim.type === 'pokemon' ? 'legendary' : claim.type === 'balance' ? 'epic' : 'verified'}">${KatsuCases.escapeHtml(claim.type)}</span>
+                </div>
+                ${claimDetailMarkup(claim)}
+                ${claim.locked_user_id ? `<div class="admin-rain-card"><strong>Locked reward</strong><div class="rain-meta" style="margin-top:8px;">This link is reserved for user ID ${Number(claim.locked_user_id)}.</div></div>` : ''}
+                <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                    ${KatsuCases.state.user ? `<button class="btn btn-primary" id="claimNowBtn"><i class="ri-gift-line"></i> Claim Reward</button>` : `<a class="btn btn-primary" href="/signin"><i class="ri-login-box-line"></i> Sign In To Claim</a>`}
+                    <button class="btn btn-ghost" type="button" id="copyClaimLinkBtn"><i class="ri-file-copy-line"></i> Copy Link</button>
+                </div>
+                <div id="claimStatus" class="rain-meta"></div>
+            </div>`;
+        const copyBtn = document.getElementById('copyClaimLinkBtn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(window.location.href);
+                    KatsuCases.showToast('Claim link copied', 'success');
+                } catch (error) {
+                    KatsuCases.showToast('Copy failed', 'error');
+                }
+            });
+        }
+        const claimBtn = document.getElementById('claimNowBtn');
+        if (claimBtn) {
+            claimBtn.addEventListener('click', async () => {
+                claimBtn.disabled = true;
+                claimBtn.innerHTML = '<i class="ri-loader-4-line"></i> Claiming…';
+                try {
+                    await KatsuCases.api.post(`/api/claims/${encodeURIComponent(code)}/claim`, {});
+                    document.getElementById('claimStatus').textContent = 'Claim completed. Your account has been updated.';
+                    KatsuCases.showToast('Reward claimed', 'success');
+                    await KatsuCases.checkAuth();
+                    await loadClaimPreview();
+                } catch (error) {
+                    document.getElementById('claimStatus').textContent = error.message || 'Claim failed.';
+                    KatsuCases.showToast(error.message || 'Claim failed', 'error');
+                } finally {
+                    claimBtn.disabled = false;
+                    claimBtn.innerHTML = '<i class="ri-gift-line"></i> Claim Reward';
+                }
+            });
+        }
+    } catch (error) {
+        target.innerHTML = `<div class="empty-state"><i class="ri-error-warning-line"></i><h3>Reward link unavailable</h3><p>${KatsuCases.escapeHtml(error.message || 'This claim link could not be loaded.')}</p></div>`;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    KatsuCases.applyBranding();
+    await KatsuCases.checkAuth();
+    await loadClaimPreview();
+});
+</script>
+</body>
+</html>

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KatsuCases - Admin Security</title>
-    <meta name="description" content="Moderate trades, issue OTP password resets, and control player account status from the KatsuCases owner security console.">
+    <title>Recover Account - KatsuCases</title>
+    <meta name="description" content="Recover your KatsuCases account with IP-aware checks, captcha, and recent-roll verification when needed.">
     <meta name="theme-color" content="#0a0e1a">
     <meta name="robots" content="noindex,nofollow">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,277 +16,120 @@
     <link rel="stylesheet" href="/css/pages.css">
 </head>
 <body>
-<div class="page-wrapper">
-    <header class="header">
-        <div class="header-inner">
-            <a href="/" class="logo"><div class="logo-icon"><i class="ri-shield-star-line"></i></div><span>KatsuCases</span></a>
-            <nav class="nav">
-                <a href="/admin" class="nav-link">Admin</a>
-                <a href="/admin/security" class="nav-link active">Security</a>
-                <a href="/admin/support" class="nav-link">Support</a>
-                <a href="/admin/rollbacks" class="nav-link">Rollbacks</a>
-            </nav>
-            <div class="header-actions">
-                <div class="balance-display"><i class="ri-wallet-3-line"></i><span class="balance-value">$0.00</span></div>
-                <div class="user-area" style="display:flex; align-items:center; gap:16px;">
-                    <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
-                    <div class="user-menu">
-                        <div class="user-menu-trigger"><div class="user-avatar"><span class="user-initial">U</span></div><span class="user-name">Username</span></div>
-                        <div class="user-menu-dropdown">
-                            <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
-                            <a href="/admin" class="user-menu-item"><i class="ri-settings-3-line"></i> Admin</a>
-                            <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
-                        </div>
-                    </div>
-                </div>
-                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><i class="ri-menu-line"></i></button>
+<div class="auth-page auth-page--split">
+    <div class="auth-shell">
+        <section class="auth-showcase auth-showcase--signin">
+            <a href="/" class="auth-brand" aria-label="KatsuCases home">
+                <img src="/assets/katsucases-topbar-logo.png" alt="KatsuCases" class="auth-brand-logo">
+            </a>
+            <div class="auth-showcase-copy">
+                <div class="auth-kicker"><span class="live-dot"></span> Account recovery</div>
+                <h1>Recover access without leaving the site.</h1>
+                <p>If you sign in from a new location, we can add a simple captcha and a recent-roll check before opening a reset link.</p>
             </div>
-        </div>
-    </header>
-
-    <main class="main-content" style="padding-top:120px;">
-        <section class="section-sm">
-            <div class="container" style="max-width:1280px;">
-                <div class="hero-copy admin-hero-copy" style="margin-bottom:24px;">
-                    <div class="hero-eyebrow"><span class="live-dot"></span>Owner Security Console</div>
-                    <h1>Ban and unban players, issue OTP resets, and cancel bad trades from one clean moderation page.</h1>
-                    <p>This page groups the user-selected actions into a dedicated owner workspace so the main admin panel stays focused on site operations.</p>
+        </section>
+        <section class="auth-panel">
+            <div class="auth-card auth-card--discordish">
+                <div class="auth-header auth-header--left">
+                    <div class="auth-chip">Recovery</div>
+                    <h2>Reset your password</h2>
+                    <p>Enter your username or email to begin recovery.</p>
                 </div>
 
-                <div class="admin-discord-layout">
-                    <aside class="admin-discord-sidebar">
-                        <div class="admin-discord-server">
-                            <div class="admin-discord-server-icon"><i class="ri-lock-star-line"></i></div>
-                            <div><strong>Security</strong><span>Moderation + recovery</span></div>
-                        </div>
-                        <div class="admin-discord-nav-group">
-                            <div class="admin-discord-nav-label">Jump</div>
-                            <a class="admin-discord-link active" href="#securityUsers"><i class="ri-user-settings-line"></i><span>User controls</span></a>
-                            <a class="admin-discord-link" href="#securityReset"><i class="ri-key-2-line"></i><span>Password reset</span></a>
-                            <a class="admin-discord-link" href="#securityTrades"><i class="ri-forbid-2-line"></i><span>Trade moderation</span></a>
-                            <a class="admin-discord-link" href="#securityFlags"><i class="ri-alarm-warning-line"></i><span>Ban evasion</span></a>
-                        </div>
-                    </aside>
-
-                    <div class="admin-discord-main">
-                        <div class="admin-grid" style="grid-template-columns:minmax(0,1fr);">
-                            <section class="panel admin-panel" id="securityUsers">
-                                <div class="panel-head"><div><h3>User account controls</h3><p>Search a player, then suspend, reactivate, or review their account details.</p></div></div>
-                                <div class="stack-form">
-                                    <div class="field-grid">
-                                        <div>
-                                            <label class="form-label" for="securityUserSearch">Find user</label>
-                                            <input id="securityUserSearch" class="input" placeholder="Search username or email">
-                                        </div>
-                                    </div>
-                                    <div id="securityUserSearchResults" class="admin-feed-list"></div>
-                                    <div id="securitySelectedUser" class="admin-rain-card empty">Select a user to unlock moderation actions.</div>
-                                    <div class="field-grid">
-                                        <div>
-                                            <label class="form-label" for="securityActionReason">Reason</label>
-                                            <textarea id="securityActionReason" class="textarea" rows="3" placeholder="Add the moderation reason players and staff should see."></textarea>
-                                        </div>
-                                        <div>
-                                            <label class="form-label" for="securityActionExpiresAt">Ends at</label>
-                                            <input id="securityActionExpiresAt" class="input" type="datetime-local">
-                                            <div class="form-hint">Leave blank to keep the ban or suspension permanent.</div>
-                                        </div>
-                                    </div>
-                                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
-                                        <button id="securitySuspendBtn" class="btn btn-secondary" type="button"><i class="ri-forbid-line"></i> Ban / Suspend</button>
-                                        <button id="securityActivateBtn" class="btn btn-ghost" type="button"><i class="ri-shield-check-line"></i> Unban / Reactivate</button>
-                                        <a href="/admin/rollbacks" class="btn btn-ghost"><i class="ri-history-line"></i> Open Rollbacks</a>
-                                    </div>
-                                </div>
-                            </section>
-
-                            <section class="panel admin-panel" id="securityReset">
-                                <div class="panel-head"><div><h3>Owner OTP password reset</h3><p>Create a one-time reset code and direct link for the selected account.</p></div></div>
-                                <div class="stack-form">
-                                    <div id="securityResetCard" class="admin-rain-card empty">Select a user first, then issue a reset.</div>
-                                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
-                                        <button id="issueOtpBtn" class="btn btn-primary" type="button"><i class="ri-key-line"></i> Issue OTP Reset</button>
-                                        <a href="/reset-password" class="btn btn-ghost"><i class="ri-external-link-line"></i> Open Reset Page</a>
-                                    </div>
-                                </div>
-                            </section>
-
-                            <section class="panel admin-panel" id="securityTrades">
-                                <div class="panel-head"><div><h3>Pending trade moderation</h3><p>Cancel suspicious or broken trades before they complete.</p></div></div>
-                                <div id="securityTradesList" class="admin-feed-list"></div>
-                            </section>
-
-                            <section class="panel admin-panel" id="securityFlags">
-                                <div class="panel-head"><div><h3>Ban evasion watchlist</h3><p>Recent signups or logins that matched the IP of a suspended account.</p></div></div>
-                                <div id="securityFlagsList" class="admin-feed-list"></div>
-                            </section>
+                <form id="recoveryStartForm" class="auth-form auth-form--enhanced">
+                    <div class="form-group">
+                        <label class="form-label" for="recoveryIdentifier">Username or Email</label>
+                        <div class="auth-input-wrap">
+                            <i class="ri-user-search-line auth-input-icon"></i>
+                            <input type="text" class="form-input auth-input" id="recoveryIdentifier" placeholder="your_username or you@example.com" required>
                         </div>
                     </div>
+                    <div id="recoveryChallengeArea" style="display:none; gap:14px;">
+                        <div id="recoveryNotice" class="auth-security-note"><i class="ri-shield-keyhole-line"></i> Security checks may appear here.</div>
+                        <div class="form-group" id="captchaGroup" style="display:none;">
+                            <label class="form-label" for="captchaAnswer">Captcha</label>
+                            <div class="auth-input-wrap">
+                                <i class="ri-shield-check-line auth-input-icon"></i>
+                                <input type="text" class="form-input auth-input" id="captchaAnswer" placeholder="Answer the captcha">
+                            </div>
+                            <span class="form-hint" id="captchaPrompt">Solve the challenge shown here.</span>
+                        </div>
+                        <div class="form-group" id="securityQuestionGroup" style="display:none;">
+                            <label class="form-label" for="securityAnswer">Recent roll verification</label>
+                            <div class="auth-input-wrap">
+                                <i class="ri-sword-line auth-input-icon"></i>
+                                <input type="text" class="form-input auth-input" id="securityAnswer" placeholder="Enter your latest roll">
+                            </div>
+                            <span class="form-hint" id="securityQuestionText"></span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg auth-submit"><i class="ri-key-2-line"></i> Continue</button>
+                </form>
+
+                <div id="recoverySuccessCard" class="auth-bonus-card" style="display:none; margin-top:18px;">
+                    <div class="auth-bonus-icon"><i class="ri-links-line"></i></div>
+                    <div>
+                        <strong>Reset link ready</strong>
+                        <p id="resetLinkCopy">Your one-time reset link will appear here.</p>
+                        <a id="resetLinkBtn" href="#" class="btn btn-secondary" style="margin-top:12px;"><i class="ri-external-link-line"></i> Open Reset Page</a>
+                    </div>
+                </div>
+
+                <div class="auth-footer auth-footer--compact">
+                    <a href="/signin">Back to sign in</a>
                 </div>
             </div>
         </section>
-    </main>
+    </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
 <script src="/js/main.js"></script>
 <script>
-let selectedSecurityUser = null;
+let recoveryRequestId = '';
 
-function toDatetimeLocalValue(value) {
-    if (!value) return '';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '';
-    const pad = (num) => String(num).padStart(2, '0');
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-function formatStatusUntil(value) {
-    if (!value) return 'Permanent';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? 'Permanent' : date.toLocaleString();
-}
-
-function renderSecurityUserCard(user) {
-    const target = document.getElementById('securitySelectedUser');
-    if (!user) {
-        target.className = 'admin-rain-card empty';
-        target.textContent = 'Select a user to unlock moderation actions.';
-        return;
-    }
-    const statusLine = user.account_status === 'suspended'
-        ? `Status: suspended · Until ${KatsuCases.escapeHtml(formatStatusUntil(user.account_status_expires_at))} · Role: ${KatsuCases.escapeHtml(user.site_role || 'player')} · Last IP: ${KatsuCases.escapeHtml(user.last_login_ip || 'unknown')}`
-        : `Status: ${KatsuCases.escapeHtml(user.account_status || 'active')} · Role: ${KatsuCases.escapeHtml(user.site_role || 'player')} · Last IP: ${KatsuCases.escapeHtml(user.last_login_ip || 'unknown')}`;
-    const reasonLine = user.account_status === 'suspended' && user.account_status_reason
-        ? `<div class="rain-meta" style="margin-top:6px;">Reason: ${KatsuCases.escapeHtml(user.account_status_reason)}</div>`
-        : '';
-    target.className = 'admin-rain-card';
-    target.innerHTML = `<div><strong>${KatsuCases.escapeHtml(user.display_name || user.username)}</strong><div class="rain-meta">@${KatsuCases.escapeHtml(user.username)} · ${KatsuCases.escapeHtml(user.email || 'no email')} · ${KatsuCases.formatCompactCurrency(user.balance || 0)}</div><div class="rain-meta" style="margin-top:6px;">${statusLine}</div>${reasonLine}${user.suspected_ban_evasion ? '<div class="rain-meta" style="margin-top:6px; color:#fca5a5;">Ban evasion watch flag is active for this account.</div>' : ''}</div>`;
-}
-
-async function searchSecurityUsers(query = '') {
-    const data = await KatsuCases.api.get(`/api/admin/users/search?query=${encodeURIComponent(query)}`);
-    const results = Array.isArray(data.users) ? data.users : [];
-    document.getElementById('securityUserSearchResults').innerHTML = results.length ? results.map((user) => `
-        <button class="trade-select-item" type="button" onclick="selectSecurityUser(${Number(user.id)})">
-            <div style="text-align:left;">
-                <div style="font-weight:600;">${KatsuCases.escapeHtml(user.display_name || user.username)}</div>
-                <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">@${KatsuCases.escapeHtml(user.username)} · ${KatsuCases.escapeHtml(user.email || '')}</div>
-            </div>
-        </button>`).join('') : '<div class="admin-feed-empty">No matching users.</div>';
-    window.__securityUsers = results;
-}
-
-function selectSecurityUser(id) {
-    selectedSecurityUser = (window.__securityUsers || []).find((entry) => Number(entry.id) === Number(id)) || null;
-    renderSecurityUserCard(selectedSecurityUser);
-    document.getElementById('securityActionReason').value = selectedSecurityUser?.account_status_reason || '';
-    if (!selectedSecurityUser?.account_status_reason) document.getElementById('securityActionReason').placeholder = 'Add the moderation reason players and staff should see.';
-    document.getElementById('securityActionExpiresAt').value = toDatetimeLocalValue(selectedSecurityUser?.account_status_expires_at);
-}
-
-async function loadSecurityTrades() {
-    const data = await KatsuCases.api.get('/api/admin/trades?status=pending&limit=20');
-    const trades = Array.isArray(data.trades) ? data.trades : [];
-    document.getElementById('securityTradesList').innerHTML = trades.length ? trades.map((trade) => `
-        <div class="admin-feed-item">
-            <div>
-                <strong>Trade #${Number(trade.id)}</strong>
-                <div class="rain-meta">${KatsuCases.escapeHtml(trade.sender_username)} → ${KatsuCases.escapeHtml(trade.receiver_username)} · ${trade.offer_count || 0} offered · ${trade.request_count || 0} requested</div>
-                <div class="rain-meta" style="margin-top:4px;">Offer ${KatsuCases.formatCompactCurrency(trade.fairness?.offerValue || 0)} · Request ${KatsuCases.formatCompactCurrency(trade.fairness?.requestValue || 0)}</div>
-            </div>
-            <button class="btn btn-ghost" type="button" onclick="cancelTrade(${Number(trade.id)})"><i class="ri-close-circle-line"></i> Cancel</button>
-        </div>
-    `).join('') : '<div class="admin-feed-empty">No pending trades right now.</div>';
-}
-
-async function loadSecurityFlags() {
-    const data = await KatsuCases.api.get('/api/admin/security/ban-evasion');
-    const flags = Array.isArray(data.flags) ? data.flags : [];
-    document.getElementById('securityFlagsList').innerHTML = flags.length ? flags.map((flag) => `
-        <div class="admin-feed-item">
-            <div>
-                <strong>${KatsuCases.escapeHtml(flag.username || flag.user?.username || 'Unknown user')}</strong>
-                <div class="rain-meta">IP ${KatsuCases.escapeHtml(flag.ip || 'unknown')} · ${new Date(flag.created_at).toLocaleString()}</div>
-                <div class="rain-meta" style="margin-top:6px;">Matched suspended accounts: ${(flag.related_users || []).map((user) => KatsuCases.escapeHtml(user.username)).join(', ') || 'None listed'}</div>
-            </div>
-        </div>
-    `).join('') : '<div class="admin-feed-empty">No ban evasion flags right now.</div>';
-}
-
-async function cancelTrade(id) {
+document.getElementById('recoveryStartForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = event.target.querySelector('button[type="submit"]');
+    const identifier = document.getElementById('recoveryIdentifier').value.trim();
+    KatsuCases.setLoading(true, button);
     try {
-        await KatsuCases.api.post(`/api/admin/trades/${id}/cancel`, { reason: 'Cancelled from owner security console' });
-        KatsuCases.showToast('Trade cancelled', 'success');
-        await loadSecurityTrades();
+        if (!recoveryRequestId) {
+            const data = await KatsuCases.api.post('/api/auth/forgot-password/start', { identifier });
+            recoveryRequestId = data.request_id;
+            document.getElementById('recoveryChallengeArea').style.display = 'grid';
+            document.getElementById('recoveryNotice').innerHTML = `<i class="ri-shield-keyhole-line"></i> ${data.is_new_location ? 'New location detected. Extra checks are required.' : 'Identity checks loaded.'}`;
+            document.getElementById('captchaGroup').style.display = data.requires_captcha ? 'block' : 'none';
+            document.getElementById('captchaPrompt').textContent = data.requires_captcha ? `Solve: ${data.captcha_prompt}` : '';
+            document.getElementById('securityQuestionGroup').style.display = data.requires_last_roll ? 'block' : 'none';
+            document.getElementById('securityQuestionText').textContent = data.question || '';
+            if (!data.requires_captcha && !data.requires_last_roll) {
+                const verified = await KatsuCases.api.post('/api/auth/forgot-password/verify', { request_id: recoveryRequestId });
+                showResetSuccess(verified);
+            } else {
+                KatsuCases.showToast('Complete the recovery checks to continue', 'info');
+            }
+        } else {
+            const verified = await KatsuCases.api.post('/api/auth/forgot-password/verify', {
+                request_id: recoveryRequestId,
+                captcha_answer: document.getElementById('captchaAnswer').value.trim(),
+                security_answer: document.getElementById('securityAnswer').value.trim()
+            });
+            showResetSuccess(verified);
+        }
     } catch (error) {
-        KatsuCases.showToast(error.message || 'Failed to cancel trade', 'error');
-    }
-}
-
-document.getElementById('securityUserSearch').addEventListener('input', KatsuCases.debounce((event) => {
-    searchSecurityUsers(event.target.value).catch((error) => KatsuCases.showToast(error.message || 'Search failed', 'error'));
-}, 220));
-
-document.getElementById('securitySuspendBtn').addEventListener('click', async () => {
-    if (!selectedSecurityUser) return KatsuCases.showToast('Select a user first', 'error');
-    const reason = document.getElementById('securityActionReason').value.trim() || 'Suspended from owner security console';
-    const expiresAt = document.getElementById('securityActionExpiresAt').value;
-    try {
-        const result = await KatsuCases.api.post(`/api/admin/users/${selectedSecurityUser.id}/status`, { status: 'suspended', reason, expires_at: expiresAt || null });
-        selectedSecurityUser.account_status = 'suspended';
-        selectedSecurityUser.account_status_reason = result.user?.account_status_reason || reason;
-        selectedSecurityUser.account_status_expires_at = result.user?.account_status_expires_at || null;
-        if (result.demoted_to_player) selectedSecurityUser.site_role = 'player';
-        renderSecurityUserCard(selectedSecurityUser);
-        KatsuCases.showToast(result.demoted_to_player ? 'Account suspended and demoted to player' : 'Account suspended', 'success');
-    } catch (error) {
-        KatsuCases.showToast(error.message || 'Failed to suspend account', 'error');
+        KatsuCases.showToast(error.message || 'Recovery could not continue', 'error');
+    } finally {
+        KatsuCases.setLoading(false, button);
     }
 });
 
-document.getElementById('securityActivateBtn').addEventListener('click', async () => {
-    if (!selectedSecurityUser) return KatsuCases.showToast('Select a user first', 'error');
-    const reason = document.getElementById('securityActionReason').value.trim() || 'Reactivated from owner security console';
-    try {
-        await KatsuCases.api.post(`/api/admin/users/${selectedSecurityUser.id}/status`, { status: 'active', reason });
-        selectedSecurityUser.account_status = 'active';
-        selectedSecurityUser.account_status_reason = '';
-        selectedSecurityUser.account_status_expires_at = null;
-        document.getElementById('securityActionExpiresAt').value = '';
-        renderSecurityUserCard(selectedSecurityUser);
-        KatsuCases.showToast('Account reactivated', 'success');
-    } catch (error) {
-        KatsuCases.showToast(error.message || 'Failed to reactivate account', 'error');
-    }
-});
-
-document.getElementById('issueOtpBtn').addEventListener('click', async () => {
-    if (!selectedSecurityUser) return KatsuCases.showToast('Select a user first', 'error');
-    try {
-        const data = await KatsuCases.api.post(`/api/admin/users/${selectedSecurityUser.id}/password-reset`, {});
-        document.getElementById('securityResetCard').className = 'admin-rain-card';
-        document.getElementById('securityResetCard').innerHTML = `
-            <div>
-                <strong>Reset ready for ${KatsuCases.escapeHtml(data.user.username)}</strong>
-                <div class="rain-meta">OTP <span class="badge badge-verified">${KatsuCases.escapeHtml(data.otp)}</span> · expires ${new Date(data.expires_at).toLocaleTimeString()}</div>
-                <div class="rain-meta" style="margin-top:8px;"><a href="${KatsuCases.escapeHtml(data.reset_url)}">${KatsuCases.escapeHtml(window.location.origin + data.reset_url)}</a></div>
-            </div>`;
-        KatsuCases.showToast('OTP reset created', 'success');
-    } catch (error) {
-        KatsuCases.showToast(error.message || 'Failed to create OTP reset', 'error');
-    }
-});
-
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        await searchSecurityUsers('');
-        await loadSecurityTrades();
-        await loadSecurityFlags();
-    } catch (error) {
-        KatsuCases.showToast(error.message || 'Security page failed to load', 'error');
-    }
-});
+function showResetSuccess(data) {
+    document.getElementById('recoverySuccessCard').style.display = 'flex';
+    document.getElementById('resetLinkCopy').textContent = `This reset link expires at ${new Date(data.expires_at).toLocaleTimeString()}.`;
+    document.getElementById('resetLinkBtn').href = data.reset_url;
+    recoveryRequestId = '';
+    KatsuCases.showToast('Reset link created', 'success');
+}
 </script>
 </body>
 </html>

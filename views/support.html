@@ -3,231 +3,736 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support - KatsuCases</title>
-    <meta name="description" content="Open and track support tickets for your KatsuCases account.">
+    <title>Trading - KatsuCases</title>
+    <meta name="description" content="Create trades, compare offer values, and exchange Pokémon items with other KatsuCases players in real time.">
     <meta name="theme-color" content="#0a0e1a">
+    <meta name="robots" content="index,follow">
+    <meta property="og:site_name" content="KatsuCases">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Trading - KatsuCases">
+    <meta property="og:description" content="Create trades, compare offer values, and exchange Pokémon items with other KatsuCases players in real time.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Trading - KatsuCases">
+    <meta name="twitter:description" content="Create trades, compare offer values, and exchange Pokémon items with other KatsuCases players in real time.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/pages.css">
-    <style>
-        .ticket-shell{display:grid;grid-template-columns:340px minmax(0,1fr);gap:22px;align-items:start}
-        .ticket-pane,.ticket-thread{background:rgba(11,15,24,.92);border:1px solid rgba(255,255,255,.08);border-radius:24px;box-shadow:0 18px 50px rgba(0,0,0,.28)}
-        .ticket-pane{padding:18px;position:sticky;top:106px}
-        .ticket-thread{padding:22px;min-height:720px;display:grid;grid-template-rows:auto auto 1fr auto;gap:16px}
-        .ticket-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-        .ticket-summary-card{padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
-        .ticket-summary-card strong{display:block;font-size:22px;font-family:Outfit,Inter,sans-serif}
-        .ticket-list{display:grid;gap:12px;margin-top:14px;max-height:540px;overflow:auto;padding-right:4px}
-        .ticket-row{width:100%;text-align:left;padding:14px 15px;border-radius:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);transition:.2s ease;cursor:pointer}
-        .ticket-row:hover,.ticket-row.active{border-color:rgba(99,102,241,.48);background:rgba(99,102,241,.08);transform:translateY(-1px)}
-        .ticket-row-top,.ticket-thread-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
-        .ticket-sub{font-size:12px;color:var(--text-secondary);margin-top:6px;display:flex;flex-wrap:wrap;gap:8px}
-        .ticket-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);font-size:12px;color:var(--text-secondary)}
-        .ticket-pill.status-open,.ticket-pill.status-customer-replied{color:#93c5fd;border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.12)}
-        .ticket-pill.status-awaiting-user,.ticket-pill.status-pending{color:#fcd34d;border-color:rgba(251,191,36,.34);background:rgba(251,191,36,.12)}
-        .ticket-pill.status-resolved,.ticket-pill.status-closed{color:#86efac;border-color:rgba(34,197,94,.34);background:rgba(34,197,94,.12)}
-        .ticket-thread-meta{display:flex;flex-wrap:wrap;gap:10px}
-        .ticket-thread-log{display:grid;gap:12px;overflow:auto;padding-right:4px}
-        .ticket-bubble{padding:14px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03)}
-        .ticket-bubble.support{background:rgba(81,118,255,.12);border-color:rgba(81,118,255,.28)}
-        .ticket-bubble-note{background:rgba(251,191,36,.09);border-color:rgba(251,191,36,.24)}
-        .ticket-bubble-head{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--text-secondary);margin-bottom:8px}
-        .ticket-bubble-body{white-space:pre-wrap;line-height:1.65}
-        .ticket-compose{display:grid;gap:10px}
-        .ticket-empty-state{display:grid;place-items:center;text-align:center;min-height:320px;border:1px dashed rgba(255,255,255,.08);border-radius:22px;color:var(--text-secondary)}
-        .ticket-empty-state i{font-size:42px;color:var(--accent-primary);margin-bottom:10px}
-        .ticket-toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
-        @media (max-width: 1060px){.ticket-shell{grid-template-columns:1fr}.ticket-pane{position:static}.ticket-thread{min-height:0}.ticket-summary-grid{grid-template-columns:1fr 1fr 1fr}}
-        @media (max-width: 720px){.ticket-summary-grid{grid-template-columns:1fr}.ticket-thread-head,.ticket-row-top,.ticket-toolbar{flex-direction:column;align-items:flex-start}}
-    </style>
 </head>
 <body>
-<div class="page-wrapper">
-<header class="header">
-    <div class="header-inner">
-        <a href="/" class="logo"><span>KatsuCases</span></a>
-        <nav class="nav">
-            <a href="/" class="nav-link">Home</a>
-            <a href="/cases" class="nav-link">Cases</a>
-            <a href="/settings" class="nav-link">Settings</a>
-            <a href="/inventory" class="nav-link">Inventory</a>
-        </nav>
-        <div class="header-actions">
-            <div class="balance-display"><i class="ri-wallet-3-line"></i><span class="balance-value">$0.00</span></div>
-            <div class="user-area" style="display:flex; align-items:center; gap:16px;">
-                <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
-                <div class="user-menu">
-                    <div class="user-menu-trigger"><div class="user-avatar"><span class="user-initial">U</span></div><span class="user-name">Username</span></div>
-                    <div class="user-menu-dropdown">
-                        <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
-                        <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
-                        <a href="/settings" class="user-menu-item"><i class="ri-settings-3-line"></i> Settings</a>
-                        <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+    <div class="page-wrapper">
+        <header class="header">
+            <div class="header-inner">
+                <a href="/" class="logo"><span>KatsuCases</span></a>
+                <nav class="nav">
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/cases" class="nav-link">Cases</a>
+                    <a href="/marketplace" class="nav-link">Marketplace</a>
+                    <a href="/trading" class="nav-link active">Trading</a>
+                    <a href="/livepulls" class="nav-link">Live Pulls</a>
+                    <a href="/casevs" class="nav-link">Case Vs</a>
+                    <a href="/guide" class="nav-link">Info</a>
+                </nav>
+                <div class="header-actions">
+                    <div class="balance-display">
+                        <i class="ri-wallet-3-line"></i>
+                        <span class="balance-value">$0.00</span>
                     </div>
+                    <div class="auth-buttons">
+                        <a href="/signin" class="btn btn-ghost">Sign In</a>
+                        <a href="/signup" class="btn btn-primary">Sign Up</a>
+                    </div>
+                    <div class="user-area" style="display:none;">
+                        <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
+                        <div class="user-menu">
+                            <div class="user-menu-trigger">
+                                <div class="user-avatar"><span class="user-initial">U</span></div>
+                                <span class="user-name">Username</span>
+                            </div>
+                            <div class="user-menu-dropdown">
+                                <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                                <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                                <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                                    <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><i class="ri-menu-line"></i></button>
                 </div>
             </div>
-            <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><i class="ri-menu-line"></i></button>
+        </header>
+
+        <main class="main-content discord-page discord-trading-page">
+            <section class="cases-hero section-sm">
+                <div class="container">
+                    <div class="section-title discord-section-title">
+                        <div class="discord-page-kicker"><i class="ri-exchange-line"></i> Trade Hub</div>
+                        <h1>Trading</h1>
+                        <p>Send real offers, add return items on accept, and complete swaps instantly.</p>
+                    </div>
+                    <div class="discord-hero-rail">
+                        <div class="discord-hero-chip"><i class="ri-inbox-archive-line"></i><span>Inbox-style offer feed</span></div>
+                        <div class="discord-hero-chip"><i class="ri-scales-3-line"></i><span>Fairness checks</span></div>
+                        <div class="discord-hero-chip"><i class="ri-user-shared-line"></i><span>Return-item swaps</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section-sm">
+                <div class="container">
+                    <div class="trade-terminal-banner trade-game-card">
+                        <div>
+                            <div class="trade-link-wire"><i class="ri-links-line"></i> Link Trade Terminal</div>
+                            <h3>Game-style trading, cleaner inboxes, and live trade status</h3>
+                            <p style="color:var(--text-secondary); margin:0;">Review incoming offers, keep a proper sent log, and open a more Pokémon-style trade lane instead of the cramped old layout.</p>
+                        </div>
+                        <div class="trade-terminal-metrics">
+                            <div class="trade-terminal-stat"><strong id="tradeIncomingCount">0</strong><span>Incoming</span></div>
+                            <div class="trade-terminal-stat"><strong id="tradeSentCount">0</strong><span>Sent</span></div>
+                            <div class="trade-terminal-stat"><strong id="tradeHistoryCount">0</strong><span>History</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="container trading-layout discord-layout-shell">
+                    <div>
+                        <div class="tabs discord-tabbar" style="margin-bottom:24px;">
+                            <button class="tab active" data-tab="incoming">Incoming <span id="incomingTabCount">0</span></button>
+                            <button class="tab" data-tab="sent">Sent <span id="sentTabCount">0</span></button>
+                            <button class="tab" data-tab="history">History <span id="historyTabCount">0</span></button>
+                        </div>
+                        <div class="trades-list discord-panel">
+                            <div class="trades-header">
+                                <h4 id="tradesTitle">Incoming Trades</h4>
+                            </div>
+                            <div id="tradesContainer"></div>
+                        </div>
+                    </div>
+
+                    <aside class="discord-side-stack">
+                        <div class="trade-compose-card discord-panel">
+                            <h4 style="margin-bottom:10px;">Open Link Trade</h4>
+                            <p style="color:var(--text-secondary); margin-bottom:16px;">Pick another trainer, choose what leaves your box, and preview what you want back before you send the trade request.</p>
+                            <div style="display:grid; gap:12px;">
+                                <input id="tradeUserSearch" class="input" placeholder="Search username or email">
+                                <div id="tradeUserResults" style="display:grid; gap:8px;"></div>
+                                <div id="tradePartnerPreview" class="trade-partner-preview"></div>
+                                <div class="profile-section trade-compose-target-panel" style="padding:12px;">
+                                    <div class="live-pull-head" style="margin-bottom:10px;">
+                                        <div>
+                                            <h4 style="margin:0 0 4px;">Wanted From Partner</h4>
+                                            <p style="color:var(--text-secondary); font-size:12px;">Pick the Pokémon you want them to trade back to you.</p>
+                                        </div>
+                                        <span class="badge badge-rare" id="requestedCountBadge">0 wanted</span>
+                                    </div>
+                                    <div id="requestedItemsPanel" class="trade-collection-grid"><div style="color:var(--text-muted); font-size:13px;">Select a player to load their tradable items.</div></div>
+                                </div>
+                                <textarea id="tradeMessageInput" class="input" rows="3" maxlength="220" placeholder="Optional trade note, like: Looking for fair value or trading for favorites"></textarea>
+                                <button class="btn btn-primary" id="sendTradeBtn"><i class="ri-send-plane-line"></i> Send Trade</button>
+                                <div id="tradeComposeInsight" class="admin-rain-card empty trade-compose-insight" style="margin:0;">Choose items on both sides to preview trade fairness.</div>
+                            </div>
+                        </div>
+
+                        <div class="profile-section discord-panel trade-bench-panel">
+                            <div class="live-pull-head">
+                                <div>
+                                    <h4 class="profile-section-title">Your Trade Box</h4>
+                                    <p style="color:var(--text-secondary); font-size:13px;">Choose Pokémon from your box just like a game trade bench.</p>
+                                </div>
+                                <span class="badge badge-uncommon" id="selectedCountBadge">0 selected</span>
+                            </div>
+                            <div class="trade-box-shell">
+                                <div id="tradeInventory" class="trade-collection-grid trade-box-grid" style="margin-top:16px;"></div>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="trade-modal">
+        <div class="modal" style="max-width: 760px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Trade Details</h3>
+                <button class="modal-close" onclick="KatsuCases.closeModal('trade-modal')"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="tradeDetails"></div>
+            </div>
+            <div class="modal-footer" id="tradeActions"></div>
         </div>
     </div>
-</header>
-<main class="main-content">
-    <section class="section-sm">
-        <div class="container" style="max-width:1320px;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; margin-bottom:24px;">
-                <div>
-                    <div class="section-kicker">SUPPORT DESK</div>
-                    <h1 style="margin:8px 0 10px;">Live account tickets</h1>
-                    <p style="color:var(--text-secondary); max-width:760px;">Open a real support ticket for rollback requests, item issues, balance problems, claim disputes, marketplace problems, and account recovery. This desk refreshes live so replies land more like a real game support inbox.</p>
+
+    <div class="trade-transfer-overlay" id="tradeTransferOverlay" aria-hidden="true">
+        <div class="trade-transfer-shell">
+            <div class="trade-transfer-side">
+                <div class="trade-transfer-label" id="tradeTransferLeftLabel">Trainer A</div>
+                <div class="trade-transfer-pod">
+                    <div class="trade-transfer-orbit"></div>
+                    <div class="trade-transfer-sprite" id="tradeTransferLeftSprite"></div>
                 </div>
-                <a href="/settings" class="btn btn-secondary"><i class="ri-settings-3-line"></i> Account Settings</a>
             </div>
-            <div class="ticket-shell">
-                <aside class="ticket-pane">
-                    <div class="ticket-toolbar">
-                        <div>
-                            <h3 style="margin:0;">Create ticket</h3>
-                            <p style="margin:6px 0 0; color:var(--text-secondary); font-size:13px;">Clear details help support move faster.</p>
-                        </div>
-                        <button id="ticketRefreshBtn" class="btn btn-ghost btn-sm" type="button"><i class="ri-refresh-line"></i> Refresh</button>
-                    </div>
-                    <form id="supportForm" style="display:grid; gap:14px; margin-top:16px;">
-                        <input id="ticketSubject" class="input" maxlength="120" placeholder="Subject">
-                        <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px;">
-                            <select id="ticketCategory" class="input"><option value="account">Account</option><option value="rollback">Rollback</option><option value="marketplace">Marketplace</option><option value="trade">Trade</option><option value="case">Case opening</option><option value="claim">Claim / reward link</option><option value="other">Other</option></select>
-                            <select id="ticketPriority" class="input"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select>
-                        </div>
-                        <textarea id="ticketMessage" class="textarea" rows="8" maxlength="2000" placeholder="Describe what happened, the time it happened, and what support should check."></textarea>
-                        <button class="btn btn-primary" type="submit"><i class="ri-send-plane-2-line"></i> Open Ticket</button>
-                    </form>
-                    <div class="ticket-summary-grid" style="margin-top:18px;">
-                        <div class="ticket-summary-card"><span class="ticket-pill"><i class="ri-coupon-2-line"></i> Total</span><strong id="ticketCountTotal">0</strong></div>
-                        <div class="ticket-summary-card"><span class="ticket-pill status-open"><i class="ri-loader-4-line"></i> Open</span><strong id="ticketCountOpen">0</strong></div>
-                        <div class="ticket-summary-card"><span class="ticket-pill status-resolved"><i class="ri-check-line"></i> Resolved</span><strong id="ticketCountResolved">0</strong></div>
-                    </div>
-                    <div class="ticket-list" id="supportTicketsList"></div>
-                </aside>
-                <section class="ticket-thread">
-                    <div class="ticket-thread-head">
-                        <div>
-                            <div class="section-kicker">ACTIVE THREAD</div>
-                            <h2 id="activeTicketTitle" style="margin:8px 0 0;">No ticket selected</h2>
-                        </div>
-                        <div class="ticket-thread-meta" id="activeTicketMeta"></div>
-                    </div>
-                    <div class="profile-account-note" id="activeTicketHint">Pick a ticket from the left to read the full thread and send replies.</div>
-                    <div class="ticket-thread-log" id="supportThread"></div>
-                    <form id="supportReplyForm" class="ticket-compose" style="display:none;">
-                        <textarea id="supportReplyMessage" class="textarea" rows="4" maxlength="2000" placeholder="Reply to this ticket"></textarea>
-                        <div><button class="btn btn-secondary" type="submit"><i class="ri-reply-line"></i> Send Reply</button></div>
-                    </form>
-                </section>
+            <div class="trade-transfer-center">
+                <div class="trade-transfer-beam"></div>
+                <div class="trade-transfer-ball"><i class="ri-record-circle-fill"></i></div>
+                <div class="trade-transfer-status" id="tradeTransferStatus">Trading…</div>
+            </div>
+            <div class="trade-transfer-side">
+                <div class="trade-transfer-label" id="tradeTransferRightLabel">Trainer B</div>
+                <div class="trade-transfer-pod">
+                    <div class="trade-transfer-orbit"></div>
+                    <div class="trade-transfer-sprite" id="tradeTransferRightSprite"></div>
+                </div>
             </div>
         </div>
-    </section>
-</main>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
-<script src="/js/main.js"></script>
-<script>
-let supportTickets = [];
-let activeTicketId = null;
-let supportPoll = null;
-function ticketStatusClass(status = '') { return ['status', String(status || '').toLowerCase()].join(' '); }
-function ticketRowMarkup(ticket) {
-    const replies = Array.isArray(ticket.replies) ? ticket.replies : [];
-    const lastReply = replies[replies.length - 1];
-    return `<button class="ticket-row ${Number(ticket.id) === Number(activeTicketId) ? 'active' : ''}" type="button" data-ticket-id="${Number(ticket.id)}"><div class="ticket-row-top"><strong>#${Number(ticket.id)} · ${KatsuCases.escapeHtml(ticket.subject || 'Untitled ticket')}</strong><span class="ticket-pill ${ticketStatusClass(ticket.status)}">${KatsuCases.escapeHtml(ticket.status || 'open')}</span></div><div class="ticket-sub"><span>${KatsuCases.escapeHtml(ticket.category || 'general')}</span><span>${KatsuCases.escapeHtml(ticket.priority || 'normal')} priority</span><span>${new Date(ticket.updated_at || ticket.created_at).toLocaleString()}</span></div><div style="margin-top:10px; color:var(--text-secondary); font-size:13px; line-height:1.5;">${KatsuCases.escapeHtml((lastReply && lastReply.message) || '').slice(0, 120) || 'No replies yet.'}</div></button>`;
-}
-function ticketBubbleMarkup(reply) {
-    const roleClass = reply.internal ? 'ticket-bubble-note' : (reply.author_type === 'admin' ? 'support' : '');
-    return `<article class="ticket-bubble ${roleClass}"><div class="ticket-bubble-head"><strong style="color:var(--text-primary);">${KatsuCases.escapeHtml(reply.display_name || reply.username || reply.author_type || 'Support')}${reply.internal ? ' · internal' : ''}</strong><span>${new Date(reply.created_at).toLocaleString()}</span></div><div class="ticket-bubble-body">${KatsuCases.escapeHtml(reply.message || '')}</div></article>`;
-}
-function renderTicketSummary() {
-    const total = supportTickets.length;
-    const openish = supportTickets.filter((ticket) => ['open', 'pending', 'customer-replied'].includes(String(ticket.status || '').toLowerCase())).length;
-    const resolved = supportTickets.filter((ticket) => ['resolved', 'closed'].includes(String(ticket.status || '').toLowerCase())).length;
-    document.getElementById('ticketCountTotal').textContent = String(total);
-    document.getElementById('ticketCountOpen').textContent = String(openish);
-    document.getElementById('ticketCountResolved').textContent = String(resolved);
-}
-function renderTicketList() {
-    const wrap = document.getElementById('supportTicketsList');
-    if (!supportTickets.length) {
-        wrap.innerHTML = '<div class="ticket-empty-state"><div><i class="ri-customer-service-2-line"></i><div>No tickets yet</div><div style="margin-top:8px;">Open one from the form above.</div></div></div>';
-        return;
-    }
-    wrap.innerHTML = supportTickets.map(ticketRowMarkup).join('');
-    wrap.querySelectorAll('[data-ticket-id]').forEach((button) => button.addEventListener('click', () => { activeTicketId = Number(button.dataset.ticketId); renderSupportDesk(); }));
-}
-function renderActiveTicket() {
-    const ticket = supportTickets.find((entry) => Number(entry.id) === Number(activeTicketId)) || supportTickets[0] || null;
-    if (ticket && activeTicketId === null) activeTicketId = Number(ticket.id);
-    const title = document.getElementById('activeTicketTitle');
-    const meta = document.getElementById('activeTicketMeta');
-    const log = document.getElementById('supportThread');
-    const hint = document.getElementById('activeTicketHint');
-    const form = document.getElementById('supportReplyForm');
-    if (!ticket) {
-        title.textContent = 'No ticket selected';
-        meta.innerHTML = '';
-        hint.style.display = 'block';
-        log.innerHTML = '<div class="ticket-empty-state"><div><i class="ri-mail-open-line"></i><div>No active support thread yet.</div></div></div>';
-        form.style.display = 'none';
-        return;
-    }
-    title.textContent = `#${Number(ticket.id)} · ${ticket.subject || 'Untitled ticket'}`;
-    meta.innerHTML = `<span class="ticket-pill ${ticketStatusClass(ticket.status)}">${KatsuCases.escapeHtml(ticket.status || 'open')}</span><span class="ticket-pill"><i class="ri-price-tag-3-line"></i>${KatsuCases.escapeHtml(ticket.category || 'general')}</span><span class="ticket-pill"><i class="ri-alarm-warning-line"></i>${KatsuCases.escapeHtml(ticket.priority || 'normal')}</span><span class="ticket-pill"><i class="ri-time-line"></i>${new Date(ticket.updated_at || ticket.created_at).toLocaleString()}</span>`;
-    hint.style.display = 'none';
-    log.innerHTML = (Array.isArray(ticket.replies) ? ticket.replies : []).map(ticketBubbleMarkup).join('') || '<div class="ticket-empty-state"><div><i class="ri-chat-1-line"></i><div>No replies yet.</div></div></div>';
-    log.scrollTop = log.scrollHeight;
-    form.style.display = 'grid';
-    form.dataset.ticketId = String(ticket.id);
-}
-function renderSupportDesk() { renderTicketSummary(); renderTicketList(); renderActiveTicket(); }
-async function loadTickets(silent = false) {
-    try {
-        const data = await KatsuCases.api.get('/api/support/tickets');
-        supportTickets = Array.isArray(data.tickets) ? data.tickets : [];
-        if (!supportTickets.some((ticket) => Number(ticket.id) === Number(activeTicketId))) activeTicketId = supportTickets.length ? Number(supportTickets[0].id) : null;
-        renderSupportDesk();
-    } catch (error) { if (!silent) KatsuCases.showToast(error.message || 'Failed to load support tickets', 'error'); }
-}
-function startSupportPolling() { if (!supportPoll) supportPoll = window.setInterval(() => loadTickets(true), 6000); }
-document.getElementById('supportForm').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const button = event.target.querySelector('button[type="submit"]');
-    KatsuCases.setLoading(true, button);
-    try {
-        const result = await KatsuCases.api.post('/api/support/tickets', { subject: document.getElementById('ticketSubject').value, category: document.getElementById('ticketCategory').value, priority: document.getElementById('ticketPriority').value, message: document.getElementById('ticketMessage').value });
-        event.target.reset();
-        activeTicketId = Number(result.ticket?.id || 0) || activeTicketId;
-        KatsuCases.showToast('Support ticket opened', 'success');
-        await loadTickets(true);
-    } catch (error) { KatsuCases.showToast(error.message || 'Failed to create support ticket', 'error'); }
-    finally { KatsuCases.setLoading(false, button); }
-});
-document.getElementById('supportReplyForm').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const ticketId = event.target.dataset.ticketId;
-    const messageField = document.getElementById('supportReplyMessage');
-    const message = messageField.value.trim();
-    if (!ticketId || !message) return;
-    const button = event.target.querySelector('button[type="submit"]');
-    KatsuCases.setLoading(true, button);
-    try {
-        await KatsuCases.api.post(`/api/support/tickets/${ticketId}/reply`, { message });
-        messageField.value = '';
-        KatsuCases.showToast('Reply sent', 'success');
-        await loadTickets(true);
-    } catch (error) { KatsuCases.showToast(error.message || 'Failed to reply to ticket', 'error'); }
-    finally { KatsuCases.setLoading(false, button); }
-});
-document.getElementById('ticketRefreshBtn').addEventListener('click', () => loadTickets());
-document.addEventListener('DOMContentLoaded', async () => { KatsuCases.init(); await loadTickets(); startSupportPolling(); });
-</script>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        let tradesData = [];
+        let inventoryData = [];
+        let selectedItems = [];
+        let currentTab = 'incoming';
+        let currentTrade = null;
+        let selectedReceiver = null;
+        let selectedRequestedItems = [];
+        let receiverInventoryData = [];
+        let selectedReturnItems = [];
+        let tradePollHandle = null;
+
+        function getSelectedInventoryItems() {
+            return inventoryData.filter((item) => selectedItems.includes(item.id));
+        }
+
+        function getSelectedRequestedInventoryItems() {
+            return receiverInventoryData.filter((item) => selectedRequestedItems.includes(item.id));
+        }
+
+        function getTradeFairness(offerItems = [], requestItems = []) {
+            const offerValue = Number(offerItems.reduce((sum, item) => sum + Number(item.estimated_value || 0), 0).toFixed(2));
+            const requestValue = Number(requestItems.reduce((sum, item) => sum + Number(item.estimated_value || 0), 0).toFixed(2));
+            const richerSide = Math.max(offerValue, requestValue);
+            const poorerSide = Math.min(offerValue, requestValue);
+            const difference = Number(Math.abs(offerValue - requestValue).toFixed(2));
+            const ratio = richerSide > 0 ? Number((poorerSide / richerSide).toFixed(3)) : 1;
+            const isFreeTrade = (offerValue === 0 && requestValue > 0) || (requestValue === 0 && offerValue > 0);
+            const status = isFreeTrade ? 'danger' : ratio < 0.45 ? 'warning' : ratio < 0.7 ? 'notice' : 'balanced';
+            return { offerValue, requestValue, difference, ratio, isFreeTrade, status };
+        }
+
+        function fairnessCopy(fairness) {
+            if (!fairness) return 'Choose items on both sides to preview trade fairness.';
+            if (fairness.isFreeTrade) return `One-sided trade · difference ${KatsuCases.formatCurrency(fairness.difference)}. The receiver must explicitly agree.`;
+            if (fairness.status === 'warning') return `Unbalanced trade · difference ${KatsuCases.formatCurrency(fairness.difference)}.`;
+            if (fairness.status === 'notice') return `Leaning trade · difference ${KatsuCases.formatCurrency(fairness.difference)}.`;
+            return `Balanced trade · difference ${KatsuCases.formatCurrency(fairness.difference)}.`;
+        }
+
+
+        function tradeOriginalOwnerMarkup(item) {
+            if (!item?.original_owner_username) return '';
+            return `<div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Original owner · <a href="/profile?user=${encodeURIComponent(item.original_owner_username)}">${KatsuCases.escapeHtml(item.original_owner_username)}</a></div>`;
+        }
+
+        function tradeSpriteThumb(item, size = 34) {
+            if (!item) return '<span class="trade-strip-slot empty"><i class="ri-question-line"></i></span>';
+            return `<span class="trade-strip-slot rarity-glow-${KatsuCases.escapeHtml(item.rarity || 'common')}">${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: `width:${size}px; height:${size}px;` })}</span>`;
+        }
+
+        function renderTradeItemStrip(items = [], cap = 4) {
+            const safe = Array.isArray(items) ? items.slice(0, cap) : [];
+            const extra = Math.max(0, (items?.length || 0) - safe.length);
+            return `
+                <div class="trade-item-strip">
+                    ${safe.map((item) => tradeSpriteThumb(item)).join('')}
+                    ${extra ? `<span class="trade-strip-more">+${extra}</span>` : ''}
+                </div>
+            `;
+        }
+
+        function renderTradePartnerPreview() {
+            const panel = document.getElementById('tradePartnerPreview');
+            if (!panel) return;
+            if (!selectedReceiver) {
+                panel.innerHTML = '<div class="trade-partner-card empty"><i class="ri-user-search-line"></i><div><strong>Choose a player</strong><p>Pick who you want to trade with to load their tradable box.</p></div></div>';
+                return;
+            }
+            panel.innerHTML = `
+                <div class="trade-partner-card">
+                    <div class="trade-partner-avatar">${KatsuCases.buildAvatarMarkup ? KatsuCases.buildAvatarMarkup({ username: selectedReceiver.username, display_name: selectedReceiver.display_name || selectedReceiver.username }, 'community-avatar') : '<i class="ri-user-line"></i>'}</div>
+                    <div class="trade-partner-meta">
+                        <strong>${KatsuCases.escapeHtml(selectedReceiver.display_name || selectedReceiver.username)}</strong>
+                        <p>@${KatsuCases.escapeHtml(selectedReceiver.username)} · Ready for a direct trade</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateTradeComposeInsight() {
+            const panel = document.getElementById('tradeComposeInsight');
+            if (!panel) return;
+            const offered = getSelectedInventoryItems();
+            const wanted = getSelectedRequestedInventoryItems();
+            const fairness = getTradeFairness(offered, wanted);
+            const titleMap = { balanced: 'Balanced', notice: 'Heads Up', warning: 'Unfair', danger: 'One-Sided' };
+            panel.className = `admin-rain-card trade-compose-insight ${fairness.status === 'balanced' ? 'empty' : ''}`;
+            panel.innerHTML = `
+                <div class="trade-compose-stage">
+                    <div class="trade-stage-lane">
+                        <div class="trade-stage-head"><span>You offer</span><strong>${offered.length}</strong></div>
+                        ${renderTradeItemStrip(offered)}
+                    </div>
+                    <div class="trade-stage-link"><i class="ri-arrow-left-right-line"></i></div>
+                    <div class="trade-stage-lane">
+                        <div class="trade-stage-head"><span>You want</span><strong>${wanted.length}</strong></div>
+                        ${renderTradeItemStrip(wanted)}
+                    </div>
+                </div>
+                <div>
+                    <strong>${titleMap[fairness.status] || 'Trade Insight'}</strong>
+                    <div class="rain-meta">Offering ${KatsuCases.formatCurrency(fairness.offerValue)} · Asking ${KatsuCases.formatCurrency(fairness.requestValue)}<br>${fairnessCopy(fairness)}</div>
+                </div>
+            `;
+            renderTradePartnerPreview();
+        }
+
+        function renderTradeDetailCard(item, compact = false) {
+            return `
+                <div class="trade-detail-card ${compact ? 'compact' : ''}">
+                    <div class="trade-detail-sprite">${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: compact ? 'width:34px; height:34px;' : 'width:52px; height:52px;' })}</div>
+                    <div class="trade-detail-meta">
+                        <div class="trade-detail-name">${KatsuCases.escapeHtml(item.pokemon_name)}</div>
+                        <div class="trade-detail-sub">${KatsuCases.escapeHtml(item.rarity)} · ${KatsuCases.formatCurrency(item.estimated_value || 0)}</div>
+                        ${tradeOriginalOwnerMarkup(item)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function playTradeAnimation({ leftTrainer = 'Trainer A', rightTrainer = 'Trainer B', leftItem = null, rightItem = null, oneWay = false } = {}) {
+            const overlay = document.getElementById('tradeTransferOverlay');
+            if (!overlay) return Promise.resolve();
+            const leftLabel = document.getElementById('tradeTransferLeftLabel');
+            const rightLabel = document.getElementById('tradeTransferRightLabel');
+            const leftSprite = document.getElementById('tradeTransferLeftSprite');
+            const rightSprite = document.getElementById('tradeTransferRightSprite');
+            const status = document.getElementById('tradeTransferStatus');
+            leftLabel.textContent = leftTrainer;
+            rightLabel.textContent = rightTrainer;
+            leftSprite.innerHTML = leftItem ? KatsuCases.buildSpriteImg({ pokemonName: leftItem.pokemon_name, isShiny: leftItem.is_shiny, spriteUrl: leftItem.sprite_url, alt: leftItem.pokemon_name, style: 'width:72px; height:72px;' }) : '<i class="ri-question-line"></i>';
+            rightSprite.innerHTML = rightItem ? KatsuCases.buildSpriteImg({ pokemonName: rightItem.pokemon_name, isShiny: rightItem.is_shiny, spriteUrl: rightItem.sprite_url, alt: rightItem.pokemon_name, style: 'width:72px; height:72px;' }) : '<i class="ri-gift-line"></i>';
+            status.textContent = oneWay ? 'Reward sent' : 'Trading…';
+            overlay.classList.add('active');
+            const shell = overlay.querySelector('.trade-transfer-shell');
+            const ball = overlay.querySelector('.trade-transfer-ball');
+            const pods = overlay.querySelectorAll('.trade-transfer-pod');
+            return new Promise((resolve) => {
+                anime.remove([shell, ball, ...pods]);
+                anime({ targets: shell, opacity: [0, 1], scale: [0.96, 1], duration: 220, easing: 'easeOutQuad' });
+                anime({ targets: pods, translateY: [14, 0], opacity: [0, 1], delay: anime.stagger(120), duration: 380, easing: 'easeOutExpo' });
+                anime({ targets: ball, translateX: oneWay ? [0, 180] : [-180, 180], rotate: '2turn', scale: [{ value: 1.1, duration: 250 }, { value: 0.95, duration: 250 }, { value: 1, duration: 250 }], duration: 1300, easing: 'easeInOutSine', complete: () => {
+                    status.textContent = oneWay ? 'Trade delivered' : 'Trade complete';
+                    window.setTimeout(() => {
+                        anime({ targets: overlay, opacity: [1, 0], duration: 220, easing: 'easeOutQuad', complete: () => { overlay.classList.remove('active'); overlay.style.opacity = ''; resolve(); } });
+                    }, 420);
+                }});
+            });
+        }
+
+        function updateTradeTabCounts() {
+            const me = KatsuCases.state.user?.id;
+            const incoming = tradesData.filter((trade) => Number(trade.receiver_id) === Number(me) && String(trade.status) === 'pending').length;
+            const sent = tradesData.filter((trade) => Number(trade.sender_id) === Number(me)).length;
+            const history = tradesData.filter((trade) => String(trade.status) !== 'pending').length;
+            const map = { incomingTabCount: incoming, sentTabCount: sent, historyTabCount: history, tradeIncomingCount: incoming, tradeSentCount: sent, tradeHistoryCount: history };
+            Object.entries(map).forEach(([id, value]) => {
+                const node = document.getElementById(id);
+                if (node) node.textContent = value;
+            });
+        }
+
+        async function loadTrades() {
+            const data = await KatsuCases.api.get('/api/trades');
+            tradesData = Array.isArray(data.trades) ? data.trades : [];
+            updateTradeTabCounts();
+            renderTrades();
+        }
+
+        async function loadInventory() {
+            const data = await KatsuCases.api.get('/api/inventory');
+            inventoryData = Array.isArray(data.items) ? data.items.filter((item) => !item.is_listed && !item.is_locked) : [];
+            renderTradeInventory();
+            updateTradeComposeInsight();
+        }
+
+        async function searchUsers(query = '') {
+            if (!KatsuCases.state.user) return;
+            const data = await KatsuCases.api.get(`/api/users/search?query=${encodeURIComponent(query)}`);
+            const container = document.getElementById('tradeUserResults');
+            const users = Array.isArray(data.users) ? data.users : [];
+            if (!users.length) {
+                container.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">No users found.</div>';
+                return;
+            }
+            container.innerHTML = users.map((user) => `
+                <button class="trade-select-item ${selectedReceiver?.id === user.id ? 'selected' : ''}" type="button" onclick='selectReceiver(${user.id}, ${JSON.stringify(String(user.username))}, ${JSON.stringify(String(user.display_name || user.username))})'>
+                    ${KatsuCases.buildAvatarMarkup ? KatsuCases.buildAvatarMarkup(user, 'community-avatar') : '<i class="ri-user-line"></i>'}
+                    <div style="text-align:left;">
+                        <div style="font-weight:600; font-size:13px;">${KatsuCases.escapeHtml(user.display_name || user.username)}</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">@${KatsuCases.escapeHtml(user.username)}${user.region ? ' · ' + KatsuCases.escapeHtml(user.region) : ''}</div>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        async function loadReceiverItems() {
+            const panel = document.getElementById('requestedItemsPanel');
+            const badge = document.getElementById('requestedCountBadge');
+            if (badge) badge.textContent = `${selectedRequestedItems.length} wanted`;
+            if (!selectedReceiver) {
+                panel.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">Select a player to load their tradable items.</div>';
+                receiverInventoryData = [];
+                return;
+            }
+            try {
+                const data = await KatsuCases.api.get(`/api/users/${selectedReceiver.id}/tradable-items`);
+                receiverInventoryData = Array.isArray(data.items) ? data.items : [];
+                if (data.user?.hide_inventory && !receiverInventoryData.length) {
+                    panel.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">This player hides their inventory from their public profile. You can still send a direct offer here.</div>';
+                }
+                renderRequestedItems();
+            } catch (error) {
+                panel.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">Could not load that player&#39;s items.</div>';
+            }
+        }
+
+        function renderRequestedItems() {
+            const panel = document.getElementById('requestedItemsPanel');
+            const badge = document.getElementById('requestedCountBadge');
+            if (badge) badge.textContent = `${selectedRequestedItems.length} wanted`;
+            if (!selectedReceiver) {
+                panel.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">Select a player to load their tradable items.</div>';
+                return;
+            }
+            if (!receiverInventoryData.length) {
+                panel.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">This player has no tradable items right now.</div>';
+                return;
+            }
+            panel.innerHTML = receiverInventoryData.map((item) => `
+                <button class="trade-select-item ${selectedRequestedItems.includes(item.id) ? 'selected' : ''}" onclick="toggleRequestedItem(${item.id})">
+                    ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:32px; height:32px;' })}
+                    <div style="text-align:left;">
+                        <div style="font-weight:600; font-size:12px;">${KatsuCases.escapeHtml(item.pokemon_name)}</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">${KatsuCases.escapeHtml(item.rarity)} · ${KatsuCases.formatCurrency(item.estimated_value || 0)}</div>
+                        ${tradeOriginalOwnerMarkup(item)}
+                    </div>
+                </button>
+            `).join('');
+            updateTradeComposeInsight();
+        }
+
+        function toggleRequestedItem(itemId) {
+            if (selectedRequestedItems.includes(itemId)) {
+                selectedRequestedItems = selectedRequestedItems.filter((id) => id !== itemId);
+            } else {
+                selectedRequestedItems.push(itemId);
+            }
+            renderRequestedItems();
+            updateTradeComposeInsight();
+        }
+
+        function selectReceiver(id, username, displayName = '') {
+            selectedReceiver = { id, username, display_name: displayName || username };
+            selectedRequestedItems = [];
+            searchUsers(document.getElementById('tradeUserSearch').value || '');
+            loadReceiverItems().catch(() => undefined);
+            updateTradeComposeInsight();
+        }
+
+        function renderTrades() {
+            const container = document.getElementById('tradesContainer');
+            let filtered = tradesData;
+            const me = KatsuCases.state.user?.id;
+            if (currentTab === 'incoming') {
+                filtered = tradesData.filter((trade) => Number(trade.receiver_id) === Number(me) && String(trade.status) === 'pending');
+            } else if (currentTab === 'sent') {
+                filtered = tradesData.filter((trade) => Number(trade.sender_id) === Number(me));
+            } else {
+                filtered = tradesData.filter((trade) => String(trade.status) !== 'pending');
+            }
+            if (!filtered.length) {
+                const copy = currentTab === 'incoming'
+                    ? { title: 'No incoming trades', body: 'When other players send you offers they will show up here like a proper trade inbox.' }
+                    : currentTab === 'sent'
+                        ? { title: 'No sent trades yet', body: 'Your outgoing offers now stay logged here so you can keep track of who you tried to trade with.' }
+                        : { title: 'No trade history yet', body: 'Accepted, declined, or cancelled trades will build out your trade history here.' };
+                container.innerHTML = `<div class="trade-terminal-empty"><i class="ri-exchange-line"></i><h3 style="margin:12px 0 8px;">${copy.title}</h3><p>${copy.body}</p></div>`;
+                return;
+            }
+            container.innerHTML = filtered.map((trade) => {
+                const offered = Array.isArray(trade.offeredItems) ? trade.offeredItems : (trade.items || []).filter((item) => Number(item.from_user) === Number(trade.sender_id));
+                const requested = Array.isArray(trade.requestedItems) ? trade.requestedItems : (trade.items || []).filter((item) => Number(item.from_user) === Number(trade.receiver_id));
+                const fairness = trade.fairness || getTradeFairness(offered, requested);
+                const senderUser = { username: trade.sender_username, display_name: trade.sender_username, avatar_url: null };
+                const receiverUser = { username: trade.receiver_username, display_name: trade.receiver_username, avatar_url: null };
+                const statusLabel = String(trade.status || 'pending').replace(/_/g, ' ');
+                return `
+                    <button class="trade-card trade-showdown-card trade-pokemon-card" type="button" onclick="showTradeDetails(${trade.id})">
+                        <div class="trade-pokemon-head">
+                            <div class="trade-pokemon-trainers">
+                                <span class="trade-pokemon-trainer">
+                                    ${KatsuCases.buildAvatarMarkup ? KatsuCases.buildAvatarMarkup(senderUser, 'community-avatar') : '<i class="ri-user-line"></i>'}
+                                    <span class="trade-pokemon-trainer-name">${KatsuCases.escapeHtml(trade.sender_username)}</span>
+                                </span>
+                                <span class="trade-pokemon-vs"><i class="ri-links-line"></i></span>
+                                <span class="trade-pokemon-trainer">
+                                    ${KatsuCases.buildAvatarMarkup ? KatsuCases.buildAvatarMarkup(receiverUser, 'community-avatar') : '<i class="ri-user-line"></i>'}
+                                    <span class="trade-pokemon-trainer-name">${KatsuCases.escapeHtml(trade.receiver_username)}</span>
+                                </span>
+                            </div>
+                            <span class="trade-status ${trade.status}">${KatsuCases.escapeHtml(statusLabel)}</span>
+                        </div>
+                        <div class="trade-pokemon-body">
+                            <div class="trade-link-wire"><i class="ri-gamepad-line"></i> Trade #${trade.id} · ${KatsuCases.formatRelativeTime(trade.updated_at || trade.created_at)}</div>
+                            ${trade.message ? `<div class="trade-time" style="margin:8px 0 2px;">Message · ${KatsuCases.escapeHtml(trade.message)}</div>` : ''}
+                            <div class="trade-pokemon-lanes">
+                                <div class="trade-pokemon-lane">
+                                    <strong>Sender Offer</strong>
+                                    ${renderTradeItemStrip(offered, 5)}
+                                    <div class="trade-time" style="margin-top:8px;">${offered.length} Pokémon · ${KatsuCases.formatCompactCurrency(trade.offer_value || 0)}</div>
+                                </div>
+                                <div class="trade-pokemon-mid">
+                                    <div class="trade-showdown-balance ${fairness.status}">${fairness.isFreeTrade ? 'ONE WAY' : fairness.status.toUpperCase()}</div>
+                                    <div class="trade-showdown-value">${KatsuCases.formatCompactCurrency(Math.max(trade.offer_value || 0, trade.request_value || 0))}</div>
+                                    <div class="trade-time" style="text-align:center;">${fairnessCopy(fairness)}</div>
+                                </div>
+                                <div class="trade-pokemon-lane">
+                                    <strong>Receiver Return</strong>
+                                    ${renderTradeItemStrip(requested, 5)}
+                                    <div class="trade-time" style="margin-top:8px;">${requested.length} Pokémon · ${KatsuCases.formatCompactCurrency(trade.request_value || 0)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function renderTradeInventory() {
+            const container = document.getElementById('tradeInventory');
+            document.getElementById('selectedCountBadge').textContent = `${selectedItems.length} selected`;
+            if (!inventoryData.length) {
+                container.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">You have no tradable items right now.</div>';
+                return;
+            }
+            container.innerHTML = inventoryData.map((item) => `
+                <button class="trade-select-item trade-box-item ${selectedItems.includes(item.id) ? 'selected' : ''}" type="button" onclick="toggleTradeItem(${item.id})">
+                    <span class="trade-box-check"><i class="ri-checkbox-${selectedItems.includes(item.id) ? 'fill' : 'blank'}"></i></span>
+                    <div class="trade-box-sprite">${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:46px; height:46px;' })}</div>
+                    <div class="trade-box-name">${KatsuCases.escapeHtml(item.pokemon_name)}</div>
+                    <div class="trade-box-value">${KatsuCases.formatCompactCurrency(item.estimated_value || 0)}</div>
+                </button>
+            `).join('');
+        }
+
+        function toggleTradeItem(itemId) {
+            if (selectedItems.includes(itemId)) {
+                selectedItems = selectedItems.filter((id) => id !== itemId);
+            } else {
+                selectedItems.push(itemId);
+            }
+            renderTradeInventory();
+        }
+
+        async function sendTrade() {
+            if (!selectedReceiver) {
+                KatsuCases.showToast('Choose a user first', 'error');
+                return;
+            }
+            if (!selectedItems.length) {
+                KatsuCases.showToast('Select at least one item', 'error');
+                return;
+            }
+            try {
+                await KatsuCases.api.post('/api/trades', { receiverId: selectedReceiver.id, items: selectedItems, requestedItemIds: selectedRequestedItems, message: document.getElementById('tradeMessageInput')?.value || '' });
+                KatsuCases.showToast('Trade request sent', 'success');
+                selectedItems = [];
+                selectedReceiver = null;
+                selectedRequestedItems = [];
+                receiverInventoryData = [];
+                const tradeMessageField = document.getElementById('tradeMessageInput');
+                if (tradeMessageField) tradeMessageField.value = '';
+                document.getElementById('tradeUserSearch').value = '';
+                document.getElementById('tradeUserResults').innerHTML = '';
+                document.getElementById('requestedItemsPanel').innerHTML = '<div style="color:var(--text-muted); font-size:13px;">Select a player to load their tradable items.</div>';
+                renderTradePartnerPreview();
+                renderTradeInventory();
+                updateTradeComposeInsight();
+                await loadTrades();
+                await KatsuCases.refreshNotifications({ silent: true });
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to send trade', 'error');
+            }
+        }
+
+        function toggleReturnItem(itemId) {
+            if (selectedReturnItems.includes(itemId)) {
+                selectedReturnItems = selectedReturnItems.filter((id) => id !== itemId);
+            } else {
+                selectedReturnItems.push(itemId);
+            }
+            showTradeDetails(currentTrade.id);
+        }
+
+        function showTradeDetails(tradeId) {
+            currentTrade = tradesData.find((trade) => Number(trade.id) === Number(tradeId));
+            if (!currentTrade) return;
+            const me = KatsuCases.state.user?.id;
+            const incoming = Number(currentTrade.receiver_id) === Number(me);
+            const offered = currentTrade.items.filter((item) => Number(item.from_user) === Number(currentTrade.sender_id));
+            const requested = currentTrade.items.filter((item) => Number(item.from_user) === Number(currentTrade.receiver_id));
+            const availableReturnItems = inventoryData.filter((item) => !selectedItems.includes(item.id));
+
+            const fairness = currentTrade.fairness || getTradeFairness(offered, requested);
+            document.getElementById('tradeDetails').innerHTML = `
+                <div class="admin-rain-card ${fairness.status === 'balanced' ? 'empty' : ''}" style="margin-bottom:16px;">
+                    <strong>${fairness.isFreeTrade ? 'One-Sided Trade' : fairness.status === 'balanced' ? 'Balanced Trade' : 'Trade Warning'}</strong>
+                    <div class="rain-meta">Offering ${KatsuCases.formatCurrency(fairness.offerValue)} · Asking ${KatsuCases.formatCurrency(fairness.requestValue)} · ${fairnessCopy(fairness)}</div>
+                    ${currentTrade.message ? `<div class="rain-meta" style="margin-top:8px;">Sender note · ${KatsuCases.escapeHtml(currentTrade.message)}</div>` : ''}
+                </div>
+                <div class="trade-detail-showcase">
+                    <section class="trade-detail-column">
+                        <div class="trade-detail-column-head">
+                            <div>
+                                <h4><a href="/profile?user=${encodeURIComponent(currentTrade.sender_username)}">${KatsuCases.escapeHtml(currentTrade.sender_username)}</a></h4>
+                                <p>Outgoing side</p>
+                            </div>
+                            ${renderTradeItemStrip(offered, 4)}
+                        </div>
+                        <div class="trade-detail-list">
+                            ${offered.map((item) => renderTradeDetailCard(item)).join('') || '<div style="color:var(--text-muted); font-size:13px;">No items offered.</div>'}
+                        </div>
+                    </section>
+                    <section class="trade-detail-column">
+                        <div class="trade-detail-column-head">
+                            <div>
+                                <h4>${incoming ? 'Your side' : KatsuCases.escapeHtml(currentTrade.receiver_username)}</h4>
+                                <p>${incoming ? 'Review what leaves your box if you accept' : 'Requested return items'}</p>
+                            </div>
+                            ${renderTradeItemStrip(requested, 4)}
+                        </div>
+                        <div class="trade-detail-list">
+                            ${requested.map((item) => renderTradeDetailCard(item)).join('') || '<div style="color:var(--text-muted); font-size:13px;">Nothing requested on this side yet.</div>'}
+                        </div>
+                        ${incoming && currentTrade.status === 'pending' ? `
+                            <div class="trade-detail-return-block">
+                                <div class="trade-return-head">
+                                    <strong>Add return items before accept</strong>
+                                    <span>${selectedReturnItems.length} selected</span>
+                                </div>
+                                <div class="trade-return-grid">
+                                    ${availableReturnItems.map((item) => `
+                                        <button class="trade-select-item trade-return-item ${selectedReturnItems.includes(item.id) ? 'selected' : ''}" type="button" onclick="toggleReturnItem(${item.id})">
+                                            ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:34px; height:34px;' })}
+                                            <span style="font-size:12px;">${KatsuCases.escapeHtml(item.pokemon_name)}</span>
+                                        </button>
+                                    `).join('') || '<div style="color:var(--text-muted); font-size:13px;">No extra items available to add.</div>'}
+                                </div>
+                                <p style="font-size:12px; color:var(--text-muted); margin-top:10px;">You can keep the requested items as-is, remove them, or add more before accepting.</p>
+                                ${fairness.isFreeTrade ? `<label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:12px; color:var(--text-secondary);"><input type="checkbox" id="receiverFreeTradeAgree"> I understand this is one-sided and I still want to accept it.</label>` : ''}
+                            </div>
+                        ` : ''}
+                    </section>
+                </div>
+            `;
+
+            document.getElementById('tradeActions').innerHTML = incoming && currentTrade.status === 'pending'
+                ? `
+                    <button class="btn btn-danger" onclick="respondToTrade('declined')">Decline</button>
+                    <button class="btn btn-success" onclick="respondToTrade('accepted')">Accept Trade</button>
+                `
+                : '<button class="btn btn-ghost" onclick="KatsuCases.closeModal(\'trade-modal\')">Close</button>';
+
+            KatsuCases.openModal('trade-modal');
+        }
+
+        async function respondToTrade(status) {
+            if (!currentTrade) return;
+            const receiverAcceptFree = Boolean(document.getElementById('receiverFreeTradeAgree')?.checked);
+            const offered = currentTrade.items.filter((item) => Number(item.from_user) === Number(currentTrade.sender_id));
+            const requested = currentTrade.items.filter((item) => Number(item.from_user) === Number(currentTrade.receiver_id));
+            const addedReturnItems = inventoryData.filter((item) => selectedReturnItems.includes(item.id));
+            try {
+                await KatsuCases.api.put(`/api/trades/${currentTrade.id}`, { status, receiverItemIds: selectedReturnItems, receiverAcceptFree });
+                KatsuCases.closeModal('trade-modal');
+                if (status === 'accepted') {
+                    await playTradeAnimation({
+                        leftTrainer: currentTrade.sender_username,
+                        rightTrainer: currentTrade.receiver_username,
+                        leftItem: offered[0] || null,
+                        rightItem: requested[0] || addedReturnItems[0] || null,
+                        oneWay: !requested.length && !addedReturnItems.length
+                    });
+                }
+                KatsuCases.showToast(status === 'accepted' ? 'Trade completed' : 'Trade declined', status === 'accepted' ? 'success' : 'info');
+                selectedReturnItems = [];
+                await loadInventory();
+                await loadTrades();
+                await KatsuCases.refreshNotifications({ silent: true });
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Failed to update trade', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            KatsuCases.applyBranding();
+            await KatsuCases.checkAuth();
+            if (!KatsuCases.state.user) {
+                window.location.href = '/signin';
+                return;
+            }
+            await loadTrades();
+            await loadInventory();
+            document.querySelectorAll('.tabs .tab').forEach((tab) => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tabs .tab').forEach((button) => button.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentTab = tab.dataset.tab;
+                    document.getElementById('tradesTitle').textContent = currentTab === 'incoming' ? 'Incoming Trades' : currentTab === 'sent' ? 'Sent Trades' : 'Trade History';
+                    renderTrades();
+                });
+            });
+            document.getElementById('sendTradeBtn').addEventListener('click', sendTrade);
+            document.getElementById('tradeUserSearch').addEventListener('input', KatsuCases.debounce((event) => searchUsers(event.target.value), 250));
+            updateTradeComposeInsight();
+            const preselectedUser = new URLSearchParams(window.location.search).get('user');
+            if (preselectedUser) {
+                document.getElementById('tradeUserSearch').value = preselectedUser;
+                await searchUsers(preselectedUser);
+                const direct = (await KatsuCases.api.get(`/api/users/search?query=${encodeURIComponent(preselectedUser)}`)).users?.find((entry) => String(entry.username).toLowerCase() === String(preselectedUser).toLowerCase());
+                if (direct) {
+                    selectReceiver(direct.id, direct.username, direct.display_name || direct.username);
+                }
+            } else {
+                searchUsers('');
+            }
+            tradePollHandle = window.setInterval(async () => {
+                await loadTrades();
+                await loadInventory();
+                if (currentTrade && document.getElementById('trade-modal')?.classList.contains('active')) {
+                    const refreshed = tradesData.find((trade) => Number(trade.id) === Number(currentTrade.id));
+                    if (refreshed) {
+                        currentTrade = refreshed;
+                        showTradeDetails(refreshed.id);
+                    }
+                }
+            }, 5000);
+        });
+    </script>
 </body>
 </html>

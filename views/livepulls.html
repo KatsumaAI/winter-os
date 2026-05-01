@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Pulls - KatsuCases</title>
-    <meta name="description" content="Watch the latest KatsuCases pulls live, inspect replay data, and track the biggest recent wins across the site.">
+    <title>Inventory - KatsuCases</title>
+    <meta name="description" content="Manage your KatsuCases inventory, sort drops by value, review item history, and list Pokémon rewards for sale or trade.">
     <meta name="theme-color" content="#0a0e1a">
-    <meta name="robots" content="index,follow">
+    <meta name="robots" content="noindex,nofollow">
     <meta property="og:site_name" content="KatsuCases">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Live Pulls - KatsuCases">
-    <meta property="og:description" content="Watch the latest KatsuCases pulls live, inspect replay data, and track the biggest recent wins across the site.">
+    <meta property="og:title" content="Inventory - KatsuCases">
+    <meta property="og:description" content="Manage your KatsuCases inventory, sort drops by value, review item history, and list Pokémon rewards for sale or trade.">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Live Pulls - KatsuCases">
-    <meta name="twitter:description" content="Watch the latest KatsuCases pulls live, inspect replay data, and track the biggest recent wins across the site.">
+    <meta name="twitter:title" content="Inventory - KatsuCases">
+    <meta name="twitter:description" content="Manage your KatsuCases inventory, sort drops by value, review item history, and list Pokémon rewards for sale or trade.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
-
+    
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/pages.css">
@@ -27,26 +27,26 @@
     <div class="page-wrapper">
         <header class="header">
             <div class="header-inner">
-                <a href="/" class="logo"><span>KatsuCases</span></a>
+                <a href="/" class="logo">
+                    <div class="logo-icon"><i class="ri-gamepad-line"></i></div>
+                    <span>KatsuCases</span>
+                </a>
+                
                 <nav class="nav">
                     <a href="/" class="nav-link">Home</a>
                     <a href="/cases" class="nav-link">Cases</a>
                     <a href="/marketplace" class="nav-link">Marketplace</a>
                     <a href="/trading" class="nav-link">Trading</a>
-                    <a href="/livepulls" class="nav-link active">Live Pulls</a>
-                    <a href="/casevs" class="nav-link">Case Vs</a>
+                    <a href="/livepulls" class="nav-link">Live Pulls</a>
                     <a href="/guide" class="nav-link">Info</a>
                 </nav>
+                
                 <div class="header-actions">
                     <div class="balance-display">
                         <i class="ri-wallet-3-line"></i>
                         <span class="balance-value">$0.00</span>
                     </div>
-                    <div class="auth-buttons">
-                        <a href="/signin" class="btn btn-ghost">Sign In</a>
-                        <a href="/signup" class="btn btn-primary">Sign Up</a>
-                    </div>
-                    <div class="user-area" style="display:none;">
+                    <div class="user-area">
                         <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
                         <div class="user-menu">
                             <div class="user-menu-trigger">
@@ -64,224 +64,392 @@
                 </div>
             </div>
         </header>
-
-        <main class="main-content discord-page discord-livepulls-page">
-            <section class="cases-hero section-sm">
-                <div class="container discord-content-shell">
-                    <div class="section-title discord-section-title">
-                        <div class="discord-page-kicker"><i class="ri-broadcast-line"></i> Activity Feed</div>
-                        <h1><span class="live-dot" style="display:inline-block; margin-right:12px;"></span>Live Pulls</h1>
-                        <p>See real openings, inspect the seed, and replay the roll before the winner landed.</p>
-                    </div>
-                    <div class="discord-hero-rail">
-                        <div class="discord-hero-chip"><i class="ri-radar-line"></i><span>Realtime pulls</span></div>
-                        <div class="discord-hero-chip"><i class="ri-shield-keyhole-line"></i><span>Seed inspect</span></div>
-                        <div class="discord-hero-chip"><i class="ri-play-circle-line"></i><span>Replay viewer</span></div>
-                    </div>
-                </div>
-            </section>
-
+        
+        <main class="main-content">
             <section class="section-sm">
-                <div class="container discord-content-shell">
-                    <div class="marketplace-filters discord-filterbar" style="margin-bottom:24px;">
+                <div class="container">
+                    <div class="inventory-header">
+                        <div class="section-title" style="text-align: left; margin-bottom: 0;">
+                            <h1>My Inventory</h1>
+                            <p>Manage your collected Pokémon items</p>
+                        </div>
+                        <a href="/cases" class="btn btn-primary">
+                            <i class="ri-gamepad-line"></i> Open More Cases
+                        </a>
+                    </div>
+                    
+                    <div class="inventory-stats" id="inventoryStats">
+                        <div class="inventory-stat">
+                            <div class="inventory-stat-value" id="totalItems">0</div>
+                            <div class="inventory-stat-label">Total Items</div>
+                        </div>
+                        <div class="inventory-stat">
+                            <div class="inventory-stat-value" id="totalListed">0</div>
+                            <div class="inventory-stat-label">Listed</div>
+                        </div>
+                        <div class="inventory-stat">
+                            <div class="inventory-stat-value" id="totalValue">$0</div>
+                            <div class="inventory-stat-label">Est. Value</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; margin:0 0 16px;">
+                        <button class="btn btn-secondary" type="button" id="sellDuplicatesBtn"><i class="ri-price-tag-3-line"></i> Sell Duplicates</button>
+                        <button class="btn btn-ghost" type="button" id="sellSelectedBtn"><i class="ri-cash-line"></i> Sell Selected</button>
+                        <a href="/pokedex" class="btn btn-ghost"><i class="ri-book-open-line"></i> Collection View</a>
+                    </div>
+                    
+                    <div class="inventory-filters">
+                        <div class="inventory-toolbar" style="display:grid; grid-template-columns: minmax(0,1fr) 220px; gap:12px; width:100%; margin-bottom:14px;">
+                            <input id="inventorySearch" class="input" placeholder="Search your inventory">
+                            <select id="inventorySort" class="input">
+                                <option value="recent">Newest First</option>
+                                <option value="value_desc">Highest Value</option>
+                                <option value="value_asc">Lowest Value</option>
+                                <option value="name">Name A-Z</option>
+                                <option value="rarity">Best Rarity</option>
+                            </select>
+                        </div>
                         <div class="pills" id="rarityPills">
                             <button class="pill active" data-filter="all">All</button>
-                            <button class="pill" data-filter="rare">Rare+</button>
-                            <button class="pill" data-filter="epic">Epic+</button>
+                            <button class="pill" data-filter="common">Common</button>
+                            <button class="pill" data-filter="uncommon">Uncommon</button>
+                            <button class="pill" data-filter="rare">Rare</button>
+                            <button class="pill" data-filter="epic">Epic</button>
                             <button class="pill" data-filter="legendary">Legendary</button>
                             <button class="pill" data-filter="mythical">Mythical</button>
                         </div>
+                        
+                        <div class="pills" id="statusPills">
+                            <button class="pill active" data-filter="all">All Items</button>
+                            <button class="pill" data-filter="listed">Listed</button>
+                            <button class="pill" data-filter="unlisted">Not Listed</button>
+                        </div>
                     </div>
-
-                    <div class="live-feed-layout">
-                        <div class="live-pulls-grid" id="pullsGrid"></div>
-                        <aside class="replay-panel discord-panel" id="replayPanel">
-                            <h3 style="margin-bottom:8px;">Replay Viewer</h3>
-                            <p style="color:var(--text-secondary); margin-bottom:18px;">Pick a live pull to inspect its seed and result track.</p>
-                            <div class="empty-state" style="padding:32px 16px;">
-                                <i class="ri-play-circle-line"></i>
-                                <h3>No replay selected</h3>
-                                <p>Choose a pull from the live feed to view the replay preview.</p>
+                    
+                    <div class="pokemon-box-shell">
+                        <div class="pokemon-box-header">
+                            <div>
+                                <div class="pokemon-box-kicker">Pokémon Storage</div>
+                                <h3 id="inventoryBoxLabel">Box 1</h3>
                             </div>
-                        </aside>
+                            <div class="pokemon-box-controls">
+                                <button class="btn btn-ghost btn-sm" type="button" id="inventoryPrevBox"><i class="ri-arrow-left-s-line"></i> Prev</button>
+                                <span id="inventoryBoxPageText">Page 1 / 1</span>
+                                <button class="btn btn-ghost btn-sm" type="button" id="inventoryNextBox">Next <i class="ri-arrow-right-s-line"></i></button>
+                            </div>
+                        </div>
+                        <div class="inventory-grid pokemon-box-grid" id="inventoryGrid">
+                            <!-- Populated by JS -->
+                        </div>
                     </div>
                 </div>
             </section>
         </main>
+        
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-bottom" style="border-top: none; padding-top: 0;">
+                    <p>&copy; 2024 KatsuCases. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
     </div>
-
+    
+    <!-- List Item Modal -->
+    <div class="modal-overlay" id="list-modal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 class="modal-title">List Item</h3>
+                <button class="modal-close" onclick="KatsuCases.closeModal('list-modal')">
+                    <i class="ri-close-line"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <img id="listItemSprite" src="" style="width: 100px; height: 100px; image-rendering: pixelated;">
+                    <h4 id="listItemName" style="margin-top: 12px;"></h4>
+                    <span id="listItemRarity" class="badge"></span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Listing Price (USD)</label>
+                    <input type="number" class="form-input" id="listPrice" placeholder="0.00" step="0.01" min="0.01">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="KatsuCases.closeModal('list-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmListItem()">List Item</button>
+            </div>
+        </div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
     <script src="/js/main.js"></script>
     <script>
-        let pullsData = [];
-        let currentFilter = 'all';
-        let livePullIds = new Set();
-        let freshPullIds = new Set();
+let inventoryData = [];
+let currentListItem = null;
+let currentBoxPage = 0;
+const INVENTORY_BOX_SIZE = 30;
+const selectedInventoryIds = new Set();
 
-        function rarityPassesFilter(rarity) {
-            if (currentFilter === 'all') return true;
-            if (currentFilter === 'rare') return ['rare', 'epic', 'legendary', 'mythical'].includes(rarity);
-            if (currentFilter === 'epic') return ['epic', 'legendary', 'mythical'].includes(rarity);
-            if (currentFilter === 'legendary') return ['legendary', 'mythical'].includes(rarity);
-            return rarity === 'mythical';
-        }
+async function loadInventory() {
+    try {
+        const data = await KatsuCases.api.get('/api/inventory');
+        inventoryData = Array.isArray(data.items) ? data.items : [];
+        renderInventory();
+        updateStats();
+    } catch (error) {
+        console.error('Failed to load inventory:', error);
+        KatsuCases.showToast('Failed to load inventory', 'error');
+    }
+}
 
-        async function loadPulls(initial = false) {
-            try {
-                const data = await KatsuCases.api.get('/api/livepulls?limit=40');
-                const incoming = Array.isArray(data.pulls) ? data.pulls : [];
-                if (initial || !pullsData.length) {
-                    pullsData = incoming;
-                    livePullIds = new Set(incoming.map((pull) => Number(pull.id)));
-                    freshPullIds = new Set();
-                } else {
-                    const fresh = incoming.filter((pull) => !livePullIds.has(Number(pull.id)));
-                    if (fresh.length) {
-                        freshPullIds = new Set(fresh.map((pull) => Number(pull.id)));
-                        fresh.forEach((pull) => livePullIds.add(Number(pull.id)));
-                        pullsData = [...fresh, ...pullsData].slice(0, 40);
-                        window.setTimeout(() => { freshPullIds.clear(); renderPulls(); }, 2200);
-                    } else {
-                        pullsData = incoming;
-                    }
-                }
-                renderPulls();
-            } catch (error) {
-                console.error('Failed to load pulls:', error);
-                KatsuCases.showToast('Failed to load live pulls', 'error');
+function getFilteredInventory() {
+    const rarity = document.querySelector('#rarityPills .pill.active')?.dataset.filter || 'all';
+    const status = document.querySelector('#statusPills .pill.active')?.dataset.filter || 'all';
+    const search = String(document.getElementById('inventorySearch')?.value || '').trim().toLowerCase();
+    const sort = document.getElementById('inventorySort')?.value || 'recent';
+    let filtered = [...inventoryData];
+    if (rarity !== 'all') filtered = filtered.filter((i) => i.rarity === rarity);
+    if (status === 'listed') filtered = filtered.filter((i) => i.is_listed);
+    else if (status === 'unlisted') filtered = filtered.filter((i) => !i.is_listed);
+    if (search) {
+        filtered = filtered.filter((i) => [i.pokemon_name, i.pokemon_form, i.rarity, i.case_name, i.original_owner_username].filter(Boolean).join(' ').toLowerCase().includes(search));
+    }
+    filtered.sort((a, b) => {
+        switch (sort) {
+            case 'value_desc': return Number(b.estimated_value || 0) - Number(a.estimated_value || 0);
+            case 'value_asc': return Number(a.estimated_value || 0) - Number(b.estimated_value || 0);
+            case 'name': return String(a.pokemon_name || '').localeCompare(String(b.pokemon_name || ''));
+            case 'rarity': {
+                const order = { mythical: 0, legendary: 1, epic: 2, rare: 3, uncommon: 4, common: 5 };
+                return (order[a.rarity] ?? 99) - (order[b.rarity] ?? 99);
             }
+            default: return String(b.acquired_at || '').localeCompare(String(a.acquired_at || ''));
         }
+    });
+    return filtered;
+}
 
-        function renderPulls() {
-            const container = document.getElementById('pullsGrid');
-            const filtered = pullsData.filter((pull) => rarityPassesFilter(pull.rarity));
+function getInventoryPageCount(items = getFilteredInventory()) {
+    return Math.max(1, Math.ceil(items.length / INVENTORY_BOX_SIZE));
+}
 
-            if (!filtered.length) {
-                container.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1 / -1;">
-                        <i class="ri-flashlight-line"></i>
-                        <h3>No pulls match this filter</h3>
-                        <p>Try another rarity tier or wait for new openings.</p>
-                    </div>
-                `;
-                return;
-            }
+function setInventoryBoxPage(nextPage, items = getFilteredInventory()) {
+    const pageCount = getInventoryPageCount(items);
+    currentBoxPage = Math.max(0, Math.min(pageCount - 1, Number(nextPage || 0)));
+    renderInventory(items);
+}
 
-            container.innerHTML = filtered.map((pull) => `
-                <article class="live-pull-card discord-live-card rarity-glow-${pull.rarity} ${freshPullIds.has(Number(pull.id)) ? "live-pull-fresh" : ""}">
-                    <div class="live-pull-head">
-                        <div class="live-pull-headline">
-                            ${KatsuCases.buildAvatarMarkup ? KatsuCases.buildAvatarMarkup({ username: pull.username, display_name: pull.username }, 'live-pull-avatar') : `<span class="live-pull-avatar fallback">${KatsuCases.escapeHtml(String(pull.username || '?').charAt(0).toUpperCase())}</span>`}
-                            <div>
-                                <div class="live-pull-user"><a href="/profile?user=${encodeURIComponent(pull.username)}">${KatsuCases.escapeHtml(pull.username)}</a></div>
-                                <div class="live-pull-case">${KatsuCases.escapeHtml(pull.case_name)} · ${KatsuCases.formatRelativeTime(pull.opened_at)}</div>
-                            </div>
-                        </div>
-                        <div class="live-pull-head-tags">
-                            ${freshPullIds.has(Number(pull.id)) ? '<span class="badge badge-epic">NEW</span>' : ''}
-                            <span class="badge badge-${pull.rarity}">${KatsuCases.escapeHtml(pull.rarity)}</span>
-                        </div>
-                    </div>
-                    <div class="live-pull-body">
-                        <div class="live-pull-sprite">
-                            ${KatsuCases.buildSpriteImg({ pokemonName: pull.pokemon_name, isShiny: pull.is_shiny, spriteUrl: pull.sprite_url, alt: pull.pokemon_name })}
-                        </div>
-                        <div class="live-pull-info">
-                            <div class="live-pull-name">
-                                <strong>${KatsuCases.escapeHtml(pull.pokemon_name)}</strong>
-                                ${pull.is_shiny ? '<span class="badge badge-legendary">SHINY</span>' : ''}
-                            </div>
-                            <div class="live-pull-head-meta">
-                                ${pull.seed ? `<span class="badge badge-common">Seed ${KatsuCases.escapeHtml(pull.seed)}</span>` : ''}
-                                ${pull.odds ? `<span class="badge badge-uncommon">1 in ${Number(pull.odds).toLocaleString()}</span>` : ''}
-                                ${pull.replay_id ? '<span class="badge badge-uncommon">Replay Ready</span>' : ''}
-                            </div>
-                            <div class="live-pull-value">${KatsuCases.formatCurrency(pull.estimated_value || 0)}</div>
-                            <div class="live-pull-actions">
-                                ${pull.replay_id ? `<button class="btn btn-primary" onclick="viewReplay(${pull.id})"><i class="ri-play-line"></i> View Replay</button>` : ''}
-                                <button class="btn btn-ghost" onclick="copySeed('${String(pull.seed || '').replace(/'/g, "\'")}')"><i class="ri-file-copy-line"></i> Copy Seed</button>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-            `).join('');
+function updateInventoryBoxMeta(items) {
+    const pageCount = getInventoryPageCount(items);
+    if (currentBoxPage > pageCount - 1) currentBoxPage = pageCount - 1;
+    if (currentBoxPage < 0) currentBoxPage = 0;
+    const label = document.getElementById('inventoryBoxLabel');
+    const pageText = document.getElementById('inventoryBoxPageText');
+    const prev = document.getElementById('inventoryPrevBox');
+    const next = document.getElementById('inventoryNextBox');
+    if (label) label.textContent = `Box ${currentBoxPage + 1}`;
+    if (pageText) pageText.textContent = `Page ${currentBoxPage + 1} / ${pageCount}`;
+    if (prev) prev.disabled = currentBoxPage <= 0;
+    if (next) next.disabled = currentBoxPage >= pageCount - 1;
+}
+
+function renderInventory(items = getFilteredInventory()) {
+    const grid = document.getElementById('inventoryGrid');
+    updateInventoryBoxMeta(items);
+    if (!items.length) {
+        grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <i class="ri-archive-line"></i>
+                <h3>No items yet</h3>
+                <p>Open some cases to start your collection.</p>
+                <a href="/cases" class="btn btn-primary" style="margin-top: 16px;">Browse Cases</a>
+            </div>
+        `;
+        return;
+    }
+    const start = currentBoxPage * INVENTORY_BOX_SIZE;
+    const pageItems = items.slice(start, start + INVENTORY_BOX_SIZE);
+    const emptySlots = Math.max(0, INVENTORY_BOX_SIZE - pageItems.length);
+    grid.innerHTML = pageItems.map((item) => `
+        <article class="inventory-item pokemon-box-slot rarity-glow-${item.rarity}">
+            <label class="pokemon-box-select">
+                <input type="checkbox" ${selectedInventoryIds.has(item.id) ? 'checked' : ''} onchange="toggleInventorySelection(${item.id}, this.checked)">
+                <span><i class="ri-checkbox-${selectedInventoryIds.has(item.id) ? 'fill' : 'blank'}"></i></span>
+            </label>
+            <div class="pokemon-box-flags">
+                ${(KatsuCases.state.user?.featured_item_ids || []).includes(item.id) ? '<span class="pokemon-box-flag fav"><i class="ri-pushpin-2-fill"></i></span>' : ''}
+                ${item.is_locked ? '<span class="pokemon-box-flag lock"><i class="ri-lock-fill"></i></span>' : ''}
+                ${item.is_favorite ? '<span class="pokemon-box-flag fav"><i class="ri-star-fill"></i></span>' : ''}
+                ${item.is_listed ? '<span class="pokemon-box-flag listed"><i class="ri-price-tag-3-fill"></i></span>' : ''}
+            </div>
+            <div class="inventory-item-sprite pokemon-box-sprite">${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name })}</div>
+            <div class="inventory-item-info pokemon-box-info">
+                <div class="inventory-item-name pokemon-box-name">${KatsuCases.escapeHtml(item.pokemon_name)}${item.pokemon_form ? ` <span style="font-size:10px; color:var(--text-muted);">(${KatsuCases.escapeHtml(item.pokemon_form)})</span>` : ''}</div>
+                <div class="inventory-item-price pokemon-box-value">${KatsuCases.formatCompactCurrency(item.estimated_value || 0)}</div>
+                <div class="pokemon-box-tags">
+                    <span>${KatsuCases.escapeHtml(item.rarity)}</span>
+                    ${item.is_shiny ? '<span>Shiny</span>' : ''}
+                </div>
+                <div class="pokemon-box-actions">
+                    <button class="btn btn-ghost btn-sm" type="button" onclick="toggleFeatured(${item.id}); event.stopPropagation();" title="Toggle showcase pin"><i class="ri-pushpin-2-${(KatsuCases.state.user?.featured_item_ids || []).includes(item.id) ? 'fill' : 'line'}"></i></button>
+                    <button class="btn btn-ghost btn-sm" type="button" onclick="toggleFavorite(${item.id}); event.stopPropagation();"><i class="ri-star-${item.is_favorite ? 'fill' : 'line'}"></i></button>
+                    <button class="btn btn-ghost btn-sm" type="button" onclick="toggleLock(${item.id}); event.stopPropagation();"><i class="ri-lock-${item.is_locked ? 'fill' : 'line'}"></i></button>
+                    <button class="btn btn-secondary btn-sm" type="button" onclick="openListFlow(${item.id}); event.stopPropagation();">${item.is_listed ? 'Unlist' : 'List'}</button>
+                </div>
+            </div>
+        </article>
+    `).join('') + Array.from({ length: emptySlots }).map(() => `
+        <article class="inventory-item pokemon-box-slot empty">
+            <div class="pokemon-box-empty"><i class="ri-add-line"></i><span>Empty</span></div>
+        </article>
+    `).join('');
+}
+
+function updateStats() {
+    const total = inventoryData.length;
+    const listed = inventoryData.filter((i) => i.is_listed).length;
+    const value = inventoryData.reduce((sum, i) => sum + Number(i.estimated_value || 0), 0);
+    document.getElementById('totalItems').textContent = total;
+    document.getElementById('totalListed').textContent = listed;
+    document.getElementById('totalValue').textContent = KatsuCases.formatCurrency(value);
+}
+
+function toggleInventorySelection(itemId, checked) {
+    if (checked) selectedInventoryIds.add(itemId);
+    else selectedInventoryIds.delete(itemId);
+}
+
+async function toggleFavorite(itemId) {
+    try {
+        await KatsuCases.api.post(`/api/inventory/${itemId}/favorite`, {});
+        await loadInventory();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to update favorite', 'error');
+    }
+}
+
+async function toggleFeatured(itemId) {
+    try {
+        const data = await KatsuCases.api.post(`/api/inventory/${itemId}/feature`, {});
+        if (KatsuCases.state.user) KatsuCases.state.user.featured_item_ids = Array.isArray(data.featured_item_ids) ? data.featured_item_ids : [];
+        KatsuCases.showToast(data.featured ? 'Pinned to profile showcase' : 'Removed from profile showcase', 'success');
+        await loadInventory();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to update showcase pin', 'error');
+    }
+}
+
+async function toggleLock(itemId) {
+    try {
+        await KatsuCases.api.post(`/api/inventory/${itemId}/lock`, {});
+        await loadInventory();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to update lock', 'error');
+    }
+}
+
+function openListFlow(itemId) {
+    const item = inventoryData.find((entry) => entry.id === itemId);
+    if (!item) return;
+    if (item.is_listed) {
+        if (confirm(`Remove "${item.pokemon_name}" from marketplace?`)) {
+            removeListing(itemId);
         }
+        return;
+    }
+    if (item.is_locked) {
+        KatsuCases.showToast('Unlock the item before listing it', 'error');
+        return;
+    }
+    currentListItem = item;
+    const img = document.getElementById('listItemSprite');
+    img.src = KatsuCases.resolveSpriteUrl(item.sprite_url, item.pokemon_name);
+    KatsuCases.applySpriteState(img, item.is_shiny, item.sprite_url, item.pokemon_form);
+    document.getElementById('listItemName').textContent = item.pokemon_name + (item.pokemon_form ? ` (${item.pokemon_form})` : '');
+    document.getElementById('listItemRarity').textContent = item.rarity.toUpperCase();
+    document.getElementById('listItemRarity').className = `badge badge-${item.rarity}`;
+    document.getElementById('listPrice').value = '';
+    KatsuCases.openModal('list-modal');
+}
 
-        async function viewReplay(openingId) {
-            try {
-                const data = await KatsuCases.api.get(`/api/livepulls/${openingId}/replay`);
-                const replay = data.replay;
-                const opening = data.opening;
-                const track = Array.isArray(replay.track) ? replay.track : [];
-                const winningIndex = Number.isFinite(Number(replay.winning_index)) ? Number(replay.winning_index) : Math.max(0, track.length - 1);
-                const previewStart = Math.max(0, winningIndex - 4);
-                const previewTrack = track.slice(previewStart, previewStart + 10);
-                const previewWinnerIndex = Math.max(0, Math.min(previewTrack.length - 1, winningIndex - previewStart));
-                document.getElementById('replayPanel').innerHTML = `
-                    <div class="live-pull-head replay-panel-head">
-                        <div>
-                            <div class="discord-panel-kicker"><i class="ri-play-circle-line"></i> Replay Viewer</div>
-                            <h3 style="margin-bottom:6px;">${KatsuCases.escapeHtml(opening.pokemon_name)} Replay</h3>
-                            <p style="color:var(--text-secondary);">${KatsuCases.escapeHtml(opening.username)} · ${KatsuCases.escapeHtml(opening.case_name)}</p>
-                        </div>
-                        <span class="badge badge-${opening.rarity}">${KatsuCases.escapeHtml(opening.rarity)}</span>
-                    </div>
-                    <div class="replay-summary-row" style="margin-top:18px; display:flex; gap:16px; align-items:center;">
-                        <div class="live-pull-sprite" style="width:96px; height:96px;">
-                            ${KatsuCases.buildSpriteImg({ pokemonName: opening.pokemon_name, isShiny: opening.is_shiny, spriteUrl: opening.sprite_url, alt: opening.pokemon_name, style: 'width:72px; height:72px;' })}
-                        </div>
-                        <div>
-                            <div style="font-weight:700; font-size:20px;">${KatsuCases.escapeHtml(opening.pokemon_name)}</div>
-                            <div style="font-size:12px; color:var(--text-muted); margin-top:8px;">${KatsuCases.formatCurrency(opening.estimated_value || 0)} · 1 in ${Number(opening.odds || 0).toLocaleString()}</div>
-                            <div style="color:var(--text-secondary); margin-top:6px;">Replay seed</div>
-                            <div class="opening-seed" style="margin-top:6px;">${KatsuCases.escapeHtml(replay.seed || 'legacy')}</div>
-                        </div>
-                    </div>
-                    <div class="replay-track-preview">
-                        ${previewTrack.map((item, index) => `
-                            <div class="track-item ${index === previewWinnerIndex ? 'rarity-glow-' + item.rarity : ''}">
-                                ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:48px; height:48px;' })}
-                                <div style="font-size:11px; margin-top:8px; font-weight:600;">${KatsuCases.escapeHtml(item.pokemon_name)}</div><div style="font-size:10px; color:var(--text-muted); margin-top:4px;">${KatsuCases.formatCurrency(item.estimated_value || 0)}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div style="margin-top:18px; color:var(--text-secondary); font-size:13px; line-height:1.6;">
-                        This preview shows the recorded section around the winning slot so the replay lines up with the actual result.
-                    </div>
-                `;
-            } catch (error) {
-                console.error('Replay error:', error);
-                KatsuCases.showToast(error.message || 'Failed to load replay', 'error');
-            }
-        }
+async function confirmListItem() {
+    if (!currentListItem) return;
+    const price = parseFloat(document.getElementById('listPrice').value);
+    if (!price || price <= 0) {
+        KatsuCases.showToast('Please enter a valid price', 'error');
+        return;
+    }
+    try {
+        await KatsuCases.api.post('/api/marketplace/list', { itemId: currentListItem.id, price });
+        KatsuCases.showToast('Item listed successfully', 'success');
+        KatsuCases.closeModal('list-modal');
+        await loadInventory();
+        await KatsuCases.refreshNotifications({ silent: true });
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to list item', 'error');
+    }
+}
 
-        async function copySeed(seed) {
-            if (!seed) {
-                KatsuCases.showToast('This pull has no stored seed yet', 'info');
-                return;
-            }
-            try {
-                await navigator.clipboard.writeText(seed);
-                KatsuCases.showToast('Seed copied', 'success');
-            } catch (error) {
-                KatsuCases.showToast('Could not copy the seed', 'error');
-            }
-        }
+async function removeListing(itemId) {
+    try {
+        await KatsuCases.api.delete(`/api/marketplace/${itemId}`);
+        KatsuCases.showToast('Listing removed', 'success');
+        await loadInventory();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to remove listing', 'error');
+    }
+}
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            KatsuCases.applyBranding();
-            await KatsuCases.checkAuth();
-            await loadPulls(true);
-            document.querySelectorAll('#rarityPills .pill').forEach((pill) => {
-                pill.addEventListener('click', () => {
-                    document.querySelectorAll('#rarityPills .pill').forEach((button) => button.classList.remove('active'));
-                    pill.classList.add('active');
-                    currentFilter = pill.dataset.filter;
-                    renderPulls();
-                });
-            });
-            window.setInterval(() => loadPulls(false), 4000);
+async function sellDuplicates() {
+    try {
+        const result = await KatsuCases.api.post('/api/inventory/sell-duplicates', {});
+        KatsuCases.showToast(`Sold ${result.soldCount} duplicate item(s)`, 'success');
+        selectedInventoryIds.clear();
+        await loadInventory();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to sell duplicates', 'error');
+    }
+}
+
+async function sellSelected() {
+    if (!selectedInventoryIds.size) {
+        KatsuCases.showToast('Select one or more items first', 'error');
+        return;
+    }
+    try {
+        const result = await KatsuCases.api.post('/api/inventory/sell-selected', { itemIds: Array.from(selectedInventoryIds) });
+        KatsuCases.showToast(`Sold ${result.soldCount} item(s)`, 'success');
+        selectedInventoryIds.clear();
+        await loadInventory();
+    } catch (error) {
+        KatsuCases.showToast(error.message || 'Failed to sell selected items', 'error');
+    }
+}
+
+function filterInventory() {
+    currentBoxPage = 0;
+    renderInventory();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await KatsuCases.checkAuth();
+    await loadInventory();
+    document.querySelectorAll('#rarityPills .pill, #statusPills .pill').forEach((pill) => {
+        pill.addEventListener('click', () => {
+            pill.closest('.pills').querySelectorAll('.pill').forEach((p) => p.classList.remove('active'));
+            pill.classList.add('active');
+            filterInventory();
         });
-    </script>
+    });
+    document.getElementById('inventorySearch')?.addEventListener('input', filterInventory);
+    document.getElementById('inventorySort')?.addEventListener('change', filterInventory);
+    document.getElementById('sellDuplicatesBtn')?.addEventListener('click', sellDuplicates);
+    document.getElementById('sellSelectedBtn')?.addEventListener('click', sellSelected);
+    document.getElementById('inventoryPrevBox')?.addEventListener('click', () => setInventoryBoxPage(currentBoxPage - 1));
+    document.getElementById('inventoryNextBox')?.addEventListener('click', () => setInventoryBoxPage(currentBoxPage + 1));
+});
+</script>
 </body>
 </html>

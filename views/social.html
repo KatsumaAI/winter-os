@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collection - KatsuCases</title>
+    <meta name="description" content="Track your KatsuCases collection progress, duplicate depth, and best Pokémon pulls in one clean Pokédex-style view.">
+    <meta name="theme-color" content="#0a0e1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body>
+<div class="page-wrapper">
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo"><span>KatsuCases</span></a>
+            <nav class="nav">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/cases" class="nav-link">Cases</a>
+                <a href="/inventory" class="nav-link">Inventory</a>
+                <a href="/pokedex" class="nav-link active">Collection</a>
+                <a href="/support" class="nav-link">Support</a>
+            </nav>
+            <div class="header-actions">
+                <div class="balance-display"><i class="ri-wallet-3-line"></i><span class="balance-value">$0.00</span></div>
+                <div class="user-area" style="display:flex; align-items:center; gap:16px;">
+                    <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
+                    <div class="user-menu">
+                        <div class="user-menu-trigger"><div class="user-avatar"><span class="user-initial">U</span></div><span class="user-name">Username</span></div>
+                        <div class="user-menu-dropdown">
+                            <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                            <a href="/settings" class="user-menu-item"><i class="ri-settings-3-line"></i> Settings</a>
+                            <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><i class="ri-menu-line"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="section-sm">
+            <div class="container" style="max-width:1200px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; margin-bottom:20px;">
+                    <div>
+                        <div class="section-kicker">COLLECTION TRACKER</div>
+                        <h1 style="margin:8px 0 10px;">Pokédex-style collection board</h1>
+                        <p style="color:var(--text-secondary); max-width:760px;">See how deep your owned collection goes, which pulls you have duplicates of, and which entries are your most valuable right now.</p>
+                    </div>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                        <a href="/inventory" class="btn btn-secondary"><i class="ri-archive-line"></i> Inventory</a>
+                        <a href="/cases" class="btn btn-primary"><i class="ri-box-3-line"></i> Open More</a>
+                    </div>
+                </div>
+
+                <div class="stats-grid" id="collectionStats" style="margin-bottom:20px;"></div>
+
+                <section class="panel" style="margin-bottom:20px;">
+                    <div class="panel-head">
+                        <div>
+                            <h3>Collection filters</h3>
+                            <p>Search by Pokémon name, form, or rarity.</p>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:minmax(0,1fr) 220px; gap:12px;">
+                        <input id="collectionSearch" class="input" placeholder="Search collection">
+                        <select id="collectionSort" class="input">
+                            <option value="value">Best value</option>
+                            <option value="owned">Most copies</option>
+                            <option value="name">Name A-Z</option>
+                            <option value="recent">Recently acquired</option>
+                        </select>
+                    </div>
+                    <div class="pills" id="collectionRarityPills" style="margin-top:14px;">
+                        <button class="pill active" data-rarity="all">All</button>
+                        <button class="pill" data-rarity="common">Common</button>
+                        <button class="pill" data-rarity="uncommon">Uncommon</button>
+                        <button class="pill" data-rarity="rare">Rare</button>
+                        <button class="pill" data-rarity="epic">Epic</button>
+                        <button class="pill" data-rarity="legendary">Legendary</button>
+                        <button class="pill" data-rarity="mythical">Mythical</button>
+                    </div>
+                </section>
+
+                <div id="collectionGrid" class="inventory-grid"></div>
+            </div>
+        </section>
+    </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+<script src="/js/main.js"></script>
+<script>
+let collectionState = { entries: [], totals: {}, rarity_breakdown: [] };
+
+function renderCollectionStats() {
+    const stats = document.getElementById('collectionStats');
+    const totals = collectionState.totals || {};
+    stats.innerHTML = `
+        <div class="stat-card"><div class="stat-label">Unique Owned</div><div class="stat-value">${totals.unique_owned || 0}</div></div>
+        <div class="stat-card"><div class="stat-label">Total Items</div><div class="stat-value">${totals.total_items || 0}</div></div>
+        <div class="stat-card"><div class="stat-label">Duplicates</div><div class="stat-value">${totals.duplicates || 0}</div></div>
+        <div class="stat-card"><div class="stat-label">Locked</div><div class="stat-value">${totals.locked_items || 0}</div></div>
+        <div class="stat-card"><div class="stat-label">Favorites</div><div class="stat-value">${totals.favorite_items || 0}</div></div>
+        <div class="stat-card"><div class="stat-label">Completion</div><div class="stat-value">${totals.collection_completion_percent || 0}%</div></div>
+        <div class="stat-card"><div class="stat-label">Est. Value</div><div class="stat-value">${KatsuCases.formatCurrency(totals.est_value || 0)}</div></div>
+    `;
+}
+
+function getFilteredEntries() {
+    const search = String(document.getElementById('collectionSearch')?.value || '').trim().toLowerCase();
+    const sort = document.getElementById('collectionSort')?.value || 'value';
+    const rarity = document.querySelector('#collectionRarityPills .pill.active')?.dataset.rarity || 'all';
+    let entries = [...(collectionState.entries || [])];
+    if (rarity !== 'all') entries = entries.filter((entry) => entry.rarity === rarity);
+    if (search) {
+        entries = entries.filter((entry) => [entry.pokemon_name, entry.pokemon_form, entry.rarity].filter(Boolean).join(' ').toLowerCase().includes(search));
+    }
+    entries.sort((a, b) => {
+        if (sort === 'owned') return Number(b.owned_count || 0) - Number(a.owned_count || 0) || Number(b.best_value || 0) - Number(a.best_value || 0);
+        if (sort === 'name') return String(a.pokemon_name || '').localeCompare(String(b.pokemon_name || ''));
+        if (sort === 'recent') return String(b.latest_acquired_at || '').localeCompare(String(a.latest_acquired_at || ''));
+        return Number(b.best_value || 0) - Number(a.best_value || 0);
+    });
+    return entries;
+}
+
+function renderCollectionGrid() {
+    const grid = document.getElementById('collectionGrid');
+    const entries = getFilteredEntries();
+    if (!entries.length) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1 / -1;"><i class="ri-book-open-line"></i><h3>No collection entries found</h3><p>Try changing the filters or open more cases.</p></div>`;
+        return;
+    }
+    grid.innerHTML = entries.map((entry) => `
+        <article class="inventory-item rarity-glow-${entry.rarity}">
+            <div class="inventory-item-sprite">${KatsuCases.buildSpriteImg({ pokemonName: entry.pokemon_name, isShiny: entry.is_shiny, spriteUrl: entry.sprite_url, alt: entry.pokemon_name })}</div>
+            <div class="inventory-item-info">
+                <div class="inventory-item-name">${KatsuCases.escapeHtml(entry.pokemon_name)}${entry.pokemon_form ? ` <span style="font-size:11px; color:var(--text-muted);">(${KatsuCases.escapeHtml(entry.pokemon_form)})</span>` : ''}</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 10px;">
+                    <span class="badge badge-${entry.rarity}">${KatsuCases.escapeHtml(entry.rarity)}</span>
+                    ${entry.is_shiny ? '<span class="badge badge-legendary">SHINY</span>' : ''}
+                    ${entry.favorite_count ? '<span class="badge badge-epic">FAVORITED</span>' : ''}
+                    ${entry.locked_count ? '<span class="badge badge-rare">LOCKED</span>' : ''}
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; font-size:12px; color:var(--text-secondary);">
+                    <div>Owned <strong style="color:var(--text-primary);">${entry.owned_count}</strong></div>
+                    <div>Best value <strong style="color:var(--text-primary);">${KatsuCases.formatCurrency(entry.best_value || 0)}</strong></div>
+                    <div>Listed <strong style="color:var(--text-primary);">${entry.listed_count || 0}</strong></div>
+                    <div>Latest <strong style="color:var(--text-primary);">${entry.latest_acquired_at ? new Date(entry.latest_acquired_at).toLocaleDateString() : '—'}</strong></div>
+                </div>
+            </div>
+        </article>
+    `).join('');
+}
+
+async function loadCollection() {
+    collectionState = await KatsuCases.api.get('/api/collection/summary');
+    renderCollectionStats();
+    renderCollectionGrid();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    KatsuCases.init();
+    await loadCollection();
+    document.getElementById('collectionSearch')?.addEventListener('input', renderCollectionGrid);
+    document.getElementById('collectionSort')?.addEventListener('change', renderCollectionGrid);
+    document.querySelectorAll('#collectionRarityPills .pill').forEach((pill) => pill.addEventListener('click', () => {
+        document.querySelectorAll('#collectionRarityPills .pill').forEach((node) => node.classList.remove('active'));
+        pill.classList.add('active');
+        renderCollectionGrid();
+    }));
+});
+</script>
+</body>
+</html>

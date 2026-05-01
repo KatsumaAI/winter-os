@@ -3,11 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - KatsuCases</title>
-    <meta name="description" content="Manage your KatsuCases account settings, profile identity, privacy controls, and offline roll preferences.">
+    <title>Sign Up - KatsuCases</title>
+    <meta name="description" content="Create your KatsuCases account and start opening Pokémon cases, collecting drops, and joining the live economy.">
     <meta name="theme-color" content="#0a0e1a">
-    <meta property="og:title" content="Settings - KatsuCases">
-    <meta property="og:description" content="Manage account settings, privacy, and offline rolls on KatsuCases.">
+    <meta name="robots" content="noindex,nofollow">
+    <meta property="og:site_name" content="KatsuCases">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Sign Up - KatsuCases">
+    <meta property="og:description" content="Create your KatsuCases account and start opening Pokémon cases, collecting drops, and joining the live economy.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Sign Up - KatsuCases">
+    <meta name="twitter:description" content="Create your KatsuCases account and start opening Pokémon cases, collecting drops, and joining the live economy.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
@@ -17,172 +23,177 @@
     <link rel="stylesheet" href="/css/pages.css">
 </head>
 <body>
-<div class="page-wrapper">
-    <header class="header">
-        <div class="header-inner">
-            <a href="/" class="logo"><span>KatsuCases</span></a>
-            <nav class="nav">
-                <a href="/" class="nav-link">Home</a>
-                <a href="/cases" class="nav-link">Cases</a>
-                <a href="/inventory" class="nav-link">Inventory</a>
-                <a href="/support" class="nav-link">Support</a>
-            </nav>
-            <div class="header-actions">
-                <div class="balance-display"><i class="ri-wallet-3-line"></i><span class="balance-value">$0.00</span></div>
-                <div class="user-area" style="display:flex; align-items:center; gap:16px;">
-                    <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
-                    <div class="user-menu">
-                        <div class="user-menu-trigger"><div class="user-avatar"><span class="user-initial">U</span></div><span class="user-name">Username</span></div>
-                        <div class="user-menu-dropdown">
-                            <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
-                            <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
-                            <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
-                        </div>
-                    </div>
+    <div class="auth-page auth-page--split">
+        <div class="auth-shell">
+            <section class="auth-showcase auth-showcase--signup">
+                <a href="/" class="auth-brand" aria-label="KatsuCases home">
+                    <img src="/assets/katsucases-topbar-logo.png" alt="KatsuCases" class="auth-brand-logo">
+                </a>
+                <div class="auth-showcase-copy">
+                    <div class="auth-kicker"><span class="live-dot"></span> New account bonus ready</div>
+                    <h1>Create your account and start opening immediately.</h1>
+                    <p>Build your profile, collect drops with full value tracking, join the live economy, and move straight into your first openings.</p>
                 </div>
-                <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><i class="ri-menu-line"></i></button>
-            </div>
-        </div>
-    </header>
 
-    <main class="main-content">
-        <section class="section-sm">
-            <div class="container" style="max-width:1180px;">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; margin-bottom:24px;">
+                <div class="auth-bonus-card">
+                    <div class="auth-bonus-icon"><i class="ri-gift-2-line"></i></div>
                     <div>
-                        <div class="section-kicker">ACCOUNT SETTINGS</div>
-                        <h1 style="margin:8px 0 10px;">Identity, privacy, and offline rolls</h1>
-                        <p style="color:var(--text-secondary); max-width:760px;">Your profile settings now live on this dedicated page. Update your public identity, hide inventory if needed, and toggle offline rolls so your account can build free spins while you are away.</p>
-                    </div>
-                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
-                        <a href="/profile" class="btn btn-secondary"><i class="ri-user-line"></i> Profile</a>
-                        <a href="/support" class="btn btn-ghost"><i class="ri-customer-service-2-line"></i> Support</a>
+                        <strong>$100 welcome balance</strong>
+                        <p>New accounts get a starting bonus so you can test cases right away.</p>
                     </div>
                 </div>
 
-                <div style="display:grid; grid-template-columns:minmax(0, 1.2fr) minmax(300px, .8fr); gap:24px; align-items:start;">
-                    <section class="profile-section">
-                        <div class="panel-head"><div><h3>Profile settings</h3><p>Control how your account appears across the site.</p></div></div>
-                        <form id="settingsForm" class="profile-settings-form" style="display:grid; gap:14px;">
-                            <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px;">
-                                <input id="settingsUsername" class="input" placeholder="Username">
-                                <input id="settingsDisplayName" class="input" placeholder="Display name">
+                <div class="auth-checklist">
+                    <div class="auth-checklist-item"><i class="ri-check-line"></i><span>Profile, display name, region, badges, and inventory visibility controls.</span></div>
+                    <div class="auth-checklist-item"><i class="ri-check-line"></i><span>Trading, market listings, Case Vs rooms, and live pull replay support.</span></div>
+                    <div class="auth-checklist-item"><i class="ri-check-line"></i><span>Original owner history, values, and more detailed player profiles.</span></div>
+                </div>
+            </section>
+
+            <section class="auth-panel">
+                <div class="auth-card auth-card--discordish auth-card--wide-form">
+                    <div class="auth-header auth-header--left">
+                        <div class="auth-chip">Create account</div>
+                        <h2>Claim your KatsuCases profile</h2>
+                        <p>Set up your account details below and jump into the site with your welcome bonus.</p>
+                    </div>
+
+                    <form id="signupForm" class="auth-form auth-form--enhanced">
+                        <div class="form-group">
+                            <label class="form-label" for="username">Username</label>
+                            <div class="auth-input-wrap">
+                                <i class="ri-at-line auth-input-icon"></i>
+                                <input type="text" class="form-input auth-input" id="username" placeholder="Choose a username" autocomplete="username" required minlength="3" maxlength="20">
                             </div>
-                            <input id="settingsAvatarUrl" class="input" placeholder="Profile picture URL">
-                            <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px;">
-                                <input id="settingsPronouns" class="input" placeholder="Pronouns">
-                                <input id="settingsRegion" class="input" placeholder="Region">
+                            <span class="form-hint">3–20 characters. Letters, numbers, and underscores only.</span>
+                            <div id="usernameAvailability" class="form-hint" style="margin-top:8px;">We will check availability while you type.</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="email">Email Address</label>
+                            <div class="auth-input-wrap">
+                                <i class="ri-mail-line auth-input-icon"></i>
+                                <input type="email" class="form-input auth-input" id="email" placeholder="you@example.com" autocomplete="email" required>
                             </div>
-                            <label class="profile-checkbox-row">
-                                <input id="settingsHideInventory" type="checkbox"> Hide my inventory on my public profile
-                            </label>
-                            <label class="profile-checkbox-row">
-                                <input id="settingsOfflineRollEnabled" type="checkbox"> Enable offline rolls
-                            </label>
+                        </div>
+
+                        <div class="auth-grid-two">
                             <div class="form-group">
-                                <label for="themeMode" class="form-label">Appearance</label>
-                                <select id="themeMode" class="input">
-                                    <option value="dark">Dark mode</option>
-                                    <option value="light">Light mode</option>
-                                </select>
-                                <span class="form-hint">Applies instantly across the site on this browser.</span>
+                                <label class="form-label" for="password">Password</label>
+                                <div class="auth-input-wrap">
+                                    <i class="ri-lock-2-line auth-input-icon"></i>
+                                    <input type="password" class="form-input auth-input auth-input--password" id="password" placeholder="Create a password" autocomplete="new-password" required minlength="6">
+                                    <button type="button" class="auth-input-action" data-toggle-password="#password" aria-label="Show password">
+                                        <i class="ri-eye-line"></i>
+                                    </button>
+                                </div>
+                                <span class="form-hint">At least 6 characters.</span>
                             </div>
-                            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:6px;">
-                                <button class="btn btn-primary" type="submit"><i class="ri-save-line"></i> Save Settings</button>
-                                <a href="/cases" class="btn btn-ghost"><i class="ri-gamepad-line"></i> Open Cases</a>
-                            </div>
-                        </form>
-                    </section>
 
-                    <div style="display:grid; gap:24px;">
-                        <section class="profile-section">
-                            <div class="panel-head"><div><h3>Offline roll status</h3><p>Earn free rolls over time when enabled.</p></div></div>
-                            <div class="profile-summary-stack">
-                                <article class="profile-summary-card"><span>Stored Free Rolls</span><strong id="offlineStored">0</strong><p id="offlineCapText">Cap information will load here.</p></article>
-                                <article class="profile-summary-card"><span>Next Roll</span><strong id="offlineNext">—</strong><p id="offlineLast">Waiting for settings.</p></article>
-                                <article class="profile-summary-card"><span>Total Earned Offline</span><strong id="offlineTotal">0</strong><p>Lifetime free rolls granted by the offline system.</p></article>
+                            <div class="form-group">
+                                <label class="form-label" for="confirmPassword">Confirm Password</label>
+                                <div class="auth-input-wrap">
+                                    <i class="ri-shield-check-line auth-input-icon"></i>
+                                    <input type="password" class="form-input auth-input auth-input--password" id="confirmPassword" placeholder="Repeat password" autocomplete="new-password" required minlength="6">
+                                    <button type="button" class="auth-input-action" data-toggle-password="#confirmPassword" aria-label="Show password">
+                                        <i class="ri-eye-line"></i>
+                                    </button>
+                                </div>
                             </div>
-                        </section>
-                        <section class="profile-section">
-                            <div class="panel-head"><div><h3>Quick links</h3><p>Jump to the pages you will use most often.</p></div></div>
-                            <div style="display:grid; gap:10px;">
-                                <a href="/inventory" class="btn btn-secondary" style="justify-content:flex-start;"><i class="ri-archive-line"></i> Inventory</a>
-                                <a href="/support" class="btn btn-secondary" style="justify-content:flex-start;"><i class="ri-lifebuoy-line"></i> Open Support</a>
-                                <a href="/profile" class="btn btn-secondary" style="justify-content:flex-start;"><i class="ri-user-line"></i> View Public Profile</a>
-                            </div>
-                        </section>
+                        </div>
+
+                        <div class="auth-action-row auth-action-row--stacked">
+                            <label class="form-checkbox auth-checkbox">
+                                <input type="checkbox" id="terms" required>
+                                <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
+                            </label>
+                            <div class="auth-security-note"><i class="ri-shield-star-line"></i> Your account is protected with secure session storage.</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg auth-submit">
+                            <i class="ri-user-add-line"></i> Create Account
+                        </button>
+                    </form>
+
+                    <div class="auth-footer auth-footer--compact">
+                        Already have an account? <a href="/signin">Sign in</a>
                     </div>
                 </div>
-            </div>
-        </section>
-    </main>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
-<script src="/js/main.js"></script>
-<script>
-async function loadSettings() {
-    const data = await KatsuCases.api.get('/api/settings');
-    const profile = data.profile || {};
-    const prefs = data.preferences || {};
-    const offline = data.offline_roll || {};
-    const platform = data.platform || {};
+            </section>
+        </div>
+    </div>
 
-    document.getElementById('settingsUsername').value = profile.username || '';
-    document.getElementById('settingsDisplayName').value = profile.display_name || '';
-    document.getElementById('settingsAvatarUrl').value = profile.avatar_url || '';
-    document.getElementById('settingsPronouns').value = profile.pronouns || '';
-    document.getElementById('settingsRegion').value = profile.region || '';
-    document.getElementById('settingsHideInventory').checked = Boolean(profile.hide_inventory);
-    document.getElementById('settingsOfflineRollEnabled').checked = Boolean(prefs.offline_roll_enabled);
-    document.getElementById('themeMode').value = prefs.theme_mode || window.localStorage.getItem('katsucases.theme') || 'dark';
-    KatsuCases.applyTheme(document.getElementById('themeMode').value);
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        const usernameInput = document.getElementById('username');
+        const usernameAvailability = document.getElementById('usernameAvailability');
+        const checkUsernameAvailability = KatsuCases.debounce(async (value) => {
+            const username = String(value || '').trim();
+            if (!username) {
+                usernameAvailability.textContent = 'We will check availability while you type.';
+                usernameAvailability.style.color = 'var(--text-muted)';
+                return;
+            }
+            try {
+                const result = await KatsuCases.api.get(`/api/auth/availability/username?username=${encodeURIComponent(username)}`);
+                usernameAvailability.textContent = result.message || (result.available ? 'Username is available' : 'That username is already taken');
+                usernameAvailability.style.color = result.available ? 'var(--success)' : 'var(--warning)';
+            } catch (error) {
+                usernameAvailability.textContent = 'Could not check username right now.';
+                usernameAvailability.style.color = 'var(--warning)';
+            }
+        }, 240);
 
-    document.getElementById('offlineStored').textContent = String(offline.free_rolls || 0);
-    document.getElementById('offlineCapText').textContent = `Cap ${platform.offline_roll_cap || offline.cap || 0} · ${platform.offline_roll_interval_minutes || offline.interval_minutes || 0} min per roll`;
-    document.getElementById('offlineNext').textContent = offline.enabled ? `${offline.next_roll_in_minutes || 0} min` : 'Disabled';
-    document.getElementById('offlineLast').textContent = offline.last_tick_at ? `Last tick ${new Date(offline.last_tick_at).toLocaleString()}` : 'Offline rolls will start after you enable them.';
-    document.getElementById('offlineTotal').textContent = String(offline.total_earned || 0);
-}
+        usernameInput.addEventListener('input', (event) => checkUsernameAvailability(event.target.value));
 
-document.getElementById('themeMode').addEventListener('change', (event) => {
-    KatsuCases.applyTheme(event.target.value);
-});
-
-document.getElementById('settingsForm').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const button = event.target.querySelector('button[type="submit"]');
-    KatsuCases.setLoading(true, button);
-    try {
-        await KatsuCases.api.put('/api/settings', {
-            username: document.getElementById('settingsUsername').value,
-            display_name: document.getElementById('settingsDisplayName').value,
-            avatar_url: document.getElementById('settingsAvatarUrl').value,
-            pronouns: document.getElementById('settingsPronouns').value,
-            region: document.getElementById('settingsRegion').value,
-            hide_inventory: document.getElementById('settingsHideInventory').checked,
-            offline_roll_enabled: document.getElementById('settingsOfflineRollEnabled').checked,
-            theme_mode: document.getElementById('themeMode').value
+        document.querySelectorAll('[data-toggle-password]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const input = document.querySelector(button.getAttribute('data-toggle-password'));
+                if (!input) return;
+                const icon = button.querySelector('i');
+                const nextType = input.type === 'password' ? 'text' : 'password';
+                input.type = nextType;
+                if (icon) {
+                    icon.className = nextType === 'password' ? 'ri-eye-line' : 'ri-eye-off-line';
+                }
+            });
         });
-        KatsuCases.applyTheme(document.getElementById('themeMode').value);
-        KatsuCases.showToast('Settings updated', 'success');
-        await loadSettings();
-        const auth = await KatsuCases.api.get('/api/auth/me');
-        if (auth.user) KatsuCases.updateUserUI(auth.user);
-    } catch (error) {
-        KatsuCases.showToast(error.message || 'Failed to save settings', 'error');
-    } finally {
-        KatsuCases.setLoading(false, button);
-    }
-});
 
-document.addEventListener('DOMContentLoaded', async () => {
-    KatsuCases.init();
-    try {
-        await loadSettings();
-    } catch (error) {
-        KatsuCases.showToast(error.message || 'Failed to load settings', 'error');
-    }
-});
-</script>
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const button = e.target.querySelector('button[type="submit"]');
+
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                KatsuCases.showToast('Username can only contain letters, numbers, and underscores', 'error');
+                return;
+            }
+            if (password !== confirmPassword) {
+                KatsuCases.showToast('Passwords do not match', 'error');
+                return;
+            }
+
+            const availability = await KatsuCases.api.get(`/api/auth/availability/username?username=${encodeURIComponent(username)}`);
+            if (!availability.available) {
+                KatsuCases.showToast(availability.message || 'That username is already taken', 'error');
+                return;
+            }
+            KatsuCases.setLoading(true, button);
+            try {
+                const data = await KatsuCases.api.post('/api/auth/register', { username, email, password });
+                KatsuCases.showToast('Account created! $100 bonus added!', 'success');
+                KatsuCases.updateUserUI(data.user);
+                window.location.href = '/';
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Registration failed', 'error');
+            } finally {
+                KatsuCases.setLoading(false, button);
+            }
+        });
+    </script>
 </body>
 </html>

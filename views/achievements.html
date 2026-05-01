@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rewards - KatsuCases</title>
+    <meta name="description" content="Claim daily rewards, track missions, and keep your favorite cases ready inside the KatsuCases rewards center.">
+    <meta name="theme-color" content="#0a0e1a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/pages.css">
+    <style>
+        .rewards-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:24px}
+        .rewards-stack{display:grid;gap:18px}
+        .reward-hero-card,.reward-panel{background:rgba(10,14,26,.92);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:24px;box-shadow:0 18px 60px rgba(0,0,0,.28)}
+        .reward-hero-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap}
+        .reward-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}
+        .reward-stat{padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
+        .reward-stat span{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px}
+        .reward-stat strong{font-size:1.05rem}
+        .mission-list,.favorite-case-list{display:grid;gap:12px}
+        .mission-card,.favorite-case-card{padding:16px;border-radius:18px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
+        .mission-head,.favorite-case-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+        .mission-progress{height:10px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:12px}
+        .mission-progress span{display:block;height:100%;background:rgba(124,58,237,0.92)}
+        .mission-rewards{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;color:var(--text-secondary);font-size:12px}
+        .favorite-case-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+        .favorite-case-thumb{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06)}
+        .reward-empty{padding:18px;border-radius:18px;background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.1);color:var(--text-secondary)}
+        @media (max-width: 960px){.rewards-grid{grid-template-columns:1fr}.reward-stats{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <header class="header">
+            <div class="header-inner">
+                <a href="/" class="logo"><span>KatsuCases</span></a>
+                <nav class="nav">
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/cases" class="nav-link">Cases</a>
+                    <a href="/marketplace" class="nav-link">Marketplace</a>
+                    <a href="/trading" class="nav-link">Trading</a>
+                    <a href="/rewards" class="nav-link active">Rewards</a>
+                    <a href="/guide" class="nav-link">Info</a>
+                </nav>
+                <div class="header-actions">
+                    <div class="balance-display"><i class="ri-wallet-3-line"></i><span class="balance-value">$0.00</span></div>
+                    <div class="user-area" style="display:none;">
+                        <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
+                        <div class="user-menu">
+                            <div class="user-menu-trigger"><div class="user-avatar"><span class="user-initial">U</span></div><span class="user-name">Username</span></div>
+                            <div class="user-menu-dropdown">
+                                <a href="/profile" class="user-menu-item"><i class="ri-user-line"></i> Profile</a>
+                                <a href="/inventory" class="user-menu-item"><i class="ri-archive-line"></i> Inventory</a>
+                                <a href="#" class="user-menu-item" onclick="KatsuCases.logout(); return false;"><i class="ri-logout-box-line"></i> Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="auth-buttons"><a href="/signin" class="btn btn-ghost">Sign In</a><a href="/signup" class="btn btn-primary">Sign Up</a></div>
+                    <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><i class="ri-menu-line"></i></button>
+                </div>
+            </div>
+        </header>
+        <main class="main-content">
+            <section class="section-sm">
+                <div class="container rewards-grid">
+                    <div class="rewards-stack">
+                        <article class="reward-hero-card">
+                            <div class="reward-hero-head">
+                                <div>
+                                    <div class="discord-page-kicker"><i class="ri-gift-2-line"></i> Rewards Center</div>
+                                    <h1 style="margin:10px 0 8px;">Daily claims, missions, and case watchlist</h1>
+                                    <p style="margin:0;color:var(--text-secondary);">Keep your streak alive, collect mission payouts, and jump straight into the cases you care about most.</p>
+                                </div>
+                                <button class="btn btn-primary" id="dailyClaimBtn"><i class="ri-treasure-map-line"></i> Claim Daily</button>
+                            </div>
+                            <div class="reward-stats" id="rewardStats"></div>
+                        </article>
+                        <article class="reward-panel">
+                            <div class="live-pull-head"><div><h3 style="margin:0;">Daily Missions</h3><p style="margin:6px 0 0;color:var(--text-secondary);">Complete activity goals to earn credits, XP, and free rolls.</p></div></div>
+                            <div class="mission-list" id="missionList"></div>
+                        </article>
+                    </div>
+                    <aside class="rewards-stack">
+                        <article class="reward-panel">
+                            <div class="live-pull-head"><div><h3 style="margin:0;">Favorite Cases</h3><p style="margin:6px 0 0;color:var(--text-secondary);">Quick-open your pinned cases from one place.</p></div><a href="/cases" class="btn btn-ghost btn-sm"><i class="ri-box-3-line"></i> Manage</a></div>
+                            <div class="favorite-case-list" id="favoriteCaseList"></div>
+                        </article>
+                        <article class="reward-panel">
+                            <div class="live-pull-head"><div><h3 style="margin:0;">Progression</h3><p style="margin:6px 0 0;color:var(--text-secondary);">Leveling, streaks, and total claims at a glance.</p></div></div>
+                            <div id="progressionSummary"></div>
+                        </article>
+                    </aside>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        let rewardsData = null;
+        let caseData = [];
+
+        function statCard(label, value, detail) {
+            return `<div class="reward-stat"><span>${KatsuCases.escapeHtml(label)}</span><strong>${KatsuCases.escapeHtml(String(value))}</strong><div style="font-size:12px;color:var(--text-secondary);margin-top:6px;">${KatsuCases.escapeHtml(detail)}</div></div>`;
+        }
+
+        function renderRewardsHeader() {
+            if (!rewardsData) return;
+            const daily = rewardsData.daily || {};
+            const progression = rewardsData.progression || {};
+            document.getElementById('rewardStats').innerHTML = [
+                statCard('Current Streak', daily.streak || 0, daily.claimed_today ? 'Already claimed today' : 'Ready to claim'),
+                statCard('Hunter Level', `Lv ${progression.level || 1}`, `${progression.total_xp || 0} total XP`),
+                statCard('Total Claims', daily.total_claims || 0, `${(rewardsData.favorite_case_ids || []).length} favorite cases`)
+            ].join('');
+            const btn = document.getElementById('dailyClaimBtn');
+            btn.disabled = Boolean(daily.claimed_today);
+            btn.innerHTML = daily.claimed_today ? '<i class="ri-check-line"></i> Claimed Today' : '<i class="ri-treasure-map-line"></i> Claim Daily';
+            document.getElementById('progressionSummary').innerHTML = `
+                <div class="mission-card">
+                    <div class="mission-head"><div><strong>XP to next level</strong><div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">${progression.xp_into_level || 0} / ${progression.xp_for_next_level || 0}</div></div><span class="badge badge-rare">${progression.progress_percent || 0}%</span></div>
+                    <div class="mission-progress"><span style="width:${Math.max(4, Number(progression.progress_percent || 0))}%"></span></div>
+                </div>
+            `;
+        }
+
+        function renderMissions() {
+            const wrap = document.getElementById('missionList');
+            const missions = Array.isArray(rewardsData?.missions) ? rewardsData.missions : [];
+            wrap.innerHTML = missions.length ? missions.map((mission) => `
+                <article class="mission-card">
+                    <div class="mission-head">
+                        <div>
+                            <strong>${KatsuCases.escapeHtml(mission.label)}</strong>
+                            <div style="font-size:12px;color:var(--text-secondary);margin-top:6px;">${KatsuCases.escapeHtml(mission.description || '')}</div>
+                        </div>
+                        <button class="btn ${mission.status === 'ready' ? 'btn-primary' : 'btn-ghost'} btn-sm" ${mission.status !== 'ready' ? 'disabled' : ''} onclick="claimMission('${KatsuCases.escapeHtml(mission.key)}')">${mission.claimed ? 'Claimed' : mission.status === 'ready' ? 'Claim' : `${mission.progress}/${mission.goal}`}</button>
+                    </div>
+                    <div class="mission-progress"><span style="width:${Math.max(4, Number(mission.progress_percent || 0))}%"></span></div>
+                    <div class="mission-rewards">
+                        <span><i class="ri-coin-line"></i> ${KatsuCases.formatCurrency(mission.rewards?.credits || 0)}</span>
+                        <span><i class="ri-flashlight-line"></i> ${mission.rewards?.xp || 0} XP</span>
+                        <span><i class="ri-refresh-line"></i> ${mission.rewards?.free_rolls || 0} free rolls</span>
+                    </div>
+                </article>
+            `).join('') : '<div class="reward-empty">No missions available right now.</div>';
+        }
+
+        function renderFavoriteCases() {
+            const ids = new Set((rewardsData?.favorite_case_ids || []).map((id) => Number(id)));
+            const favorites = (caseData || []).filter((entry) => ids.has(Number(entry.id)));
+            const wrap = document.getElementById('favoriteCaseList');
+            wrap.innerHTML = favorites.length ? favorites.map((entry) => `
+                <article class="favorite-case-card">
+                    <div class="favorite-case-head">
+                        <div>
+                            <strong>${KatsuCases.escapeHtml(entry.name)}</strong>
+                            <div style="font-size:12px;color:var(--text-secondary);margin-top:6px;">${KatsuCases.formatCurrency(entry.price || 0)} · ${KatsuCases.escapeHtml(entry.category || 'case')}</div>
+                        </div>
+                        <a class="btn btn-primary btn-sm" href="/cases?case=${Number(entry.id)}"><i class="ri-arrow-right-up-line"></i> Open</a>
+                    </div>
+                    <div class="favorite-case-strip">${(entry.top_items || []).slice(0,4).map((item) => `<span class="favorite-case-thumb">${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:28px;height:28px;' })}</span>`).join('')}</div>
+                </article>
+            `).join('') : '<div class="reward-empty">No favorite cases yet. Favorite cases from the cases page and they will show up here.</div>';
+        }
+
+        async function loadRewards() {
+            const [progression, cases] = await Promise.all([
+                KatsuCases.api.get('/api/progression'),
+                KatsuCases.api.get('/api/cases')
+            ]);
+            rewardsData = progression;
+            caseData = Array.isArray(cases.cases) ? cases.cases : [];
+            renderRewardsHeader();
+            renderMissions();
+            renderFavoriteCases();
+        }
+
+        async function claimDaily() {
+            try {
+                rewardsData = await KatsuCases.api.post('/api/daily/claim', {});
+                KatsuCases.showToast('Daily reward claimed', 'success');
+                await KatsuCases.checkAuth();
+                renderRewardsHeader();
+                renderMissions();
+                renderFavoriteCases();
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Daily claim failed', 'error');
+            }
+        }
+
+        async function claimMission(key) {
+            try {
+                rewardsData = await KatsuCases.api.post(`/api/missions/${encodeURIComponent(key)}/claim`, {});
+                KatsuCases.showToast('Mission reward claimed', 'success');
+                await KatsuCases.checkAuth();
+                renderRewardsHeader();
+                renderMissions();
+                renderFavoriteCases();
+            } catch (error) {
+                KatsuCases.showToast(error.message || 'Mission claim failed', 'error');
+            }
+        }
+        window.claimMission = claimMission;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            KatsuCases.init();
+            await KatsuCases.checkAuth();
+            if (!KatsuCases.state.user) { window.location.href = '/signin'; return; }
+            document.getElementById('dailyClaimBtn').addEventListener('click', claimDaily);
+            await loadRewards();
+        });
+    </script>
+</body>
+</html>

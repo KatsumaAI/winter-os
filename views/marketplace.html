@@ -3,45 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marketplace - KatsuCases</title>
-    <meta name="description" content="Buy and sell Pokémon drops on the KatsuCases marketplace with live pricing, clean listings, and fast player-to-player trading.">
+    <title>Live Pulls - KatsuCases</title>
+    <meta name="description" content="Watch the latest KatsuCases pulls live, inspect replay data, and track the biggest recent wins across the site.">
     <meta name="theme-color" content="#0a0e1a">
     <meta name="robots" content="index,follow">
     <meta property="og:site_name" content="KatsuCases">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Marketplace - KatsuCases">
-    <meta property="og:description" content="Buy and sell Pokémon drops on the KatsuCases marketplace with live pricing, clean listings, and fast player-to-player trading.">
+    <meta property="og:title" content="Live Pulls - KatsuCases">
+    <meta property="og:description" content="Watch the latest KatsuCases pulls live, inspect replay data, and track the biggest recent wins across the site.">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Marketplace - KatsuCases">
-    <meta name="twitter:description" content="Buy and sell Pokémon drops on the KatsuCases marketplace with live pricing, clean listings, and fast player-to-player trading.">
+    <meta name="twitter:title" content="Live Pulls - KatsuCases">
+    <meta name="twitter:description" content="Watch the latest KatsuCases pulls live, inspect replay data, and track the biggest recent wins across the site.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
-    
+
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/pages.css">
 </head>
 <body>
     <div class="page-wrapper">
-        <!-- Header -->
         <header class="header">
             <div class="header-inner">
-                <a href="/" class="logo">
-                    <div class="logo-icon"><i class="ri-gamepad-line"></i></div>
-                    <span>KatsuCases</span>
-                </a>
-                
+                <a href="/" class="logo"><span>KatsuCases</span></a>
                 <nav class="nav">
                     <a href="/" class="nav-link">Home</a>
                     <a href="/cases" class="nav-link">Cases</a>
-                    <a href="/marketplace" class="nav-link active">Marketplace</a>
+                    <a href="/marketplace" class="nav-link">Marketplace</a>
                     <a href="/trading" class="nav-link">Trading</a>
-                    <a href="/livepulls" class="nav-link">Live Pulls</a>
+                    <a href="/livepulls" class="nav-link active">Live Pulls</a>
+                    <a href="/casevs" class="nav-link">Case Vs</a>
                     <a href="/guide" class="nav-link">Info</a>
                 </nav>
-                
                 <div class="header-actions">
                     <div class="balance-display">
                         <i class="ri-wallet-3-line"></i>
@@ -51,7 +46,7 @@
                         <a href="/signin" class="btn btn-ghost">Sign In</a>
                         <a href="/signup" class="btn btn-primary">Sign Up</a>
                     </div>
-                    <div class="user-area" style="display: none;">
+                    <div class="user-area" style="display:none;">
                         <a href="/inventory" class="btn btn-icon btn-ghost"><i class="ri-archive-line"></i></a>
                         <div class="user-menu">
                             <div class="user-menu-trigger">
@@ -69,208 +64,223 @@
                 </div>
             </div>
         </header>
-        
-        <!-- Main Content -->
-        <main class="main-content discord-page discord-marketplace-page">
+
+        <main class="main-content discord-page discord-livepulls-page">
             <section class="cases-hero section-sm">
-                <div class="container">
+                <div class="container discord-content-shell">
                     <div class="section-title discord-section-title">
-                        <div class="discord-page-kicker"><i class="ri-store-2-line"></i> Community Market</div>
-                        <h1>Marketplace</h1>
-                        <p>Buy and sell Pokémon items directly with other traders</p>
+                        <div class="discord-page-kicker"><i class="ri-broadcast-line"></i> Activity Feed</div>
+                        <h1><span class="live-dot" style="display:inline-block; margin-right:12px;"></span>Live Pulls</h1>
+                        <p>See real openings, inspect the seed, and replay the roll before the winner landed.</p>
                     </div>
                     <div class="discord-hero-rail">
-                        <div class="discord-hero-chip"><i class="ri-search-eye-line"></i><span>Fast listing search</span></div>
-                        <div class="discord-hero-chip"><i class="ri-price-tag-3-line"></i><span>Recent offers</span></div>
-                        <div class="discord-hero-chip"><i class="ri-user-star-line"></i><span>Player-to-player sales</span></div>
+                        <div class="discord-hero-chip"><i class="ri-radar-line"></i><span>Realtime pulls</span></div>
+                        <div class="discord-hero-chip"><i class="ri-shield-keyhole-line"></i><span>Seed inspect</span></div>
+                        <div class="discord-hero-chip"><i class="ri-play-circle-line"></i><span>Replay viewer</span></div>
                     </div>
                 </div>
             </section>
-            
+
             <section class="section-sm">
-                <div class="container">
-                    <div class="marketplace-header discord-panel-header">
-                        <div class="marketplace-search search-input">
-                            <i class="ri-search-line"></i>
-                            <input type="text" class="form-input" placeholder="Search Pokémon..." id="searchInput">
-                        </div>
-                        
-                        <div class="marketplace-filters discord-filterbar">
-                            <div class="pills" id="rarityPills">
-                                <button class="pill active" data-filter="all">All</button>
-                                <button class="pill" data-filter="common">Common</button>
-                                <button class="pill" data-filter="uncommon">Uncommon</button>
-                                <button class="pill" data-filter="rare">Rare</button>
-                                <button class="pill" data-filter="epic">Epic</button>
-                                <button class="pill" data-filter="legendary">Legendary</button>
-                                <button class="pill" data-filter="mythical">Mythical</button>
-                            </div>
-                            
-                            <select class="form-input form-select marketplace-sort" id="sortSelect">
-                                <option value="recent">Most Recent</option>
-                                <option value="price_low">Price: Low to High</option>
-                                <option value="price_high">Price: High to Low</option>
-                            </select>
+                <div class="container discord-content-shell">
+                    <div class="marketplace-filters discord-filterbar" style="margin-bottom:24px;">
+                        <div class="pills" id="rarityPills">
+                            <button class="pill active" data-filter="all">All</button>
+                            <button class="pill" data-filter="rare">Rare+</button>
+                            <button class="pill" data-filter="epic">Epic+</button>
+                            <button class="pill" data-filter="legendary">Legendary</button>
+                            <button class="pill" data-filter="mythical">Mythical</button>
                         </div>
                     </div>
-                    
-                    <div class="items-grid" id="itemsGrid">
-                        <!-- Populated by JS -->
+
+                    <div class="live-feed-layout">
+                        <div class="live-pulls-grid" id="pullsGrid"></div>
+                        <aside class="replay-panel discord-panel" id="replayPanel">
+                            <h3 style="margin-bottom:8px;">Replay Viewer</h3>
+                            <p style="color:var(--text-secondary); margin-bottom:18px;">Pick a live pull to inspect its seed and result track.</p>
+                            <div class="empty-state" style="padding:32px 16px;">
+                                <i class="ri-play-circle-line"></i>
+                                <h3>No replay selected</h3>
+                                <p>Choose a pull from the live feed to view the replay preview.</p>
+                            </div>
+                        </aside>
                     </div>
                 </div>
             </section>
         </main>
-        
-        <!-- Footer -->
-        <footer class="footer">
-            <div class="container">
-                <div class="footer-bottom" style="border-top: none; padding-top: 0;">
-                    <p>&copy; 2024 KatsuCases. All rights reserved.</p>
-                </div>
-            </div>
-        </footer>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
     <script src="/js/main.js"></script>
-    <script src="/js/animations.js"></script>
     <script>
-        let itemsData = [];
-        
-        async function loadMarketplace() {
+        let pullsData = [];
+        let currentFilter = 'all';
+        let livePullIds = new Set();
+        let freshPullIds = new Set();
+
+        function rarityPassesFilter(rarity) {
+            if (currentFilter === 'all') return true;
+            if (currentFilter === 'rare') return ['rare', 'epic', 'legendary', 'mythical'].includes(rarity);
+            if (currentFilter === 'epic') return ['epic', 'legendary', 'mythical'].includes(rarity);
+            if (currentFilter === 'legendary') return ['legendary', 'mythical'].includes(rarity);
+            return rarity === 'mythical';
+        }
+
+        async function loadPulls(initial = false) {
             try {
-                const data = await KatsuCases.api.get('/api/marketplace');
-                itemsData = data.items || [];
-                renderItems(itemsData);
+                const data = await KatsuCases.api.get('/api/livepulls?limit=40');
+                const incoming = Array.isArray(data.pulls) ? data.pulls : [];
+                if (initial || !pullsData.length) {
+                    pullsData = incoming;
+                    livePullIds = new Set(incoming.map((pull) => Number(pull.id)));
+                    freshPullIds = new Set();
+                } else {
+                    const fresh = incoming.filter((pull) => !livePullIds.has(Number(pull.id)));
+                    if (fresh.length) {
+                        freshPullIds = new Set(fresh.map((pull) => Number(pull.id)));
+                        fresh.forEach((pull) => livePullIds.add(Number(pull.id)));
+                        pullsData = [...fresh, ...pullsData].slice(0, 40);
+                        window.setTimeout(() => { freshPullIds.clear(); renderPulls(); }, 2200);
+                    } else {
+                        pullsData = incoming;
+                    }
+                }
+                renderPulls();
             } catch (error) {
-                console.error('Failed to load marketplace:', error);
-                KatsuCases.showToast('Failed to load marketplace', 'error');
+                console.error('Failed to load pulls:', error);
+                KatsuCases.showToast('Failed to load live pulls', 'error');
             }
         }
-        
-        function renderItems(items) {
-            const grid = document.getElementById('itemsGrid');
-            
-            if (items.length === 0) {
-                grid.innerHTML = `
+
+        function renderPulls() {
+            const container = document.getElementById('pullsGrid');
+            const filtered = pullsData.filter((pull) => rarityPassesFilter(pull.rarity));
+
+            if (!filtered.length) {
+                container.innerHTML = `
                     <div class="empty-state" style="grid-column: 1 / -1;">
-                        <i class="ri-shopping-bag-line"></i>
-                        <h3>No items listed</h3>
-                        <p>Be the first to list an item!</p>
+                        <i class="ri-flashlight-line"></i>
+                        <h3>No pulls match this filter</h3>
+                        <p>Try another rarity tier or wait for new openings.</p>
                     </div>
                 `;
                 return;
             }
-            
-            grid.innerHTML = items.map(item => `
-                <div class="card item-card discord-market-card rarity-glow-${item.rarity}">
-                    <div class="item-card-sprite-wrap">
-                        <div class="market-item-topline">
-                            <span class="market-item-channel"># listing-${item.id}</span>
-                            <div class="market-item-badge-row">
-                                ${item.is_shiny ? `<span class="badge badge-legendary" style="font-size: 10px;">SHINY</span>` : ''}
-                                <span class="badge badge-${item.rarity}">${item.rarity}</span>
+
+            container.innerHTML = filtered.map((pull) => `
+                <article class="live-pull-card discord-live-card rarity-glow-${pull.rarity} ${freshPullIds.has(Number(pull.id)) ? "live-pull-fresh" : ""}">
+                    <div class="live-pull-head">
+                        <div class="live-pull-headline">
+                            ${KatsuCases.buildAvatarMarkup ? KatsuCases.buildAvatarMarkup({ username: pull.username, display_name: pull.username }, 'live-pull-avatar') : `<span class="live-pull-avatar fallback">${KatsuCases.escapeHtml(String(pull.username || '?').charAt(0).toUpperCase())}</span>`}
+                            <div>
+                                <div class="live-pull-user"><a href="/profile?user=${encodeURIComponent(pull.username)}">${KatsuCases.escapeHtml(pull.username)}</a></div>
+                                <div class="live-pull-case">${KatsuCases.escapeHtml(pull.case_name)} · ${KatsuCases.formatRelativeTime(pull.opened_at)}</div>
                             </div>
                         </div>
-                        <div class="item-card-sprite">
-                            ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name })}
+                        <div class="live-pull-head-tags">
+                            ${freshPullIds.has(Number(pull.id)) ? '<span class="badge badge-epic">NEW</span>' : ''}
+                            <span class="badge badge-${pull.rarity}">${KatsuCases.escapeHtml(pull.rarity)}</span>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <h4 class="item-card-name">${item.pokemon_name}</h4>
-                        ${item.pokemon_form ? `<p class="item-card-form">${item.pokemon_form}</p>` : ''}
-                        <div class="market-item-meta">
-                            <div class="item-card-price">${KatsuCases.formatCurrency(item.price)}</div>
-                            <div class="item-card-seller"><i class="ri-user-3-line"></i> ${KatsuCases.escapeHtml(item.seller_username)}</div>
+                    <div class="live-pull-body">
+                        <div class="live-pull-sprite">
+                            ${KatsuCases.buildSpriteImg({ pokemonName: pull.pokemon_name, isShiny: pull.is_shiny, spriteUrl: pull.sprite_url, alt: pull.pokemon_name })}
                         </div>
-                        ${KatsuCases.state.user && KatsuCases.state.user.id !== item.seller_id ? `
-                            <button class="btn btn-primary btn-sm" style="width: 100%; margin-top: 12px;" onclick="buyItem(${item.id})">
-                                <i class="ri-shopping-cart-line"></i> Buy Now
-                            </button>
-                        ` : ''}
+                        <div class="live-pull-info">
+                            <div class="live-pull-name">
+                                <strong>${KatsuCases.escapeHtml(pull.pokemon_name)}</strong>
+                                ${pull.is_shiny ? '<span class="badge badge-legendary">SHINY</span>' : ''}
+                            </div>
+                            <div class="live-pull-head-meta">
+                                ${pull.seed ? `<span class="badge badge-common">Seed ${KatsuCases.escapeHtml(pull.seed)}</span>` : ''}
+                                ${pull.odds ? `<span class="badge badge-uncommon">1 in ${Number(pull.odds).toLocaleString()}</span>` : ''}
+                                ${pull.replay_id ? '<span class="badge badge-uncommon">Replay Ready</span>' : ''}
+                            </div>
+                            <div class="live-pull-value">${KatsuCases.formatCurrency(pull.estimated_value || 0)}</div>
+                            <div class="live-pull-actions">
+                                ${pull.replay_id ? `<button class="btn btn-primary" onclick="viewReplay(${pull.id})"><i class="ri-play-line"></i> View Replay</button>` : ''}
+                                <button class="btn btn-ghost" onclick="copySeed('${String(pull.seed || '').replace(/'/g, "\'")}')"><i class="ri-file-copy-line"></i> Copy Seed</button>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </article>
             `).join('');
         }
-        
-        async function buyItem(itemId) {
-            if (!KatsuCases.state.user) {
-                KatsuCases.showToast('Please sign in to purchase', 'error');
+
+        async function viewReplay(openingId) {
+            try {
+                const data = await KatsuCases.api.get(`/api/livepulls/${openingId}/replay`);
+                const replay = data.replay;
+                const opening = data.opening;
+                const track = Array.isArray(replay.track) ? replay.track : [];
+                const winningIndex = Number.isFinite(Number(replay.winning_index)) ? Number(replay.winning_index) : Math.max(0, track.length - 1);
+                const previewStart = Math.max(0, winningIndex - 4);
+                const previewTrack = track.slice(previewStart, previewStart + 10);
+                const previewWinnerIndex = Math.max(0, Math.min(previewTrack.length - 1, winningIndex - previewStart));
+                document.getElementById('replayPanel').innerHTML = `
+                    <div class="live-pull-head replay-panel-head">
+                        <div>
+                            <div class="discord-panel-kicker"><i class="ri-play-circle-line"></i> Replay Viewer</div>
+                            <h3 style="margin-bottom:6px;">${KatsuCases.escapeHtml(opening.pokemon_name)} Replay</h3>
+                            <p style="color:var(--text-secondary);">${KatsuCases.escapeHtml(opening.username)} · ${KatsuCases.escapeHtml(opening.case_name)}</p>
+                        </div>
+                        <span class="badge badge-${opening.rarity}">${KatsuCases.escapeHtml(opening.rarity)}</span>
+                    </div>
+                    <div class="replay-summary-row" style="margin-top:18px; display:flex; gap:16px; align-items:center;">
+                        <div class="live-pull-sprite" style="width:96px; height:96px;">
+                            ${KatsuCases.buildSpriteImg({ pokemonName: opening.pokemon_name, isShiny: opening.is_shiny, spriteUrl: opening.sprite_url, alt: opening.pokemon_name, style: 'width:72px; height:72px;' })}
+                        </div>
+                        <div>
+                            <div style="font-weight:700; font-size:20px;">${KatsuCases.escapeHtml(opening.pokemon_name)}</div>
+                            <div style="font-size:12px; color:var(--text-muted); margin-top:8px;">${KatsuCases.formatCurrency(opening.estimated_value || 0)} · 1 in ${Number(opening.odds || 0).toLocaleString()}</div>
+                            <div style="color:var(--text-secondary); margin-top:6px;">Replay seed</div>
+                            <div class="opening-seed" style="margin-top:6px;">${KatsuCases.escapeHtml(replay.seed || 'legacy')}</div>
+                        </div>
+                    </div>
+                    <div class="replay-track-preview">
+                        ${previewTrack.map((item, index) => `
+                            <div class="track-item ${index === previewWinnerIndex ? 'rarity-glow-' + item.rarity : ''}">
+                                ${KatsuCases.buildSpriteImg({ pokemonName: item.pokemon_name, isShiny: item.is_shiny, spriteUrl: item.sprite_url, alt: item.pokemon_name, style: 'width:48px; height:48px;' })}
+                                <div style="font-size:11px; margin-top:8px; font-weight:600;">${KatsuCases.escapeHtml(item.pokemon_name)}</div><div style="font-size:10px; color:var(--text-muted); margin-top:4px;">${KatsuCases.formatCurrency(item.estimated_value || 0)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="margin-top:18px; color:var(--text-secondary); font-size:13px; line-height:1.6;">
+                        This preview shows the recorded section around the winning slot so the replay lines up with the actual result.
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Replay error:', error);
+                KatsuCases.showToast(error.message || 'Failed to load replay', 'error');
+            }
+        }
+
+        async function copySeed(seed) {
+            if (!seed) {
+                KatsuCases.showToast('This pull has no stored seed yet', 'info');
                 return;
             }
-            
             try {
-                await KatsuCases.api.post(`/api/marketplace/${itemId}/buy`);
-                KatsuCases.showToast('Purchase successful!', 'success');
-                
-                // Update balance
-                const user = await KatsuCases.api.get('/api/auth/me');
-                KatsuCases.updateUserUI(user.user);
-                
-                // Refresh marketplace
-                await loadMarketplace();
-                await KatsuCases.refreshNotifications({ silent: true });
+                await navigator.clipboard.writeText(seed);
+                KatsuCases.showToast('Seed copied', 'success');
             } catch (error) {
-                KatsuCases.showToast(error.message || 'Purchase failed', 'error');
+                KatsuCases.showToast('Could not copy the seed', 'error');
             }
         }
-        
-        function filterItems(rarity, search, sort) {
-            let filtered = [...itemsData];
-            
-            if (rarity !== 'all') {
-                filtered = filtered.filter(i => i.rarity === rarity);
-            }
-            
-            if (search) {
-                const searchLower = search.toLowerCase();
-                filtered = filtered.filter(i => 
-                    i.pokemon_name.toLowerCase().includes(searchLower)
-                );
-            }
-            
-            switch (sort) {
-                case 'price_low':
-                    filtered.sort((a, b) => a.price - b.price);
-                    break;
-                case 'price_high':
-                    filtered.sort((a, b) => b.price - a.price);
-                    break;
-                default:
-                    filtered.sort((a, b) => new Date(b.listed_at) - new Date(a.listed_at));
-            }
-            
-            renderItems(filtered);
-        }
-        
-        // Initialize
+
         document.addEventListener('DOMContentLoaded', async () => {
+            KatsuCases.applyBranding();
             await KatsuCases.checkAuth();
-            await loadMarketplace();
-            
-            // Search
-            const searchInput = document.getElementById('searchInput');
-            searchInput.addEventListener('input', KatsuCases.debounce((e) => {
-                const activeRarity = document.querySelector('#rarityPills .pill.active')?.dataset.filter || 'all';
-                const sort = document.getElementById('sortSelect').value;
-                filterItems(activeRarity, e.target.value, sort);
-            }, 300));
-            
-            // Rarity filter
-            document.querySelectorAll('#rarityPills .pill').forEach(pill => {
+            await loadPulls(true);
+            document.querySelectorAll('#rarityPills .pill').forEach((pill) => {
                 pill.addEventListener('click', () => {
-                    document.querySelectorAll('#rarityPills .pill').forEach(p => p.classList.remove('active'));
+                    document.querySelectorAll('#rarityPills .pill').forEach((button) => button.classList.remove('active'));
                     pill.classList.add('active');
-                    const sort = document.getElementById('sortSelect').value;
-                    filterItems(pill.dataset.filter, searchInput.value, sort);
+                    currentFilter = pill.dataset.filter;
+                    renderPulls();
                 });
             });
-            
-            // Sort
-            document.getElementById('sortSelect').addEventListener('change', (e) => {
-                const activeRarity = document.querySelector('#rarityPills .pill.active')?.dataset.filter || 'all';
-                filterItems(activeRarity, searchInput.value, e.target.value);
-            });
+            window.setInterval(() => loadPulls(false), 4000);
         });
     </script>
 </body>
